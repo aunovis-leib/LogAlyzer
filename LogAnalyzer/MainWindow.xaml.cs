@@ -19,7 +19,7 @@ namespace LogAnalyzer
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new ViewModels.MainViewModel();
+            DataContext = new ViewModels.MainViewModel(); // Set DataContext for bindings
         }
     }
 }

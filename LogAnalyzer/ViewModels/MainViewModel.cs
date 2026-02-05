@@ -1,16 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
 
 namespace LogAnalyzer.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    [ObservableProperty]
-    private string _greeting = "Hallo MVVM!";
+    public ObservableCollection<LogListViewModel> Lists { get; } = new();
+
+    public MainViewModel()
+    {
+        Lists.Add(new LogListViewModel());
+    }
 
     [RelayCommand]
-    private void UpdateGreeting()
+    private void AddList()
     {
-        Greeting = "Aktualisiert: " + System.DateTime.Now.ToString("T");
+        Lists.Add(new LogListViewModel());
     }
 }

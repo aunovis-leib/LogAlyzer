@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LogAnalyzer"
+        xmlns:vm="clr-namespace:LogAnalyzer.ViewModels"
         xmlns:views="clr-namespace:LogAnalyzer.Views"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
@@ -13,9 +14,19 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-
-        <TextBlock Text="{Binding Greeting}" FontSize="20" />
-        <Button Grid.Row="1" Content="Aktualisieren" Command="{Binding UpdateGreetingCommand}" Margin="0,8,0,0" Width="140" />
-        <views:DetailsView Grid.Row="2" />
+       
+        <Button Grid.Row="1" Content="+" Command="{Binding AddListCommand}" Margin="0,8,0,0" Width="140" />
+        <ItemsControl Grid.Row="2" ItemsSource="{Binding Lists}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="{Binding Lists.Count}" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:LogListViewModel}">
+                    <views:LogListView />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </Window>

@@ -2,13 +2,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System;
+using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows.Data;
 using LogAnalyzer.Models;
 
 namespace LogAnalyzer.ViewModels;
 
-public partial class DetailsViewModel : ObservableObject
+public partial class LogListViewModel : ObservableObject
 {
     private ObservableCollection<LogFileEntry> _logFilesEntries = [];
     public ObservableCollection<LogFileEntry> LogFilesEntries
@@ -16,6 +18,11 @@ public partial class DetailsViewModel : ObservableObject
         get => _logFilesEntries;
         set => SetProperty(ref _logFilesEntries, value);
     }
+
+    public ICollectionView LogFilesView { get; }
+
+    [ObservableProperty]
+    private LogType? _selectedType = null;
 
     [ObservableProperty]
     private string _text1 = string.Empty;
@@ -56,6 +63,7 @@ public partial class DetailsViewModel : ObservableObject
             });
 
             LogFilesEntries = new ObservableCollection<LogFileEntry>(entries);
+            LogFilesView.Refresh();
         }
     }
 
@@ -84,5 +92,22 @@ public partial class DetailsViewModel : ObservableObject
         entry.Type = type;
         entry.Text = textPart;
         return true;
+    }
+
+    public LogListViewModel()
+    {
+        LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
+        LogFilesView.Filter = FilterByType;
+    }
+
+    partial void OnSelectedTypeChanged(LogType? value)
+    {
+        LogFilesView.Refresh();
+    }
+
+    private bool FilterByType(object obj)
+    {
+        if (obj is not LogFileEntry e) return false;
+        return SelectedType is null || e.Type == SelectedType.Value;
     }
 }

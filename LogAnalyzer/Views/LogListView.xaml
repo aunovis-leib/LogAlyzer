@@ -1,4 +1,4 @@
-<UserControl x:Class="LogAnalyzer.Views.DetailsView"
+<UserControl x:Class="LogAnalyzer.Views.LogListView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -36,8 +36,16 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Button Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" Content="Datei wählen" Command="{Binding ChooseFileCommand}"/>
-        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesEntries}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000">
+        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+            <Button HorizontalAlignment="Left" Content="Datei wählen" Command="{Binding ChooseFileCommand}"/>
+            <ComboBox Margin="8,0,0,0" Width="120" SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <ComboBoxItem Content="Alle" />
+                <ComboBoxItem Content="Error" />
+                <ComboBoxItem Content="Info" />
+                <ComboBoxItem Content="Debug" />
+            </ComboBox>
+        </StackPanel>
+        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000">
             <ListView.View> 
                 <GridView>
                     <GridViewColumn>
