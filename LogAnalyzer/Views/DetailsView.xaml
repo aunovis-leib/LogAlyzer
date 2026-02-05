@@ -1,0 +1,73 @@
+<UserControl x:Class="LogAnalyzer.Views.DetailsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:LogAnalyzer.Converters"
+             xmlns:models="clr-namespace:LogAnalyzer.Models"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <conv:AddOneConverter x:Key="AddOne" />
+        <Style x:Key="RowStyle" TargetType="ListViewItem">
+            <Setter Property="ItemsControl.AlternationCount" Value="1000000"/>
+        </Style>
+        <DataTemplate x:Key="LogEntryTemplate" DataType="{x:Type models:LogFileEntry}">
+                <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition Width="80"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" HorizontalAlignment="Right" Margin="0,0,6,0"
+                           Text="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource AddOne}}"/>
+                <TextBlock Grid.Column="1" Text="{Binding Date}"/>
+                <TextBlock Grid.Column="2" Text="{Binding Type}"/>
+                <TextBlock Grid.Column="3" Text="{Binding Text}"/>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Button Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" Content="Datei wählen" Command="{Binding ChooseFileCommand}"/>
+        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesEntries}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000">
+            <ListView.View> 
+                <GridView>
+                    <GridViewColumn>
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Content="#" Click="GridViewColumnHeader_Click" Tag="Index" />
+                        </GridViewColumn.Header>
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock HorizontalAlignment="Right" Margin="0,0,6,0"
+                                           Text="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource AddOne}}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding Date}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding Type}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Content="Type" Click="GridViewColumnHeader_Click" Tag="Type" />
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding Text}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Content="Text" Click="GridViewColumnHeader_Click" Tag="Text" />
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</UserControl>
