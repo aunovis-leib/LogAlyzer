@@ -2,4 +2,50 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs
+# Visual Studio
+.vs/
+*.sln.ide
+*.suo
+*.user
+*.userprefs
+*.prefs
+*.csproj.user
+*.csproj.lock
+*.pdb
+
+# Build results
+bin/*
+[Dd]ebug/
+[Rr]elease/
+[Aa][Rr][Mm]/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.exe
+*.dll
+*.app
+*.o
+*.so
+*.dSYM/
+*.class
+
+# Rider
+.idea/
+*.sln.iml
+
+# NuGet Packages
+*.nupkg
+**/packages/*
+**/project.lock.json
+
+# Visual Studio Code
+.vscode/
+.history/
+
+# SQL Server
+*.mdf
+*.ldf
+
+/LogAnalyzer/bin/Debug/*
+/LogAnalyzer/bin/Debug/net10.0-windows/LogAnalyzer.exe
+/LogAnalyzer/bin/Debug/net10.0-windows/LogAnalyzer.pdb
