@@ -14,5 +14,6 @@ namespace LogAnalyzer.Models
         public DateTime Date { get; set; }
         public LogType Type { get; set; }
         public string Text { get; set; } = string.Empty;
+        public string[] Detail { get; set; } = [];
     }
 }

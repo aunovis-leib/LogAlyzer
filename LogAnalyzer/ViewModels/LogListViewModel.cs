@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
-using System;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -27,6 +26,9 @@ public partial class LogListViewModel : ObservableObject
     private LogType? _selectedType = null;
 
     [ObservableProperty]
+    private LogFileEntry? _selectedEntry;
+
+    [ObservableProperty]
     private string _text1 = string.Empty;
 
     [ObservableProperty]
@@ -42,18 +44,7 @@ public partial class LogListViewModel : ObservableObject
         };
         if (dlg.ShowDialog() == true)
         {
-            var entries = await Task.Run(() =>
-            {
-                var list = new List<LogFileEntry>();
-                foreach (var line in File.ReadLines(dlg.FileName))
-                {
-                    if (TryParseLine(line, out var entry))
-                    {
-                        list.Add(entry);
-                    }
-                }
-                return list;
-            });
+            var entries = await Task.Run(() => ParseLogFile(dlg.FileName));
 
             LogFilesEntries.Clear();
             foreach (var e in entries)
@@ -62,6 +53,35 @@ public partial class LogListViewModel : ObservableObject
             }
             LogFilesView.Refresh();
         }
+    }
+
+    private static List<LogFileEntry> ParseLogFile(string fileName)
+    {
+        var list = new List<LogFileEntry>();
+        foreach (var line in File.ReadLines(fileName))
+        {
+            if (TryParseLine(line, out var entry))
+            {
+                entry.Detail = string.IsNullOrEmpty(entry.Text)
+                    ? []
+                    : [entry.Text];
+                list.Add(entry);
+            }
+            else
+            {
+                AddLineToLastEntryDetail(list, line);
+            }
+        }
+        return list;
+    }
+
+    private static void AddLineToLastEntryDetail(List<LogFileEntry> list, string line)
+    {
+        if (list.Count == 0) return;
+        var last = list[^1];
+        var details = last.Detail?.ToList() ?? [];
+        details.Add(line);
+        last.Detail = [.. details];
     }
 
     private static bool TryParseLine(string line, out LogFileEntry entry)
@@ -84,6 +104,7 @@ public partial class LogListViewModel : ObservableObject
             System.Globalization.CultureInfo.GetCultureInfo("de-DE"),
             System.Globalization.DateTimeStyles.None,
             out var dt)) return false;
+
 
         LogType type = LogType.Info;
         if (typePart.Equals("Error", StringComparison.OrdinalIgnoreCase)) type = LogType.Error;

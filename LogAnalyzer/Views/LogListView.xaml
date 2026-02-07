@@ -41,7 +41,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
@@ -53,7 +53,7 @@
                 <ComboBoxItem Content="Debug" />
             </ComboBox>
         </StackPanel>
-        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000" >
+        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000" >
             <ListView.View> 
                 <GridView>
                     <GridViewColumn>
@@ -85,5 +85,7 @@
                 </GridView>
             </ListView.View>
         </ListView>
+        <ListView Grid.Row="2" Grid.Column="0" ItemsSource="{Binding SelectedEntry.Detail}" Margin="0,8,0,0" />
+       
     </Grid>
 </UserControl>
