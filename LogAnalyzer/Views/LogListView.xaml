@@ -5,9 +5,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:conv="clr-namespace:LogAnalyzer.Converters"
              xmlns:models="clr-namespace:LogAnalyzer.Models"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d">
     <UserControl.Resources>
         <conv:AddOneConverter x:Key="AddOne" />
+        <conv:LogTypeStringToNullableConverter x:Key="LogTypeStringToNullableConverter" />
         <Style x:Key="RowStyle" TargetType="ListViewItem">
             <Setter Property="ItemsControl.AlternationCount" Value="1000000"/>
         </Style>
@@ -26,10 +28,16 @@
                 <TextBlock Grid.Column="3" Text="{Binding Text}"/>
             </Grid>
         </DataTemplate>
+        <ObjectDataProvider x:Key="LogTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="models:LogType" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </UserControl.Resources>
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
@@ -38,14 +46,14 @@
 
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
             <Button HorizontalAlignment="Left" Content="Datei wählen" Command="{Binding ChooseFileCommand}"/>
-            <ComboBox Margin="8,0,0,0" Width="120" SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <ComboBox Margin="8,0,0,0" Width="140" SelectedValuePath="Content" SelectedValue="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource LogTypeStringToNullableConverter}}">
                 <ComboBoxItem Content="Alle" />
                 <ComboBoxItem Content="Error" />
                 <ComboBoxItem Content="Info" />
                 <ComboBoxItem Content="Debug" />
             </ComboBox>
         </StackPanel>
-        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000">
+        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000" >
             <ListView.View> 
                 <GridView>
                     <GridViewColumn>

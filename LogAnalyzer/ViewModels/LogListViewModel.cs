@@ -16,9 +16,11 @@ public partial class LogListViewModel : ObservableObject
     public ObservableCollection<LogFileEntry> LogFilesEntries
     {
         get => _logFilesEntries;
-        set => SetProperty(ref _logFilesEntries, value);
+        set
+        {
+            SetProperty(ref _logFilesEntries, value);
+        }
     }
-
     public ICollectionView LogFilesView { get; }
 
     [ObservableProperty]
@@ -49,20 +51,15 @@ public partial class LogListViewModel : ObservableObject
                     {
                         list.Add(entry);
                     }
-                    else
-                    {
-                        //list.Add(new LogFileEntry
-                        //{
-                        //    Date = DateTime.Now,
-                        //    Type = LogType.Info,
-                        //    Text = line
-                        //});
-                    }
                 }
                 return list;
             });
 
-            LogFilesEntries = new ObservableCollection<LogFileEntry>(entries);
+            LogFilesEntries.Clear();
+            foreach (var e in entries)
+            {
+                LogFilesEntries.Add(e);
+            }
             LogFilesView.Refresh();
         }
     }
@@ -81,7 +78,12 @@ public partial class LogListViewModel : ObservableObject
         var typePart = parts[1].Replace("\t", string.Empty).Trim();
         var textPart = string.Join("|", parts[2..]).Trim();
 
-        if (!DateTime.TryParse(datePart, out var dt)) return false;
+        if (!DateTime.TryParseExact(
+            datePart,
+            "dd.MM.yyyy HH:mm:ss.fff",
+            System.Globalization.CultureInfo.GetCultureInfo("de-DE"),
+            System.Globalization.DateTimeStyles.None,
+            out var dt)) return false;
 
         LogType type = LogType.Info;
         if (typePart.Equals("Error", StringComparison.OrdinalIgnoreCase)) type = LogType.Error;
@@ -102,6 +104,7 @@ public partial class LogListViewModel : ObservableObject
 
     partial void OnSelectedTypeChanged(LogType? value)
     {
+        LogFilesView.Filter = FilterByType;
         LogFilesView.Refresh();
     }
 
