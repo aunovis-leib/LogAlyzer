@@ -38,6 +38,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
@@ -85,7 +86,8 @@
                 </GridView>
             </ListView.View>
         </ListView>
-        <ListView Grid.Row="2" Grid.Column="0" ItemsSource="{Binding SelectedEntry.Detail}" Margin="0,8,0,0" />
+        <GridSplitter Grid.Row="2" Grid.Column="0" Height="6" HorizontalAlignment="Stretch" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000"/>
+        <ListView Grid.Row="3" Grid.Column="0" ItemsSource="{Binding SelectedEntry.Detail}" Margin="0,8,0,0" />
        
     </Grid>
 </UserControl>
