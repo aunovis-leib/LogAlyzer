@@ -6,7 +6,10 @@ namespace LogAnalyzer.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    public ObservableCollection<LogListViewModel> Lists { get; } = new();
+    public ObservableCollection<LogListViewModel> Lists { get; } = [];
+
+    [ObservableProperty]
+    private System.DateTime? _filterDate = null;
 
     public MainViewModel()
     {
@@ -17,5 +20,13 @@ public partial class MainViewModel : ObservableObject
     private void AddList()
     {
         Lists.Add(new LogListViewModel());
+    }
+
+    partial void OnFilterDateChanged(System.DateTime? value)
+    {
+        foreach (var l in Lists)
+        {
+            l.FilterDate = value;
+        }
     }
 }

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
+using System;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -35,6 +36,9 @@ public partial class LogListViewModel : ObservableObject
     private string _text2 = string.Empty;
 
     [ObservableProperty]
+    private DateTime? _filterDate = null;
+
+    [ObservableProperty]
     private string _filterText = string.Empty;
 
     [RelayCommand]
@@ -65,7 +69,6 @@ public partial class LogListViewModel : ObservableObject
         {
             if (TryParseLine(line, out var entry))
             {
-                // Neue Einträge: Detail bleibt leer; nur Folgezeilen ohne Datum gehen in Detail
                 entry.Detail = [];
                 list.Add(entry);
             }
@@ -131,6 +134,11 @@ public partial class LogListViewModel : ObservableObject
         LogFilesView.Refresh();
     }
 
+    partial void OnFilterDateChanged(DateTime? value)
+    {
+        LogFilesView.Refresh();
+    }
+
     partial void OnFilterTextChanged(string value)
     {
         LogFilesView.Refresh();
@@ -141,6 +149,8 @@ public partial class LogListViewModel : ObservableObject
         if (obj is not LogFileEntry e) return false;
         var typeOk = SelectedType is null || e.Type == SelectedType.Value;
         if (!typeOk) return false;
+        var dateOk = FilterDate is null || e.Date.Date == FilterDate.Value.Date;
+        if (!dateOk) return false;
         if (string.IsNullOrWhiteSpace(FilterText)) return true;
         return (e.Text?.IndexOf(FilterText, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
     }
