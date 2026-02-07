@@ -62,9 +62,8 @@ public partial class LogListViewModel : ObservableObject
         {
             if (TryParseLine(line, out var entry))
             {
-                entry.Detail = string.IsNullOrEmpty(entry.Text)
-                    ? []
-                    : [entry.Text];
+                // Neue Einträge: Detail bleibt leer; nur Folgezeilen ohne Datum gehen in Detail
+                entry.Detail = [];
                 list.Add(entry);
             }
             else
