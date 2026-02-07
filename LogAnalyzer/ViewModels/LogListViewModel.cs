@@ -34,6 +34,9 @@ public partial class LogListViewModel : ObservableObject
     [ObservableProperty]
     private string _text2 = string.Empty;
 
+    [ObservableProperty]
+    private string _filterText = string.Empty;
+
     [RelayCommand]
     private async Task ChooseFile()
     {
@@ -128,9 +131,17 @@ public partial class LogListViewModel : ObservableObject
         LogFilesView.Refresh();
     }
 
+    partial void OnFilterTextChanged(string value)
+    {
+        LogFilesView.Refresh();
+    }
+
     private bool FilterByType(object obj)
     {
         if (obj is not LogFileEntry e) return false;
-        return SelectedType is null || e.Type == SelectedType.Value;
+        var typeOk = SelectedType is null || e.Type == SelectedType.Value;
+        if (!typeOk) return false;
+        if (string.IsNullOrWhiteSpace(FilterText)) return true;
+        return (e.Text?.IndexOf(FilterText, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
     }
 }
