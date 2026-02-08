@@ -16,8 +16,8 @@ public class LogTypeStringToNullableConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         var s = value?.ToString();
-        if (string.Equals(s, "Alle", StringComparison.OrdinalIgnoreCase)) return null;
+        if (string.Equals(s, "Alle", StringComparison.OrdinalIgnoreCase)) return null!;
         if (Enum.TryParse<LogType>(s, true, out var type)) return type;
-        return null;
+        return null!;
     }
 }

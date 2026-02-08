@@ -36,10 +36,13 @@ public partial class LogListViewModel : ObservableObject
     private string _text2 = string.Empty;
 
     [ObservableProperty]
-    private DateTime? _filterDate = null;
+    private string _filterText = string.Empty;
 
     [ObservableProperty]
-    private string _filterText = string.Empty;
+    private DateTime? _filterFromDate = null;
+
+    [ObservableProperty]
+    private DateTime? _filterToDate = null;
 
     [RelayCommand]
     private async Task ChooseFile()
@@ -47,11 +50,20 @@ public partial class LogListViewModel : ObservableObject
         var dlg = new OpenFileDialog
         {
             Title = "Logdatei wählen",
-            Filter = "Log Files (*.log)|*.log"
+            Filter = "Log Files (*.log)|*.log",
+            Multiselect = true
         };
         if (dlg.ShowDialog() == true)
         {
-            var entries = await Task.Run(() => ParseLogFile(dlg.FileName));
+            var entries = await Task.Run(() =>
+            {
+                var all = new List<LogFileEntry>();
+                foreach (var fn in dlg.FileNames)
+                {
+                    all.AddRange(ParseLogFile(fn));
+                }
+                return all;
+            });
 
             LogFilesEntries.Clear();
             foreach (var e in entries)
@@ -134,12 +146,17 @@ public partial class LogListViewModel : ObservableObject
         LogFilesView.Refresh();
     }
 
-    partial void OnFilterDateChanged(DateTime? value)
+    partial void OnFilterTextChanged(string value)
     {
         LogFilesView.Refresh();
     }
 
-    partial void OnFilterTextChanged(string value)
+    partial void OnFilterFromDateChanged(DateTime? value)
+    {
+        LogFilesView.Refresh();
+    }
+
+    partial void OnFilterToDateChanged(DateTime? value)
     {
         LogFilesView.Refresh();
     }
@@ -149,8 +166,8 @@ public partial class LogListViewModel : ObservableObject
         if (obj is not LogFileEntry e) return false;
         var typeOk = SelectedType is null || e.Type == SelectedType.Value;
         if (!typeOk) return false;
-        var dateOk = FilterDate is null || e.Date.Date == FilterDate.Value.Date;
-        if (!dateOk) return false;
+        if (FilterFromDate is not null && e.Date.Date < FilterFromDate.Value.Date) return false;
+        if (FilterToDate is not null && e.Date.Date > FilterToDate.Value.Date) return false;
         if (string.IsNullOrWhiteSpace(FilterText)) return true;
         return (e.Text?.IndexOf(FilterText, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
     }

@@ -11,6 +11,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private System.DateTime? _filterDate = null;
 
+    [ObservableProperty]
+    private System.DateTime? _filterFromDate = null;
+
+    [ObservableProperty]
+    private System.DateTime? _filterToDate = null;
+
     public MainViewModel()
     {
         Lists.Add(new LogListViewModel());
@@ -19,14 +25,27 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AddList()
     {
-        Lists.Add(new LogListViewModel());
+        var vm = new LogListViewModel
+        {
+            FilterFromDate = FilterFromDate,
+            FilterToDate = FilterToDate
+        };
+        Lists.Add(vm);
     }
 
-    partial void OnFilterDateChanged(System.DateTime? value)
+    partial void OnFilterFromDateChanged(System.DateTime? value)
     {
         foreach (var l in Lists)
         {
-            l.FilterDate = value;
+            l.FilterFromDate = value;
+        }
+    }
+
+    partial void OnFilterToDateChanged(System.DateTime? value)
+    {
+        foreach (var l in Lists)
+        {
+            l.FilterToDate = value;
         }
     }
 }
