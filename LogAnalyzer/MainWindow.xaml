@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LogAnalyzer"
         xmlns:vm="clr-namespace:LogAnalyzer.ViewModels"
+        xmlns:ctrls="clr-namespace:LogAnalyzer.Controls"
         xmlns:views="clr-namespace:LogAnalyzer.Views"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
@@ -19,9 +20,8 @@
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Content="+" Command="{Binding AddListCommand}" Width="140" />
                 <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Datum:" />
-                <DatePicker Margin="8,0,0,0" SelectedDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Margin="4,0" VerticalAlignment="Center" Text="-" />
-                <DatePicker Margin="8,0,0,0" SelectedDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <ctrls:DateRangePicker FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
             <ItemsControl Grid.Row="2" ItemsSource="{Binding Lists}">
             <ItemsControl.ItemsPanel>

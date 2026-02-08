@@ -1,0 +1,12 @@
+<UserControl x:Class="LogAnalyzer.Controls.DateRangePicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <StackPanel Orientation="Horizontal">
+        <DatePicker Margin="0,0,0,0" SelectedDate="{Binding FromDate, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBlock Margin="4,0" VerticalAlignment="Center" Text="-" />
+        <DatePicker Margin="4,0,0,0" SelectedDate="{Binding ToDate, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+    </StackPanel>
+</UserControl>

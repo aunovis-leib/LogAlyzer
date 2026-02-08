@@ -6,6 +6,7 @@
              xmlns:conv="clr-namespace:LogAnalyzer.Converters"
              xmlns:models="clr-namespace:LogAnalyzer.Models"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:ctrls="clr-namespace:LogAnalyzer.Controls"
              mc:Ignorable="d">
     <UserControl.Resources>
         <conv:AddOneConverter x:Key="AddOne" />
@@ -54,9 +55,9 @@
                 <ComboBoxItem Content="Debug" />
             </ComboBox>
             <TextBox Margin="8,0,0,0" MinWidth="160" Width="240" Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-            <DatePicker Margin="8,0,0,0" SelectedDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-            <TextBlock Margin="4,0" VerticalAlignment="Center" Text="-" />
-            <DatePicker Margin="4,0,0,0" SelectedDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <ctrls:DateRangePicker Margin="8,0,0,0"
+                                   FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel>
         <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000" >
             <ListView.View> 
