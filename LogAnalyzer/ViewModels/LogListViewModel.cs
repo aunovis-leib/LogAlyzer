@@ -12,6 +12,7 @@ namespace LogAnalyzer.ViewModels;
 
 public partial class LogListViewModel : ObservableObject
 {
+    private bool _suppressAvailableTypesUpdate;
     private ObservableCollection<LogFileEntry> _logFilesEntries = [];
     public ObservableCollection<LogFileEntry> LogFilesEntries
     {
@@ -25,6 +26,8 @@ public partial class LogListViewModel : ObservableObject
 
     [ObservableProperty]
     private LogType? _selectedType = null;
+
+    public ObservableCollection<object?> AvailableTypes { get; } = [];
 
     [ObservableProperty]
     private LogFileEntry? _selectedEntry;
@@ -65,12 +68,15 @@ public partial class LogListViewModel : ObservableObject
                 return all;
             });
 
+            _suppressAvailableTypesUpdate = true;
             LogFilesEntries.Clear();
             foreach (var e in entries)
             {
                 LogFilesEntries.Add(e);
             }
+            _suppressAvailableTypesUpdate = false;
             LogFilesView.Refresh();
+            UpdateAvailableTypes();
         }
     }
 
@@ -138,6 +144,13 @@ public partial class LogListViewModel : ObservableObject
     {
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
+        // initialize available types with just 'Alle'
+        UpdateAvailableTypes();
+        LogFilesEntries.CollectionChanged += (_, __) =>
+        {
+            if (_suppressAvailableTypesUpdate) return;
+            UpdateAvailableTypes();
+        };
     }
 
     partial void OnSelectedTypeChanged(LogType? value)
@@ -170,5 +183,31 @@ public partial class LogListViewModel : ObservableObject
         if (FilterToDate is not null && e.Date.Date > FilterToDate.Value.Date) return false;
         if (string.IsNullOrWhiteSpace(FilterText)) return true;
         return (e.Text?.IndexOf(FilterText, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
+    }
+
+    private void UpdateAvailableTypes()
+    {
+        if (_suppressAvailableTypesUpdate) return;
+        // Build distinct types from current entries
+        var types = LogFilesEntries
+            .Select(x => x.Type)
+            .Distinct()
+            .OrderBy(t => t)
+            .Cast<object>()
+            .ToList();
+
+        // Always include null (Alle) as first entry
+        AvailableTypes.Clear();
+        AvailableTypes.Add(null);
+        foreach (var t in types)
+        {
+            AvailableTypes.Add(t);
+        }
+
+        // Ensure SelectedType is valid; reset to null if not present
+        if (SelectedType is not null && !types.Contains(SelectedType.Value))
+        {
+            SelectedType = null;
+        }
     }
 }
