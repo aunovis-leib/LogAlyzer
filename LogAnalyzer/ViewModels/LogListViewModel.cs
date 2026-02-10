@@ -12,6 +12,7 @@ namespace LogAnalyzer.ViewModels;
 
 public partial class LogListViewModel : ObservableObject
 {
+    public event EventHandler? EntriesReloaded;
     private bool _suppressAvailableTypesUpdate;
     private ObservableCollection<LogFileEntry> _logFilesEntries = [];
     public ObservableCollection<LogFileEntry> LogFilesEntries
@@ -77,6 +78,7 @@ public partial class LogListViewModel : ObservableObject
             _suppressAvailableTypesUpdate = false;
             LogFilesView.Refresh();
             UpdateAvailableTypes();
+            EntriesReloaded?.Invoke(this, EventArgs.Empty);
         }
     }
 

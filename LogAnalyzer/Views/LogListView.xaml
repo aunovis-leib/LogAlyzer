@@ -48,7 +48,7 @@
 
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
             <Button HorizontalAlignment="Left" Content="Datei wählen" Command="{Binding ChooseFileCommand}"/>
-            <ComboBox Margin="8,0,0,0" Width="140" ItemsSource="{Binding AvailableTypes}" SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <ComboBox Margin="8,0,0,0" Width="80" ItemsSource="{Binding AvailableTypes}" SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <ComboBox.ItemContainerStyle>
                     <Style TargetType="ComboBoxItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -71,7 +71,7 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-            <TextBox Margin="8,0,0,0" MinWidth="160" Width="240" Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Margin="8,0,0,0" MinWidth="90" Width="90" Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             <ctrls:DateRangePicker Margin="8,0,0,0"
                                    FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
