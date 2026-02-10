@@ -126,7 +126,22 @@ public partial class LogListViewModel : ObservableObject
             "dd.MM.yyyy HH:mm:ss.fff",
             System.Globalization.CultureInfo.GetCultureInfo("de-DE"),
             System.Globalization.DateTimeStyles.None,
-            out var dt)) return false;
+            out var dt))
+        {
+            // Fallback: support ISO 8601 format e.g. 2026-02-10T14:23:57.149+01:00
+            if (System.DateTimeOffset.TryParse(
+                datePart,
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out var dto))
+            {
+                dt = dto.LocalDateTime;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
 
         LogType type = LogType.Info;
