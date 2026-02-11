@@ -24,25 +24,33 @@ public partial class MainViewModel : ObservableObject
         var first = new LogListViewModel();
         Lists.Add(first);
         SubscribeToList(first);
-        Lists.CollectionChanged += (s, e) =>
-        {
-            if (e.NewItems is not null)
-            {
-                foreach (var it in e.NewItems)
-                {
-                    if (it is LogListViewModel vm) SubscribeToList(vm);
-                }
-            }
-            if (e.OldItems is not null)
-            {
-                foreach (var it in e.OldItems)
-                {
-                    if (it is LogListViewModel vm) UnsubscribeFromList(vm);
-                }
-            }
-            RefreshChart();
-        };
+        Lists.CollectionChanged += Lists_CollectionChanged;
         RefreshChart();
+    }
+
+    private void Lists_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        HandleNewItems(e.NewItems);
+        HandleOldItems(e.OldItems);
+        RefreshChart();
+    }
+
+    private void HandleNewItems(System.Collections.IList? newItems)
+    {
+        if (newItems is null) return;
+        foreach (var it in newItems)
+        {
+            if (it is LogListViewModel vm) SubscribeToList(vm);
+        }
+    }
+
+    private void HandleOldItems(System.Collections.IList? oldItems)
+    {
+        if (oldItems is null) return;
+        foreach (var it in oldItems)
+        {
+            if (it is LogListViewModel vm) UnsubscribeFromList(vm);
+        }
     }
 
     [RelayCommand]

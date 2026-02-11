@@ -50,22 +50,37 @@ namespace LogAnalyzer.ViewModels
             var series = new SeriesCollection();
             foreach (var t in allTypes)
             {
-                var values = new ChartValues<double>();
-                foreach (var hour in byHour)
+                if (t is LogType.Error)
                 {
-                    var count = hour.Count(e => e.Type == t);
-                    values.Add(count);
+                    var values = new ChartValues<double>();
+                    foreach (var hour in byHour)
+                    {
+                        var count = hour.Count(e => e.Type == t);
+                        values.Add(count);
+                    }
+                    series.Add(new LineSeries
+                    {
+                        Title = t.ToString(),
+                        Values = values,
+                        Stroke = GetColor(t),
+                    }); 
                 }
-                series.Add(new LineSeries
-                {
-                    Title = t.ToString(),
-                    Values = values
-                });
             }
 
             ChartSeries = series;
         }
 
+        private static System.Windows.Media.Brush GetColor(LogType logType)
+        {
+            return logType switch
+            {
+                LogType.Info => System.Windows.Media.Brushes.Green,
+                LogType.Debug => System.Windows.Media.Brushes.Orange,
+                LogType.Error => System.Windows.Media.Brushes.Red,
+                _ => System.Windows.Media.Brushes.Gray
+            };
+
+        }
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged([CallerMemberName] string name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
