@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using LogAnalyzer.ViewModels;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -11,13 +10,13 @@ public partial class MainViewModel : ObservableObject
     public LiveChartViewModel ChartVM { get; } = new();
 
     [ObservableProperty]
-    private System.DateTime? _filterDate = null;
+    private DateTime? _filterDate = null;
 
     [ObservableProperty]
-    private System.DateTime? _filterFromDate = null;
+    private DateTime? _filterFromDate = null;
 
     [ObservableProperty]
-    private System.DateTime? _filterToDate = null;
+    private DateTime? _filterToDate = null;
 
     public MainViewModel()
     {
@@ -66,8 +65,13 @@ public partial class MainViewModel : ObservableObject
         RefreshChart();
     }
 
-    partial void OnFilterFromDateChanged(System.DateTime? value)
+    partial void OnFilterFromDateChanged(DateTime? value)
     {
+        if (value is null)
+        {
+            throw new ArgumentNullException(nameof(value));
+        }
+
         foreach (var l in Lists)
         {
             l.FilterFromDate = value;
@@ -75,7 +79,7 @@ public partial class MainViewModel : ObservableObject
         RefreshChart();
     }
 
-    partial void OnFilterToDateChanged(System.DateTime? value)
+    partial void OnFilterToDateChanged(DateTime? value)
     {
         foreach (var l in Lists)
         {
@@ -100,7 +104,7 @@ public partial class MainViewModel : ObservableObject
         vm.EntriesReloaded -= EntriesReloaded;
     }
 
-    private void EntriesReloaded(object? sender, System.EventArgs e)
+    private void EntriesReloaded(object? sender, EventArgs e)
     {
         RefreshChart();
     }

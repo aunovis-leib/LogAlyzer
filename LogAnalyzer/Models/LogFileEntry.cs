@@ -6,6 +6,7 @@ namespace LogAnalyzer.Models
     {
         Error,
         Info,
+        Warning,
         Debug
     }
 
