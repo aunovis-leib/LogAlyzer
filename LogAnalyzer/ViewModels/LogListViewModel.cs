@@ -146,10 +146,10 @@ public partial class LogListViewModel : ObservableObject
         }
 
 
-        LogType type = LogType.Info;
-        if (typePart.Equals("Error", StringComparison.OrdinalIgnoreCase)) type = LogType.Error;
-        else if (typePart.Equals("Debug", StringComparison.OrdinalIgnoreCase)) type = LogType.Debug;
-        else if (typePart.Equals("Info", StringComparison.OrdinalIgnoreCase)) type = LogType.Info;
+        if (!Enum.TryParse<LogType>(typePart, true, out var type))
+        {
+            type = LogType.Info;
+        }
 
         entry.Date = dt;
         entry.Type = type;
