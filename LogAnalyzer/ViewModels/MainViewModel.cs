@@ -6,6 +6,11 @@ namespace LogAnalyzer.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
+    private readonly Services.AppSettingsManager _appSettings;
+    public IReadOnlyList<Models.ParserProfile> Profiles { get; }
+
+    [ObservableProperty]
+    private Models.ParserProfile? _selectedProfile;
     public ObservableCollection<LogListViewModel> Lists { get; } = [];
     public LiveChartViewModel ChartVM { get; } = new();
 
@@ -18,9 +23,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private DateTime? _filterToDate = null;
 
-    public MainViewModel()
+    public MainViewModel(Services.AppSettingsManager appSettings)
     {
-        var first = new LogListViewModel();
+        _appSettings = appSettings;
+        Profiles = _appSettings.ParserProfiles;
+        SelectedProfile = Profiles.FirstOrDefault();
+        var first = new LogListViewModel(_appSettings, SelectedProfile);
         Lists.Add(first);
         SubscribeToList(first);
         Lists.CollectionChanged += Lists_CollectionChanged;
@@ -55,7 +63,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AddList()
     {
-        var vm = new LogListViewModel
+        var vm = new LogListViewModel(_appSettings, SelectedProfile)
         {
             FilterFromDate = FilterFromDate,
             FilterToDate = FilterToDate
@@ -63,6 +71,14 @@ public partial class MainViewModel : ObservableObject
         Lists.Add(vm);
         SubscribeToList(vm);
         RefreshChart();
+    }
+
+    partial void OnSelectedProfileChanged(Models.ParserProfile? value)
+    {
+        foreach (var l in Lists)
+        {
+            l.SelectedProfile = value;
+        }
     }
 
     partial void OnFilterFromDateChanged(DateTime? value)

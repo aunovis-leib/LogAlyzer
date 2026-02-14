@@ -31,6 +31,14 @@
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Content="+" Command="{Binding AddListCommand}" Width="140" />
+                
+                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Profil:" />
+                <ComboBox ItemsSource="{Binding Profiles}"
+                          SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                          DisplayMemberPath="Name"
+                          Width="100"
+                          Margin="6,0,0,0" />
+
                 <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Datum:" />
                 <ctrls:DateRangePicker FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />

@@ -52,12 +52,7 @@ namespace LogAnalyzer.ViewModels
             {
                 if (t is LogType.Error)
                 {
-                    var values = new ChartValues<double>();
-                    foreach (var hour in byHour)
-                    {
-                        var count = hour.Count(e => e.Type == t);
-                        values.Add(count);
-                    }
+                    var values = new ChartValues<double>(byHour.Select(hour => (double)hour.Count(e => e.Type == t)));
                     series.Add(new LineSeries
                     {
                         Title = t.ToString(),
@@ -70,7 +65,7 @@ namespace LogAnalyzer.ViewModels
             ChartSeries = series;
         }
 
-        private static System.Windows.Media.Brush GetColor(LogType logType)
+        private static System.Windows.Media.SolidColorBrush GetColor(LogType logType)
         {
             return logType switch
             {

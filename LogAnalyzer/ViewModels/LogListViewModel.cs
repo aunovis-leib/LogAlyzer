@@ -7,11 +7,20 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Data;
 using LogAnalyzer.Models;
+using static LogAnalyzer.Models.LogFileEntry;
+using System.Text.Json;
+using LogAnalyzer.Services;
 
 namespace LogAnalyzer.ViewModels;
 
 public partial class LogListViewModel : ObservableObject
 {
+    private readonly AppSettingsManager _appSettings;
+    private readonly List<ParserProfile> _profiles;
+
+    [ObservableProperty]
+    private ParserProfile? _selectedProfile;
+
     public event EventHandler? EntriesReloaded;
     private bool _suppressAvailableTypesUpdate;
     private ObservableCollection<LogFileEntry> _logFilesEntries = [];
@@ -82,7 +91,7 @@ public partial class LogListViewModel : ObservableObject
         }
     }
 
-    private static List<LogFileEntry> ParseLogFile(string fileName)
+    private List<LogFileEntry> ParseLogFile(string fileName)
     {
         var list = new List<LogFileEntry>();
         foreach (var line in File.ReadLines(fileName))
@@ -109,13 +118,54 @@ public partial class LogListViewModel : ObservableObject
         last.Detail = [.. details];
     }
 
-    private static bool TryParseLine(string line, out LogFileEntry entry)
+    private bool TryParseLine(string line, out LogFileEntry entry)
     {
         entry = new LogFileEntry();
         if (string.IsNullOrWhiteSpace(line)) return false;
 
-        // Erwartetes Format: "dd.MM.yyyy HH:mm:ss.fff |\tType\t|\tText"
-        // Split an den Pipe-Zeichen, Tabs entfernen
+        // Try using selected parser profile
+        if (ShouldUseSelectedProfile(out var profile) && profile is not null)
+        {
+            return TryParseWithProfile(line, profile, out entry);
+        }
+
+        // Fallback: legacy pipe splitter and default date format
+        return TryParseLegacy(line, out entry);
+    }
+
+    private bool ShouldUseSelectedProfile(out ParserProfile? profile)
+    {
+        profile = null;
+        if (AppSettingsManager.Instance != null && _profiles.Count > 0 && SelectedProfile is not null)
+        {
+            profile = SelectedProfile;
+            return true;
+        }
+        return false;
+    }
+
+    private bool TryParseWithProfile(string line, ParserProfile profile, out LogFileEntry entry)
+    {
+        entry = new LogFileEntry();
+        var parts = line.Split([profile.Splitter], StringSplitOptions.None);
+        if (parts.Length < 3) return false;
+
+        var datePart = parts[0].Trim();
+        var typePart = parts[1].Replace("\t", string.Empty).Trim();
+        var textPart = string.Join(profile.Splitter, parts[2..]).Trim();
+
+        if (!TryParseDate(datePart, profile.DateFormat, out var dt))
+            return false;
+
+        entry.Date = dt;
+        entry.Type = TryParseLogType(typePart);
+        entry.Text = textPart;
+        return true;
+    }
+
+    private bool TryParseLegacy(string line, out LogFileEntry entry)
+    {
+        entry = new LogFileEntry();
         var parts = line.Split('|');
         if (parts.Length < 3) return false;
 
@@ -123,42 +173,53 @@ public partial class LogListViewModel : ObservableObject
         var typePart = parts[1].Replace("\t", string.Empty).Trim();
         var textPart = string.Join("|", parts[2..]).Trim();
 
-        if (!DateTime.TryParseExact(
-            datePart,
-            "dd.MM.yyyy HH:mm:ss.fff",
-            System.Globalization.CultureInfo.GetCultureInfo("de-DE"),
-            System.Globalization.DateTimeStyles.None,
-            out var dt))
-        {
-            // Fallback: support ISO 8601 format e.g. 2026-02-10T14:23:57.149+01:00
-            if (System.DateTimeOffset.TryParse(
-                datePart,
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None,
-                out var dto))
-            {
-                dt = dto.LocalDateTime;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-
-        if (!Enum.TryParse<LogType>(typePart, true, out var type))
-        {
-            type = LogType.Info;
-        }
+        if (!TryParseDate(datePart, "dd.MM.yyyy HH:mm:ss.fff", out var dt))
+            return false;
 
         entry.Date = dt;
-        entry.Type = type;
+        entry.Type = TryParseLogType(typePart);
         entry.Text = textPart;
         return true;
     }
 
-    public LogListViewModel()
+    private bool TryParseDate(string datePart, string dateFormat, out DateTime dt)
     {
+        if (DateTime.TryParseExact(
+            datePart,
+            dateFormat,
+            System.Globalization.CultureInfo.GetCultureInfo("de-DE"),
+            System.Globalization.DateTimeStyles.None,
+            out dt))
+        {
+            return true;
+        }
+        if (System.DateTimeOffset.TryParse(
+            datePart,
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out var dto))
+        {
+            dt = dto.LocalDateTime;
+            return true;
+        }
+        return false;
+    }
+
+    private LogType TryParseLogType(string typePart)
+    {
+        if (!Enum.TryParse<LogType>(typePart, true, out var type))
+        {
+            type = LogType.Info;
+        }
+        return type;
+    }
+    
+
+    public LogListViewModel(AppSettingsManager appSettings, ParserProfile? selectedProfile)
+    {
+        _appSettings = appSettings;
+        _profiles = [.. _appSettings.ParserProfiles];
+        _selectedProfile = selectedProfile;
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
         // initialize available types with just 'Alle'
