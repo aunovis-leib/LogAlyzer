@@ -10,6 +10,7 @@ using LogAnalyzer.Models;
 using static LogAnalyzer.Models.LogFileEntry;
 using System.Text.Json;
 using LogAnalyzer.Services;
+using LogAnalyzer.Services.Parsing;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -94,9 +95,10 @@ public partial class LogListViewModel : ObservableObject
     private List<LogFileEntry> ParseLogFile(string fileName)
     {
         var list = new List<LogFileEntry>();
+        ILogParser parser = GetActiveParser();
         foreach (var line in File.ReadLines(fileName))
         {
-            if (TryParseLine(line, out var entry))
+            if (parser.TryParse(line, out var entry))
             {
                 entry.Detail = [];
                 list.Add(entry);
@@ -118,102 +120,14 @@ public partial class LogListViewModel : ObservableObject
         last.Detail = [.. details];
     }
 
-    private bool TryParseLine(string line, out LogFileEntry entry)
+    private ILogParser GetActiveParser()
     {
-        entry = new LogFileEntry();
-        if (string.IsNullOrWhiteSpace(line)) return false;
-
-        // Try using selected parser profile
-        if (ShouldUseSelectedProfile(out var profile) && profile is not null)
+        if (SelectedProfile is not null)
         {
-            return TryParseWithProfile(line, profile, out entry);
+            return new ProfileLogParser(SelectedProfile);
         }
-
-        // Fallback: legacy pipe splitter and default date format
-        return TryParseLegacy(line, out entry);
+        return new LegacyLogParser();
     }
-
-    private bool ShouldUseSelectedProfile(out ParserProfile? profile)
-    {
-        profile = null;
-        if (AppSettingsManager.Instance != null && _profiles.Count > 0 && SelectedProfile is not null)
-        {
-            profile = SelectedProfile;
-            return true;
-        }
-        return false;
-    }
-
-    private bool TryParseWithProfile(string line, ParserProfile profile, out LogFileEntry entry)
-    {
-        entry = new LogFileEntry();
-        var parts = line.Split([profile.Splitter], StringSplitOptions.None);
-        if (parts.Length < 3) return false;
-
-        var datePart = parts[0].Trim();
-        var typePart = parts[1].Replace("\t", string.Empty).Trim();
-        var textPart = string.Join(profile.Splitter, parts[2..]).Trim();
-
-        if (!TryParseDate(datePart, profile.DateFormat, out var dt))
-            return false;
-
-        entry.Date = dt;
-        entry.Type = TryParseLogType(typePart);
-        entry.Text = textPart;
-        return true;
-    }
-
-    private bool TryParseLegacy(string line, out LogFileEntry entry)
-    {
-        entry = new LogFileEntry();
-        var parts = line.Split('|');
-        if (parts.Length < 3) return false;
-
-        var datePart = parts[0].Trim();
-        var typePart = parts[1].Replace("\t", string.Empty).Trim();
-        var textPart = string.Join("|", parts[2..]).Trim();
-
-        if (!TryParseDate(datePart, "dd.MM.yyyy HH:mm:ss.fff", out var dt))
-            return false;
-
-        entry.Date = dt;
-        entry.Type = TryParseLogType(typePart);
-        entry.Text = textPart;
-        return true;
-    }
-
-    private bool TryParseDate(string datePart, string dateFormat, out DateTime dt)
-    {
-        if (DateTime.TryParseExact(
-            datePart,
-            dateFormat,
-            System.Globalization.CultureInfo.GetCultureInfo("de-DE"),
-            System.Globalization.DateTimeStyles.None,
-            out dt))
-        {
-            return true;
-        }
-        if (System.DateTimeOffset.TryParse(
-            datePart,
-            System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.None,
-            out var dto))
-        {
-            dt = dto.LocalDateTime;
-            return true;
-        }
-        return false;
-    }
-
-    private LogType TryParseLogType(string typePart)
-    {
-        if (!Enum.TryParse<LogType>(typePart, true, out var type))
-        {
-            type = LogType.Info;
-        }
-        return type;
-    }
-    
 
     public LogListViewModel(AppSettingsManager appSettings, ParserProfile? selectedProfile)
     {
