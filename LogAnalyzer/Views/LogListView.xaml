@@ -11,9 +11,6 @@
     <UserControl.Resources>
         <conv:AddOneConverter x:Key="AddOne" />
         <conv:LogTypeStringToNullableConverter x:Key="LogTypeStringToNullableConverter" />
-        <Style x:Key="RowStyle" TargetType="ListViewItem">
-            <Setter Property="ItemsControl.AlternationCount" Value="1000000"/>
-        </Style>
         <DataTemplate x:Key="LogEntryTemplate" DataType="{x:Type models:LogFileEntry}">
             <Grid Margin="2">
                 <Grid.ColumnDefinitions>
@@ -23,7 +20,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" HorizontalAlignment="Right" Margin="0,0,6,0"
-                           Text="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource AddOne}}"/>
+                           Text="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=(ItemsControl.AlternationIndex)}"/>
                 <TextBlock Grid.Column="1" Text="{Binding Date}"/>
                 <TextBlock Grid.Column="2" Text="{Binding Type}"/>
                 <TextBlock Grid.Column="3" Text="{Binding Text}"/>
@@ -77,20 +74,15 @@
                                    FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel>
-        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" Margin="0,8,0,0" ItemContainerStyle="{StaticResource RowStyle}" AlternationCount="1000000" Grid.ColumnSpan="2" >
+        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" Margin="0,8,0,0" AlternationCount="1000000" Grid.ColumnSpan="2" >
             <ListView.View>
                 <GridView>
-                    <GridViewColumn>
-                        <GridViewColumn.Header>
-                            <GridViewColumnHeader Content="#" Click="GridViewColumnHeader_Click" Tag="Index" />
-                        </GridViewColumn.Header>
-                        <GridViewColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock HorizontalAlignment="Right" Margin="0,0,6,0"
-                                           Text="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource AddOne}}"/>
-                            </DataTemplate>
-                        </GridViewColumn.CellTemplate>
-                    </GridViewColumn>
+                  
+                        <GridViewColumn
+                           Header="#" Width="30"
+                           DisplayMemberBinding="{Binding (ItemsControl.AlternationIndex),
+                           RelativeSource={RelativeSource AncestorType=ListViewItem}}" />
+                    
                     <GridViewColumn DisplayMemberBinding="{Binding Date}">
                         <GridViewColumn.Header>
                             <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />

@@ -17,7 +17,6 @@ namespace LogAnalyzer.ViewModels;
 public partial class LogListViewModel : ObservableObject
 {
     private readonly AppSettingsManager _appSettings;
-    private readonly List<ParserProfile> _profiles;
 
     [ObservableProperty]
     private ParserProfile? _selectedProfile;
@@ -132,7 +131,6 @@ public partial class LogListViewModel : ObservableObject
     public LogListViewModel(AppSettingsManager appSettings, ParserProfile? selectedProfile)
     {
         _appSettings = appSettings;
-        _profiles = [.. _appSettings.ParserProfiles];
         _selectedProfile = selectedProfile;
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
