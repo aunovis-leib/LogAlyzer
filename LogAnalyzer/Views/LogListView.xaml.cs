@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Threading;
+using LogAnalyzer.Models;
 
 namespace LogAnalyzer.Views;
 
@@ -56,5 +58,30 @@ public partial class LogListView : UserControl
             }
         }
         return null;
+    }
+
+    // Programmatically select an entry and scroll it into view
+    public void SelectAndScrollTo(LogFileEntry entry)
+    {
+        if (entry == null) return;
+
+        // Update selection via binding and control
+        LogsListView.SelectedItem = entry;
+
+        void Scroll()
+        {
+            LogsListView.ScrollIntoView(entry);
+            var container = LogsListView.ItemContainerGenerator.ContainerFromItem(entry) as ListViewItem;
+            container?.BringIntoView();
+        }
+
+        if (LogsListView.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+        {
+            Scroll();
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new System.Action(Scroll));
+        }
     }
 }

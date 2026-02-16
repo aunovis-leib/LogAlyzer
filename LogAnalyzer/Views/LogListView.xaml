@@ -7,6 +7,7 @@
              xmlns:models="clr-namespace:LogAnalyzer.Models"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:ctrls="clr-namespace:LogAnalyzer.Controls"
+             xmlns:bh="clr-namespace:LogAnalyzer.Behaviors"
              mc:Ignorable="d">
     <UserControl.Resources>
         <conv:AddOneConverter x:Key="AddOne" />
@@ -74,15 +75,13 @@
                                    FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel>
-        <ListView Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" Margin="0,8,0,0" AlternationCount="1000000" Grid.ColumnSpan="2" >
+        <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" AlternationCount="1000000" Grid.ColumnSpan="2" >
             <ListView.View>
                 <GridView>
-                  
-                        <GridViewColumn
-                           Header="#" Width="30"
-                           DisplayMemberBinding="{Binding (ItemsControl.AlternationIndex),
-                           RelativeSource={RelativeSource AncestorType=ListViewItem}}" />
-                    
+                    <GridViewColumn
+                        Header="#" Width="30"
+                        DisplayMemberBinding="{Binding (ItemsControl.AlternationIndex),
+                        RelativeSource={RelativeSource AncestorType=ListViewItem}}" />
                     <GridViewColumn DisplayMemberBinding="{Binding Date}">
                         <GridViewColumn.Header>
                             <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />
@@ -103,6 +102,5 @@
         </ListView>
         <GridSplitter Grid.Row="2" Grid.Column="0" Height="6" HorizontalAlignment="Stretch" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000" Grid.ColumnSpan="2"/>
         <ListView Grid.Row="3" Grid.Column="0" ItemsSource="{Binding SelectedEntry.Detail}" Margin="0,8,0,0" Grid.ColumnSpan="2" />
-
     </Grid>
 </UserControl>
