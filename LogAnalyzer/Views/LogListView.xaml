@@ -32,6 +32,12 @@
                 <x:Type TypeName="models:LogType" />
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+
+        <ContextMenu x:Key="LogEntryContextMenu">
+            <MenuItem Header="Synchronisieren"
+                      Command="{Binding Path=DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+        </ContextMenu>
     </UserControl.Resources>
     <Grid Margin="12">
         <Grid.RowDefinitions>
@@ -76,6 +82,11 @@
                                    ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel>
         <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" AlternationCount="1000000" Grid.ColumnSpan="2" >
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="ContextMenu" Value="{StaticResource LogEntryContextMenu}"/>
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.View>
                 <GridView>
                     <GridViewColumn

@@ -22,6 +22,7 @@ public partial class LogListViewModel : ObservableObject
     private ParserProfile? _selectedProfile;
 
     public event EventHandler? EntriesReloaded;
+    public event EventHandler<LogFileEntry?>? EntrySelected;
     private bool _suppressAvailableTypesUpdate;
     private ObservableCollection<LogFileEntry> _logFilesEntries = [];
     public ObservableCollection<LogFileEntry> LogFilesEntries
@@ -56,6 +57,24 @@ public partial class LogListViewModel : ObservableObject
 
     [ObservableProperty]
     private DateTime? _filterToDate = null;
+
+    [RelayCommand]
+    private void SelectEntry(LogFileEntry? entry)
+    {
+        if (entry is null) return;
+        SelectedEntry = entry;
+        EntrySelected?.Invoke(this, entry);
+    }
+
+    public void SelectEntryFromOutside(LogFileEntry? entry)
+    {
+        if (entry is null) return;
+        var foundEntry = LogFilesEntries.FirstOrDefault(x => x.Date.ToString() == entry.Date.ToString());
+        if (foundEntry is not null)
+        {
+            SelectedEntry = foundEntry;
+        }
+    }
 
     [RelayCommand]
     private async Task ChooseFile()
