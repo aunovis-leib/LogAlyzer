@@ -12,21 +12,6 @@
     <UserControl.Resources>
         <conv:AddOneConverter x:Key="AddOne" />
         <conv:LogTypeStringToNullableConverter x:Key="LogTypeStringToNullableConverter" />
-        <DataTemplate x:Key="LogEntryTemplate" DataType="{x:Type models:LogFileEntry}">
-            <Grid Margin="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition Width="160"/>
-                    <ColumnDefinition Width="80"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" HorizontalAlignment="Right" Margin="0,0,6,0"
-                           Text="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=(ItemsControl.AlternationIndex)}"/>
-                <TextBlock Grid.Column="1" Text="{Binding Date}"/>
-                <TextBlock Grid.Column="2" Text="{Binding Type}"/>
-                <TextBlock Grid.Column="3" Text="{Binding Text}"/>
-            </Grid>
-        </DataTemplate>
         <ObjectDataProvider x:Key="LogTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="models:LogType" />
@@ -41,8 +26,8 @@
     </UserControl.Resources>
     <Grid Margin="12">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="24" />
+            <RowDefinition Height="2*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -112,6 +97,6 @@
             </ListView.View>
         </ListView>
         <GridSplitter Grid.Row="2" Grid.Column="0" Height="6" HorizontalAlignment="Stretch" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000" Grid.ColumnSpan="2"/>
-        <ListView Grid.Row="3" Grid.Column="0" ItemsSource="{Binding SelectedEntry.Detail}" Margin="0,8,0,0" Grid.ColumnSpan="2" />
+        <ListView Grid.Row="3" Grid.Column="0" ItemsSource="{Binding SelectedEntry.Detail}" Margin="0,0,0,0" Grid.ColumnSpan="2" />
     </Grid>
 </UserControl>
