@@ -9,28 +9,41 @@
         xmlns:views="clr-namespace:LogAnalyzer.Views"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="ToggleButton.Checked" SourceName="SettingsToggle">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="SettingsPaneTransform"
+                                     Storyboard.TargetProperty="X"
+                                     To="0" Duration="0:0:0.2" />
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+        <EventTrigger RoutedEvent="ToggleButton.Unchecked" SourceName="SettingsToggle">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="SettingsPaneTransform"
+                                     Storyboard.TargetProperty="X"
+                                     To="320" Duration="0:0:0.2" />
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
+
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="2*" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Menu Grid.Row="0">
-            <MenuItem Header="_Datei">
-                <MenuItem Header="_Öffnen" />
-                <Separator />
-                <MenuItem Header="_Beenden" />
-            </MenuItem>
-            <MenuItem Header="_Hilfe">
-                <MenuItem Header="_Über" />
-            </MenuItem>
-        </Menu>
-
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
-                <Button Content="+" Command="{Binding AddListCommand}" Width="140" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Content="+" Command="{Binding AddListCommand}" Width="20" />
                 
                 <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Profil:" />
                 <ComboBox ItemsSource="{Binding Profiles}"
@@ -42,21 +55,44 @@
                 <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Datum:" />
                 <ctrls:DateRangePicker FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            </StackPanel>
-            <ItemsControl Grid.Row="2" ItemsSource="{Binding Lists}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="{Binding Lists.Count}" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="{x:Type vm:LogListViewModel}">
-                    <views:LogListView />
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
+
+                <ToggleButton x:Name="SettingsToggle" Content="Settings" Margin="12,0,0,0" Width="100" />
+        </StackPanel>
+        <ItemsControl Grid.Row="2" ItemsSource="{Binding Lists}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <UniformGrid Columns="{Binding Lists.Count}" />
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type vm:LogListViewModel}">
+                <views:LogListView />
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
         </ItemsControl>
         
         <GridSplitter Grid.Row="3" HorizontalAlignment="Stretch" Height="6" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000"/>
-        <views:LiveChartView Grid.Row="4" DataContext="{Binding ChartVM}" />
+        <views:LiveChartView Grid.Row="4" DataContext="{Binding ChartVM}">
+            <views:LiveChartView.Style>
+                <Style TargetType="{x:Type views:LiveChartView}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Value="False"
+                                     Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
+                                                       RelativeSource={RelativeSource AncestorType=Window}}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </views:LiveChartView.Style>
+        </views:LiveChartView>
+
+        <!-- Sliding Settings Pane -->
+        <Border x:Name="SettingsPane" Grid.RowSpan="5" Width="320" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="SettingsPaneTransform" X="320" />
+            </Border.RenderTransform>
+            <views:SettingsView />
+        </Border>
     </Grid>
 </Window>

@@ -14,6 +14,10 @@ public partial class MainViewModel : ObservableObject
     private Models.ParserProfile? _selectedProfile;
     public ObservableCollection<LogListViewModel> Lists { get; } = [];
     public LiveChartViewModel ChartVM { get; } = new();
+    public SettingsViewModel? SettingsVM { get; private set; } = new();
+
+    [ObservableProperty]
+    private bool _showLiveChart;
 
     [ObservableProperty]
     private DateTime? _filterDate = null;
@@ -39,7 +43,7 @@ public partial class MainViewModel : ObservableObject
         Lists.Add(first);
         SubscribeToList(first);
         Lists.CollectionChanged += Lists_CollectionChanged;
-        RefreshChart();
+        RefreshChart();     
     }
 
     private void Lists_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -65,6 +69,11 @@ public partial class MainViewModel : ObservableObject
         {
             if (it is LogListViewModel vm) UnsubscribeFromList(vm);
         }
+    }
+
+    private void ApplySelectionSync(bool enabled)
+    {
+        // Implement synchronization logic between lists
     }
 
     [RelayCommand]
@@ -119,10 +128,10 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedEntryGlobalChanged(LogFileEntry? value)
     {
-        // An alle Listen anwenden
         foreach (var l in Lists)
         {
-            l.SelectEntryFromOutside(value);
+            var tolerance = SettingsVM?.SyncTolerance ?? TimeSpan.Zero;
+            l.SelectEntryFromOutside(value, tolerance);
         }
         // Event benachrichtigen
         SelectedEntryChanged?.Invoke(this, value);
