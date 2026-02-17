@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using LogAnalyzer.Models;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -22,6 +23,12 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private DateTime? _filterToDate = null;
+
+    [ObservableProperty]
+    private LogFileEntry? _selectedEntryGlobal;
+
+    public event EventHandler<LogFileEntry?>? SelectedEntryChanged;
+    private readonly Dictionary<LogListViewModel, EventHandler<LogFileEntry?>> _selectedEntryHandlers = new();
 
     public MainViewModel(Services.AppSettingsManager appSettings)
     {
@@ -110,18 +117,45 @@ public partial class MainViewModel : ObservableObject
         ChartVM.UpdateFromEntries(allEntries, FilterFromDate, FilterToDate);
     }
 
+    partial void OnSelectedEntryGlobalChanged(LogFileEntry? value)
+    {
+        // An alle Listen anwenden
+        foreach (var l in Lists)
+        {
+            l.SelectEntryFromOutside(value);
+        }
+        // Event benachrichtigen
+        SelectedEntryChanged?.Invoke(this, value);
+    }
+
     private void SubscribeToList(LogListViewModel vm)
     {
         vm.EntriesReloaded += EntriesReloaded;
+        vm.EntrySelected += OnEntrySelected;
+        // Bei Ereignis die Auswahl für diese Instanz setzen
+        EventHandler<LogFileEntry?> handler = (sender, entry) => { vm.SelectedEntry = entry; };
+        _selectedEntryHandlers[vm] = handler;
+        SelectedEntryChanged += handler;
     }
 
     private void UnsubscribeFromList(LogListViewModel vm)
     {
         vm.EntriesReloaded -= EntriesReloaded;
+        vm.EntrySelected -= OnEntrySelected;
+        // Vom Ereignis abmelden nur für diese Instanz
+        if (_selectedEntryHandlers.Remove(vm, out var handler))
+        {
+            SelectedEntryChanged -= handler;
+        }
     }
 
     private void EntriesReloaded(object? sender, EventArgs e)
     {
         RefreshChart();
+    }
+
+    private void OnEntrySelected(object? sender, LogFileEntry? entry)
+    {
+        SelectedEntryGlobal = entry;
     }
 }
