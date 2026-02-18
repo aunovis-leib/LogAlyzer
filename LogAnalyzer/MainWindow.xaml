@@ -7,8 +7,9 @@
         xmlns:vm="clr-namespace:LogAnalyzer.ViewModels"
         xmlns:ctrls="clr-namespace:LogAnalyzer.Controls"
         xmlns:views="clr-namespace:LogAnalyzer.Views"
+        xmlns:res="clr-namespace:LogAnalyzer.Resources"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="LogAlyzer" Height="450" Width="800">
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -19,7 +20,7 @@
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0">
-            <MenuItem Header="_Datei">
+            <MenuItem Header="{x:Static res:Strings.Open}">
                 <MenuItem Header="_Öffnen" />
                 <Separator />
                 <MenuItem Header="_Beenden" />
@@ -31,15 +32,15 @@
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
                 <Button Content="+" Command="{Binding AddListCommand}" Width="140" />
-                
-                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Profil:" />
+
+            <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="{x:Static res:Strings.Open}" />
                 <ComboBox ItemsSource="{Binding Profiles}"
                           SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
                           DisplayMemberPath="Name"
                           Width="100"
                           Margin="6,0,0,0" />
 
-                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Datum:" />
+                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Date" />
                 <ctrls:DateRangePicker FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
