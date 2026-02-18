@@ -7,6 +7,7 @@
         xmlns:vm="clr-namespace:LogAnalyzer.ViewModels"
         xmlns:ctrls="clr-namespace:LogAnalyzer.Controls"
         xmlns:views="clr-namespace:LogAnalyzer.Views"
+        xmlns:res="clr-namespace:LogAnalyzer.Resources"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Window.Resources>
@@ -52,7 +53,7 @@
                           Width="100"
                           Margin="6,0,0,0" />
 
-                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Datum:" />
+                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Date" />
                 <ctrls:DateRangePicker FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
