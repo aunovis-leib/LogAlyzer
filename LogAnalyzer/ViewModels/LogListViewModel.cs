@@ -66,10 +66,15 @@ public partial class LogListViewModel : ObservableObject
         EntrySelected?.Invoke(this, entry);
     }
 
-    public void SelectEntryFromOutside(LogFileEntry? entry)
+    public void SelectEntryFromOutside(LogFileEntry? entry, TimeSpan syncTolerance)
     {
         if (entry is null) return;
-        var foundEntry = LogFilesEntries.FirstOrDefault(x => x.Date.ToString() == entry.Date.ToString());
+        LogFileEntry? foundEntry;
+        if (syncTolerance == TimeSpan.Zero)
+            foundEntry = LogFilesEntries.FirstOrDefault(x => x.Date.ToString() == entry.Date.ToString());
+        foundEntry = LogFilesEntries
+            .OrderBy(x => Math.Abs((x.Date - entry.Date).TotalSeconds))
+            .FirstOrDefault(x => Math.Abs((x.Date - entry.Date).TotalSeconds) <= syncTolerance.TotalSeconds);
         if (foundEntry is not null)
         {
             SelectedEntry = foundEntry;
