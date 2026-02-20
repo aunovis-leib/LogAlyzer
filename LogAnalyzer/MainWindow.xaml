@@ -9,7 +9,8 @@
         xmlns:views="clr-namespace:LogAnalyzer.Views"
         xmlns:res="clr-namespace:LogAnalyzer.Resources"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="LogAlyzer" Height="450" Width="800" Icon="/Resources/Icons/LogAlyzer.png"
+        PreviewMouseDown="Window_PreviewMouseDown">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
@@ -34,7 +35,7 @@
         </EventTrigger>
     </Window.Triggers>
 
-    <Grid Margin="12">
+    <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -43,7 +44,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,0">
             <Button Command="{Binding AddListCommand}" BorderThickness="0" Background="{x:Null}">
                 <Image Source="/Resources/Icons/Add_log-view.ico" Width="20" Height="20" />
             </Button>
@@ -55,11 +56,12 @@
                           Width="100"
                           Margin="6,0,0,0" />
 
-                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="Date" />
                 <ctrls:DateRangePicker FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                <ToggleButton x:Name="SettingsToggle" Content="Settings" Margin="12,0,0,0" Width="100" />
+            <ToggleButton x:Name="SettingsToggle" Margin="12,0,0,0">
+                <Image Source="/Resources/Icons/Settings.ico" Width="20" Height="20" />
+            </ToggleButton>
         </StackPanel>
         <ItemsControl Grid.Row="2" ItemsSource="{Binding Lists}">
         <ItemsControl.ItemsPanel>

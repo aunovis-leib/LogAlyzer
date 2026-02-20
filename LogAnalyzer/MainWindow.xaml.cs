@@ -21,5 +21,20 @@ namespace LogAnalyzer
             InitializeComponent();
             DataContext = new ViewModels.MainViewModel(Services.AppServices.AppSettings);
         }
+
+        private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (SettingsToggle.IsChecked != true)
+            {
+                return;
+            }
+
+            if (SettingsPane.IsMouseOver || SettingsToggle.IsMouseOver)
+            {
+                return;
+            }
+
+            SettingsToggle.IsChecked = false;
+        }
     }
 }
