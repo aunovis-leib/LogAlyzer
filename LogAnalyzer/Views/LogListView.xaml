@@ -38,7 +38,10 @@
 
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Grid.ColumnSpan="2">
             <Button HorizontalAlignment="Left" Content="Datei wählen" Command="{Binding ChooseFileCommand}"/>
-            <ComboBox Margin="8,0,0,0" Width="80" ItemsSource="{Binding AvailableTypes}" SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <ComboBox Margin="8,0,0,0"
+                      Width="80"
+                      ItemsSource="{Binding AvailableTypes}"
+                      SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <ComboBox.ItemContainerStyle>
                     <Style TargetType="ComboBoxItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -51,7 +54,7 @@
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Text" Value="{Binding}" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                        <DataTrigger Binding="{Binding}" Value="{x:Static models:LogType.All}">
                                             <Setter Property="Text" Value="Alle" />
                                         </DataTrigger>
                                     </Style.Triggers>

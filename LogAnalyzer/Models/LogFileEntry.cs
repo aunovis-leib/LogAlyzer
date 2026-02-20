@@ -4,6 +4,7 @@ namespace LogAnalyzer.Models
 {
     public enum LogType
     {
+        All = -1,
         Error,
         Info,
         Warning,
