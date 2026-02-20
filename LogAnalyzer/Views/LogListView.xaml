@@ -37,7 +37,9 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Grid.ColumnSpan="2">
-            <Button HorizontalAlignment="Left" Content="Datei wählen" Command="{Binding ChooseFileCommand}"/>
+            <Button HorizontalAlignment="Left" Command="{Binding ChooseFileCommand}" BorderThickness="0" Background="{x:Null}">
+                <Image Width="20" Height="20" Source="/Resources/Icons/Add-files.ico" />
+            </Button>
             <ComboBox Margin="8,0,0,0"
                       Width="80"
                       ItemsSource="{Binding AvailableTypes}"
