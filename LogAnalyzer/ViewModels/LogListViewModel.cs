@@ -36,9 +36,9 @@ public partial class LogListViewModel : ObservableObject
     public ICollectionView LogFilesView { get; }
 
     [ObservableProperty]
-    private LogType? _selectedType = null;
+    private LogType _selectedType = LogType.All;
 
-    public ObservableCollection<object?> AvailableTypes { get; } = [];
+    public ObservableCollection<LogType> AvailableTypes { get; } = [];
 
     [ObservableProperty]
     private LogFileEntry? _selectedEntry;
@@ -167,7 +167,7 @@ public partial class LogListViewModel : ObservableObject
         };
     }
 
-    partial void OnSelectedTypeChanged(LogType? value)
+    partial void OnSelectedTypeChanged(LogType value)
     {
         LogFilesView.Filter = FilterByType;
         LogFilesView.Refresh();
@@ -191,7 +191,7 @@ public partial class LogListViewModel : ObservableObject
     private bool FilterByType(object obj)
     {
         if (obj is not LogFileEntry e) return false;
-        var typeOk = SelectedType is null || e.Type == SelectedType.Value;
+        var typeOk = SelectedType == LogType.All || e.Type == SelectedType;
         if (!typeOk) return false;
         if (FilterFromDate is not null && e.Date.Date < FilterFromDate.Value.Date) return false;
         if (FilterToDate is not null && e.Date.Date > FilterToDate.Value.Date) return false;
@@ -207,21 +207,22 @@ public partial class LogListViewModel : ObservableObject
             .Select(x => x.Type)
             .Distinct()
             .OrderBy(t => t)
-            .Cast<object>()
             .ToList();
 
-        // Always include null (Alle) as first entry
+        // Always include Alle as first entry
         AvailableTypes.Clear();
-        AvailableTypes.Add(null);
+        AvailableTypes.Add(LogType.All);
         foreach (var t in types)
         {
             AvailableTypes.Add(t);
         }
 
-        // Ensure SelectedType is valid; reset to null if not present
-        if (SelectedType is not null && !types.Contains(SelectedType.Value))
+        // Ensure SelectedType is valid; reset to All if not present
+        if (SelectedType != LogType.All && !types.Contains(SelectedType))
         {
-            SelectedType = null;
+            SelectedType = LogType.All;
         }
+
+        OnPropertyChanged(nameof(SelectedType));
     }
 }

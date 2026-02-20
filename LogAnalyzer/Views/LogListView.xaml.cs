@@ -1,8 +1,8 @@
+using LogAnalyzer.Models;
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Threading;
-using LogAnalyzer.Models;
 
 namespace LogAnalyzer.Views;
 
