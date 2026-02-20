@@ -222,5 +222,7 @@ public partial class LogListViewModel : ObservableObject
         {
             SelectedType = LogType.All;
         }
+
+        OnPropertyChanged(nameof(SelectedType));
     }
 }
