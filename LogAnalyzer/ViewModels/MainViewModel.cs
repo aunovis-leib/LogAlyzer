@@ -1,17 +1,17 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
 using LogAnalyzer.Models;
+using System.Collections.ObjectModel;
 
 namespace LogAnalyzer.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
     private readonly Services.AppSettingsManager _appSettings;
-    public IReadOnlyList<Models.ParserProfile> Profiles { get; }
+    public IReadOnlyList<ParserProfile> Profiles { get; }
 
     [ObservableProperty]
-    private Models.ParserProfile? _selectedProfile;
+    private ParserProfile? _selectedProfile;
     public ObservableCollection<LogListViewModel> Lists { get; } = [];
     public LiveChartViewModel ChartVM { get; } = new();
     public SettingsViewModel? SettingsVM { get; private set; } = new();
@@ -43,7 +43,7 @@ public partial class MainViewModel : ObservableObject
         Lists.Add(first);
         SubscribeToList(first);
         Lists.CollectionChanged += Lists_CollectionChanged;
-        RefreshChart();     
+        RefreshChart();
     }
 
     private void Lists_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

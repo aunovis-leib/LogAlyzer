@@ -58,7 +58,7 @@ namespace LogAnalyzer.Resources {
             set {
                 resourceCulture = value;
             }
-        } 
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Date.
@@ -68,13 +68,31 @@ namespace LogAnalyzer.Resources {
                 return ResourceManager.GetString("Date", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to File.
         /// </summary>
         public static string File {
             get {
                 return ResourceManager.GetString("File", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to List.
+        /// </summary>
+        public static string List {
+            get {
+                return ResourceManager.GetString("List", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Max entries per list.
+        /// </summary>
+        public static string MaxEntriesPerList {
+            get {
+                return ResourceManager.GetString("MaxEntriesPerList", resourceCulture);
             }
         }
         
@@ -93,6 +111,33 @@ namespace LogAnalyzer.Resources {
         public static string Settings {
             get {
                 return ResourceManager.GetString("Settings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show live chart.
+        /// </summary>
+        public static string ShowLiveChart {
+            get {
+                return ResourceManager.GetString("ShowLiveChart", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to synchronization tolerance.
+        /// </summary>
+        public static string SynchronizationTolerance {
+            get {
+                return ResourceManager.GetString("SynchronizationTolerance", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sync selection across lists.
+        /// </summary>
+        public static string SyncSelectionAcrossLists {
+            get {
+                return ResourceManager.GetString("SyncSelectionAcrossLists", resourceCulture);
             }
         }
         
