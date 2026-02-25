@@ -109,6 +109,7 @@ public partial class LogListViewModel : ObservableObject
             _suppressAvailableTypesUpdate = false;
             LogFilesView.Refresh();
             UpdateAvailableTypes();
+            UpdateAvailableDates();
             EntriesReloaded?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -158,10 +159,13 @@ public partial class LogListViewModel : ObservableObject
         LogFilesView.Filter = FilterByType;
         // initialize available types with just 'Alle'
         UpdateAvailableTypes();
+        // initialize available dates
+        UpdateAvailableDates();
         LogFilesEntries.CollectionChanged += (_, __) =>
         {
             if (_suppressAvailableTypesUpdate) return;
             UpdateAvailableTypes();
+            UpdateAvailableDates();
         };
     }
 
@@ -225,5 +229,17 @@ public partial class LogListViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedType));
         // notify subscribers (e.g. main VM) about available types
         TypesChanged?.Invoke(this, SelectedType);
+    }
+
+    private void UpdateAvailableDates()
+    {
+        if (_suppressAvailableTypesUpdate) return;
+
+        if (LogFilesEntries == null || LogFilesEntries.Count == 0)
+        {
+            return;
+        }
+        FilterFromDate = LogFilesEntries.Min(e => e.Date.Date);
+        FilterToDate = LogFilesEntries.Max(e => e.Date.Date);
     }
 }
