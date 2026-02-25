@@ -42,6 +42,8 @@
             </Button>
             <ComboBox Margin="8,0,0,0"
                       Width="80"
+                      IsEditable="True"
+                      Text="{Binding SelectedType, Mode=OneWay, Converter={StaticResource LogTypeStringToNullableConverter}}"
                       ItemsSource="{Binding AvailableTypes}"
                       SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <ComboBox.ItemContainerStyle>
@@ -51,18 +53,7 @@
                 </ComboBox.ItemContainerStyle>
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock>
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding}" Value="{x:Static models:LogType.All}">
-                                            <Setter Property="Text" Value="Alle" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                        <TextBlock Text="{Binding Converter={StaticResource LogTypeStringToNullableConverter}}" />
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
