@@ -1,8 +1,7 @@
-using System;
+using LogAnalyzer.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using LogAnalyzer.Models;
 
 namespace LogAnalyzer.Services
 {
@@ -11,48 +10,59 @@ namespace LogAnalyzer.Services
         private static readonly Lazy<AppSettingsManager> _lazy = new(() => new AppSettingsManager());
         public static AppSettingsManager Instance => _lazy.Value;
 
+        private readonly string _settingsPath;
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true
         };
 
         private AppSettingsManager()
         {
+            var baseDir = AppContext.BaseDirectory;
+            _settingsPath = Path.Combine(baseDir, "appsettings.json");
             Load();
         }
 
-        public IReadOnlyList<ParserProfile> ParserProfiles { get; private set; } = [];
+        public AppSettings Settings { get; private set; } = new();
+
+        public IReadOnlyList<ParserProfile> ParserProfiles => Settings.ParserProfiles;
 
         private void Load()
         {
             try
             {
-                var baseDir = AppContext.BaseDirectory;
-                var path = Path.Combine(baseDir, "appsettings.json");
-                if (!File.Exists(path))
+                if (!File.Exists(_settingsPath))
                 {
-                    ParserProfiles = new List<ParserProfile>();
+                    Settings = new AppSettings();
+                    EnsureDefaults();
                     return;
                 }
 
-                var json = File.ReadAllText(path);
-                var root = JsonSerializer.Deserialize<ConfigRoot>(json, _jsonOptions);
-                ParserProfiles = root?.LogAnalyzer?.ParserProfiles ?? new List<ParserProfile>();
+                var json = File.ReadAllText(_settingsPath);
+                var settings = JsonSerializer.Deserialize<AppSettings>(json, _jsonOptions);
+                Settings = settings ?? new AppSettings();
+                EnsureDefaults();
             }
             catch
             {
-                ParserProfiles = new List<ParserProfile>();
+                Settings = new AppSettings();
+                EnsureDefaults();
             }
         }
 
-        private class ConfigRoot
+        public void Save()
         {
-            public LogAnalyzerSection? LogAnalyzer { get; set; }
+            EnsureDefaults();
+            var json = JsonSerializer.Serialize(Settings, _jsonOptions);
+            File.WriteAllText(_settingsPath, json);
         }
 
-        private class LogAnalyzerSection
+        private void EnsureDefaults()
         {
-            public List<ParserProfile> ParserProfiles { get; set; } = new List<ParserProfile>();
+            Settings.LivChart ??= new LiveChartSettings();
+            Settings.ParserProfiles ??= new List<ParserProfile>();
+            Settings.SettingsView ??= new SettingsViewSettings();
         }
     }
 }
