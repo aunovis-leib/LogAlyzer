@@ -1,16 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Win32;
-using System;
-using System.ComponentModel;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Windows.Data;
 using LogAnalyzer.Models;
-using static LogAnalyzer.Models.LogFileEntry;
-using System.Text.Json;
 using LogAnalyzer.Services;
 using LogAnalyzer.Services.Parsing;
+using Microsoft.Win32;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
+using System.Windows.Data;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -23,6 +20,7 @@ public partial class LogListViewModel : ObservableObject
 
     public event EventHandler? EntriesReloaded;
     public event EventHandler<LogFileEntry?>? EntrySelected;
+    public event EventHandler<LogType>? TypesChanged;
     private bool _suppressAvailableTypesUpdate;
     private ObservableCollection<LogFileEntry> _logFilesEntries = [];
     public ObservableCollection<LogFileEntry> LogFilesEntries
@@ -171,6 +169,7 @@ public partial class LogListViewModel : ObservableObject
     {
         LogFilesView.Filter = FilterByType;
         LogFilesView.Refresh();
+        UpdateAvailableTypes();
     }
 
     partial void OnFilterTextChanged(string value)
@@ -224,5 +223,7 @@ public partial class LogListViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(SelectedType));
+        // notify subscribers (e.g. main VM) about available types
+        TypesChanged?.Invoke(this, SelectedType);
     }
 }

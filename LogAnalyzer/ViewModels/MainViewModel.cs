@@ -1,17 +1,17 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
 using LogAnalyzer.Models;
+using System.Collections.ObjectModel;
 
 namespace LogAnalyzer.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
     private readonly Services.AppSettingsManager _appSettings;
-    public IReadOnlyList<Models.ParserProfile> Profiles { get; }
+    public IReadOnlyList<ParserProfile> Profiles { get; }
 
     [ObservableProperty]
-    private Models.ParserProfile? _selectedProfile;
+    private ParserProfile? _selectedProfile;
     public ObservableCollection<LogListViewModel> Lists { get; } = [];
     public LiveChartViewModel ChartVM { get; } = new();
     public SettingsViewModel? SettingsVM { get; private set; } = new();
@@ -43,7 +43,7 @@ public partial class MainViewModel : ObservableObject
         Lists.Add(first);
         SubscribeToList(first);
         Lists.CollectionChanged += Lists_CollectionChanged;
-        RefreshChart();     
+        RefreshChart();
     }
 
     private void Lists_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -71,11 +71,6 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    private void ApplySelectionSync(bool enabled)
-    {
-        // Implement synchronization logic between lists
-    }
-
     [RelayCommand]
     private void AddList()
     {
@@ -89,7 +84,7 @@ public partial class MainViewModel : ObservableObject
         RefreshChart();
     }
 
-    partial void OnSelectedProfileChanged(Models.ParserProfile? value)
+    partial void OnSelectedProfileChanged(ParserProfile? value)
     {
         foreach (var l in Lists)
         {
@@ -141,6 +136,7 @@ public partial class MainViewModel : ObservableObject
     {
         vm.EntriesReloaded += EntriesReloaded;
         vm.EntrySelected += OnEntrySelected;
+        vm.TypesChanged += OnListTypesChanged;
         // Bei Ereignis die Auswahl für diese Instanz setzen
         EventHandler<LogFileEntry?> handler = (sender, entry) => { vm.SelectedEntry = entry; };
         _selectedEntryHandlers[vm] = handler;
@@ -160,6 +156,12 @@ public partial class MainViewModel : ObservableObject
 
     private void EntriesReloaded(object? sender, EventArgs e)
     {
+        RefreshChart();
+    }
+
+    private void OnListTypesChanged(object? sender, LogType selectedType)
+    {
+        ChartVM.TypeToShow = selectedType;
         RefreshChart();
     }
 

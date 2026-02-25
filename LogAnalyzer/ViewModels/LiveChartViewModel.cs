@@ -1,13 +1,15 @@
 using LiveCharts;
 using LiveCharts.Wpf;
+using LogAnalyzer.Models;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using LogAnalyzer.Models;
 
 namespace LogAnalyzer.ViewModels
 {
     public class LiveChartViewModel : INotifyPropertyChanged
     {
+        public LogType? TypeToShow { get; set; }
+
         private SeriesCollection _chartSeries = [];
         public SeriesCollection ChartSeries
         {
@@ -41,24 +43,45 @@ namespace LogAnalyzer.ViewModels
                 .ToList();
 
             // build x labels
-            XLabels = [.. byHour.Select(g => g.Key.ToString("dd.MM.yyyy HH:mm"))];
+            XLabels = byHour.Select(g => g.Key.ToString("dd.MM.yyyy HH:mm")).ToList();
             OnPropertyChanged(nameof(XLabels));
 
-            // get all types present
-            var allTypes = Enum.GetValues<LogType>().ToList();
+            // determine which types to render (fallback to all except All)
+            LogType typeToRender;
+            if (TypeToShow.HasValue)
+            {
+                typeToRender = TypeToShow.Value;
+            }
+            else
+            {
+                typeToRender = LogType.All;
+            }
 
             var series = new SeriesCollection();
-            foreach (var t in allTypes)
+
+            if (typeToRender != LogType.All)
             {
-                if (t is LogType.Error)
+                var values = new ChartValues<double>(byHour.Select(hour => (double)hour.Count(e => e.Type == typeToRender)));
+                series.Add(new LineSeries
                 {
+                    Title = typeToRender.ToString(),
+                    Values = values,
+                    Stroke = GetColor(typeToRender),
+                });
+            }
+            else
+            {
+                // Show all types except All
+                foreach (LogType t in Enum.GetValues(typeof(LogType)))
+                {
+                    if (t == LogType.All) continue;
                     var values = new ChartValues<double>(byHour.Select(hour => (double)hour.Count(e => e.Type == t)));
                     series.Add(new LineSeries
                     {
                         Title = t.ToString(),
                         Values = values,
                         Stroke = GetColor(t),
-                    }); 
+                    });
                 }
             }
 
