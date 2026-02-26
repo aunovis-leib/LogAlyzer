@@ -54,4 +54,11 @@
     </Resource>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Helpers\**" />
+    <EmbeddedResource Remove="Helpers\**" />
+    <None Remove="Helpers\**" />
+    <Page Remove="Helpers\**" />
+  </ItemGroup>
+
 </Project>
