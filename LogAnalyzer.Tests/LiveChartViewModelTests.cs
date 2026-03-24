@@ -20,9 +20,9 @@ namespace LogAnalyzer.Tests
 
             var entriesList = new List<LogFileEntry>
             {
-                new() { Date = new DateTime(2024,1,1,10,0,0), Type = LogType.Info },
-                new() { Date = new DateTime(2024,1,1,10,30,0), Type = LogType.Error },
-                new() { Date = new DateTime(2024,1,1,11,0,0), Type = LogType.Info }
+                new() { Date = new DateTime(2024,1,1,10,0,0, DateTimeKind.Utc), Type = LogType.Info },
+                new() { Date = new DateTime(2024,1,1,10,30,0, DateTimeKind.Utc), Type = LogType.Error },
+                new() { Date = new DateTime(2024,1,1,11,0,0, DateTimeKind.Utc), Type = LogType.Info }
             };
 
             var entries = Substitute.For<IEnumerable<LogFileEntry>>();
