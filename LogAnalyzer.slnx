@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="LogAnalyzer.Tests/LogAnalyzer.Tests.csproj" />
   <Project Path="LogAnalyzer/LogAnalyzer.csproj" />
 </Solution>

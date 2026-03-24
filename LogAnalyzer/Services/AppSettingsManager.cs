@@ -1,5 +1,4 @@
 using LogAnalyzer.Models;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -7,7 +6,12 @@ namespace LogAnalyzer.Services
 {
     public sealed class AppSettingsManager
     {
-        private static readonly Lazy<AppSettingsManager> _lazy = new(() => new AppSettingsManager());
+        // Test hook: when set, the manager will use this base directory instead of AppContext.BaseDirectory
+        // Prefer calling Initialize(baseDirectory) from tests instead of manipulating this field.
+        internal static string? TestBaseDirectory;
+
+        // Not readonly so tests can reinitialize the lazy instance
+        private static Lazy<AppSettingsManager> _lazy = new(() => new AppSettingsManager());
         public static AppSettingsManager Instance => _lazy.Value;
 
         private readonly string _settingsPath;
@@ -18,13 +22,30 @@ namespace LogAnalyzer.Services
         };
 
         private AppSettingsManager()
+            : this(AppContext.BaseDirectory)
         {
-            var baseDir = AppContext.BaseDirectory;
+        }
+
+        // Internal constructor that accepts a base directory. Tests and callers can use Initialize to
+        // replace the singleton factory so the manager uses a custom base directory.
+        private AppSettingsManager(string baseDirectory)
+        {
+            var baseDir = TestBaseDirectory ?? baseDirectory;
             _settingsPath = Path.Combine(baseDir, "appsettings.json");
             Load();
         }
 
-        public AppSettings Settings { get; private set; } = new();
+        // Public API to allow tests or application startup to configure where settings are stored.
+        // Call this before accessing AppSettingsManager.Instance.
+        public static void Initialize(string baseDirectory)
+        {
+            if (string.IsNullOrEmpty(baseDirectory))
+                throw new System.ArgumentException("baseDirectory must be provided", nameof(baseDirectory));
+
+            _lazy = new System.Lazy<AppSettingsManager>(() => new AppSettingsManager(baseDirectory));
+        }
+
+        internal AppSettings Settings { get; private set; } = new();
 
         public IReadOnlyList<ParserProfile> ParserProfiles => Settings.ParserProfiles;
 
