@@ -8,6 +8,7 @@ using Xunit;
 
 namespace LogAnalyzer.Tests
 {
+    [Collection("AppSettingsManagerSerial")]
     public class LogListViewModelTests
     {
         private static string CreateTempDir(string name)

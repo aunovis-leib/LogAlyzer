@@ -5,6 +5,7 @@ using Xunit;
 
 namespace LogAnalyzer.Tests
 {
+    [Collection("AppSettingsManagerSerial")]
     public class AppSettingsManagerTests
     {
         [Fact]
