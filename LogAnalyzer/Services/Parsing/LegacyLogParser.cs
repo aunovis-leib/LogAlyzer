@@ -1,46 +1,47 @@
 using System;
+using System.Globalization;
 using LogAnalyzer.Models;
 
 namespace LogAnalyzer.Services.Parsing
 {
     public sealed class LegacyLogParser : ILogParser
     {
+        private static readonly CultureInfo GermanCulture = CultureInfo.GetCultureInfo("de-DE");
+
         public bool TryParse(string line, out LogFileEntry entry)
         {
             entry = new LogFileEntry();
             if (string.IsNullOrWhiteSpace(line)) return false;
 
-            var parts = line.Split('|');
-            if (parts.Length < 3) return false;
+            var firstSep = line.IndexOf('|');
+            if (firstSep < 0) return false;
 
-            var datePart = parts[0].Trim();
-            var typePart = parts[1].Replace("\t", string.Empty).Trim();
-            var textPart = string.Join("|", parts[2..]).Trim();
+            var secondSep = line.IndexOf('|', firstSep + 1);
+            if (secondSep < 0) return false;
+
+            var datePart = line.AsSpan(0, firstSep).Trim();
+            var typePart = line.AsSpan(firstSep + 1, secondSep - firstSep - 1).Trim();
+            var textPart = line.AsSpan(secondSep + 1).Trim();
 
             if (!TryParseDate(datePart, "dd.MM.yyyy HH:mm:ss.fff", out var dt))
                 return false;
 
             entry.Date = dt;
             entry.Type = TryParseLogType(typePart);
-            entry.Text = textPart;
+            entry.Text = textPart.ToString();
             return true;
         }
 
-        private static bool TryParseDate(string datePart, string dateFormat, out DateTime dt)
+        private static bool TryParseDate(ReadOnlySpan<char> datePart, string dateFormat, out DateTime dt)
         {
-            if (DateTime.TryParseExact(
-                datePart,
-                dateFormat,
-                System.Globalization.CultureInfo.GetCultureInfo("de-DE"),
-                System.Globalization.DateTimeStyles.None,
-                out dt))
+            if (DateTime.TryParseExact(datePart, dateFormat, GermanCulture, DateTimeStyles.None, out dt))
             {
                 return true;
             }
             if (System.DateTimeOffset.TryParse(
                 datePart,
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
                 out var dto))
             {
                 dt = dto.LocalDateTime;
@@ -49,9 +50,10 @@ namespace LogAnalyzer.Services.Parsing
             return false;
         }
 
-        private static LogType TryParseLogType(string typePart)
+        private static LogType TryParseLogType(ReadOnlySpan<char> typePart)
         {
-            if (!Enum.TryParse<LogType>(typePart, true, out var type))
+            var sanitizedType = typePart.ToString().Replace("\t", string.Empty).Trim();
+            if (!Enum.TryParse<LogType>(sanitizedType, true, out var type))
             {
                 type = LogType.Info;
             }
