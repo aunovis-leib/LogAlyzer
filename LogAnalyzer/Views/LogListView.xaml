@@ -40,6 +40,9 @@
             <Button HorizontalAlignment="Left" Command="{Binding ChooseFileCommand}" BorderThickness="0" Background="{x:Null}">
                 <Image Width="20" Height="20" Source="/Resources/Icons/Add-files.ico" />
             </Button>
+            <Button Margin="8,0,0,0" Command="{Binding CancelLoadingCommand}" IsEnabled="{Binding IsLoading}">
+                <TextBlock Text="Abbrechen" />
+            </Button>
             <ComboBox Margin="8,0,0,0"
                       Width="80"
                       IsEditable="True"
@@ -61,6 +64,7 @@
             <ctrls:DateRangePicker Margin="8,0,0,0"
                                    FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="{Binding LoadingStatus}" />
         </StackPanel>
         <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="0" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" AlternationCount="1000000" Grid.ColumnSpan="2"
                   VirtualizingPanel.IsVirtualizing="True"
