@@ -1,7 +1,10 @@
 using LogAnalyzer.Models;
+using LogAnalyzer.ViewModels;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace LogAnalyzer.Views;
@@ -58,6 +61,20 @@ public partial class LogListView : UserControl
             }
         }
         return null;
+    }
+
+    private void ListViewItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not ListViewItem item || item.DataContext is not LogFileEntry entry)
+        {
+            return;
+        }
+
+        if (DataContext is LogListViewModel vm && vm.SelectEntryCommand.CanExecute(entry))
+        {
+            vm.SelectEntryCommand.Execute(entry);
+            e.Handled = true;
+        }
     }
 
     // Programmatically select an entry and scroll it into view

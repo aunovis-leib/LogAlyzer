@@ -73,6 +73,7 @@
                 <Style TargetType="ListViewItem">
                     <Setter Property="ContextMenu" Value="{StaticResource LogEntryContextMenu}"/>
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <EventSetter Event="MouseLeftButtonUp" Handler="ListViewItem_MouseLeftButtonUp"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListViewItem">
@@ -95,9 +96,11 @@
                                     </ItemsControl>
                                 </StackPanel>
                                 <ControlTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsDetailVisible}" Value="True">
+                                        <Setter TargetName="DetailRows" Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="RowBorder" Property="Background" Value="#14007ACC"/>
-                                        <Setter TargetName="DetailRows" Property="Visibility" Value="Visible"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>

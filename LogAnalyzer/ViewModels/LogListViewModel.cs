@@ -81,6 +81,7 @@ public partial class LogListViewModel : ObservableObject
     private void SelectEntry(LogFileEntry? entry)
     {
         if (entry is null) return;
+        entry.IsDetailVisible = !entry.IsDetailVisible;
         SelectedEntry = entry;
         EntrySelected?.Invoke(this, entry);
     }
@@ -96,6 +97,7 @@ public partial class LogListViewModel : ObservableObject
             .FirstOrDefault(x => Math.Abs((x.Date - entry.Date).TotalSeconds) <= syncTolerance.TotalSeconds);
         if (foundEntry is not null)
         {
+            foundEntry.IsDetailVisible = true;
             SelectedEntry = foundEntry;
         }
     }
