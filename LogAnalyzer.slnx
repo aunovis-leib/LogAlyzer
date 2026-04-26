@@ -1,4 +1,6 @@
 <Solution>
-  <Project Path="LogAnalyzer.Tests/LogAnalyzer.Tests.csproj" />
+  <Project Path="LogAnalyzer.Tests/LogAnalyzer.Tests.csproj">
+    <Build Solution="Release|*" Project="false" />
+  </Project>
   <Project Path="LogAnalyzer/LogAnalyzer.csproj" />
 </Solution>

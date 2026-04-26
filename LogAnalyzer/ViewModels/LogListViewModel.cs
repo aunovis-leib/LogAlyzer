@@ -14,6 +14,7 @@ namespace LogAnalyzer.ViewModels;
 public partial class LogListViewModel : ObservableObject
 {
     private readonly AppSettingsManager _appSettings;
+    private CancellationTokenSource? _loadCancellation;
 
     [ObservableProperty]
     private ParserProfile? _selectedProfile;
@@ -56,6 +57,26 @@ public partial class LogListViewModel : ObservableObject
     [ObservableProperty]
     private DateTime? _filterToDate = null;
 
+    private bool _isLoading;
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
+    private string _loadingStatus = string.Empty;
+    public string LoadingStatus
+    {
+        get => _loadingStatus;
+        set => SetProperty(ref _loadingStatus, value);
+    }
+
+    [RelayCommand]
+    private void CancelLoading()
+    {
+        _loadCancellation?.Cancel();
+    }
+
     [RelayCommand]
     private void SelectEntry(LogFileEntry? entry)
     {
@@ -82,6 +103,11 @@ public partial class LogListViewModel : ObservableObject
     [RelayCommand]
     private async Task ChooseFile()
     {
+        if (IsLoading)
+        {
+            return;
+        }
+
         var dlg = new OpenFileDialog
         {
             Title = "Logdatei wählen",
@@ -90,56 +116,90 @@ public partial class LogListViewModel : ObservableObject
         };
         if (dlg.ShowDialog() == true)
         {
-            var entries = await Task.Run(() =>
+            IsLoading = true;
+            LoadingStatus = "Lade Logdateien...";
+            _loadCancellation = new CancellationTokenSource();
+            var previousFilter = LogFilesView.Filter;
+
+            DateTime? minDate = null;
+            DateTime? maxDate = null;
+            var observedTypes = new HashSet<LogType>();
+            try
             {
-                var all = new List<LogFileEntry>();
-                foreach (var fn in dlg.FileNames)
+                _suppressAvailableTypesUpdate = true;
+                LogFilesView.Filter = null;
+                LogFilesEntries.Clear();
+                var parser = GetActiveParser();
+                var loader = new LogFileChunkLoader(parser);
+                var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
+                var loadedEntries = 0;
+
+                await foreach (var chunk in loader.LoadAsync(dlg.FileNames, 2000, _loadCancellation.Token))
                 {
-                    all.AddRange(ParseLogFile(fn));
+                    foreach (var e in chunk.Entries)
+                    {
+                        if (loadedEntries >= maxEntries)
+                        {
+                            break;
+                        }
+
+                        LogFilesEntries.Add(e);
+                        loadedEntries++;
+                        observedTypes.Add(e.Type);
+
+                        var day = e.Date.Date;
+                        if (minDate is null || day < minDate.Value)
+                        {
+                            minDate = day;
+                        }
+                        if (maxDate is null || day > maxDate.Value)
+                        {
+                            maxDate = day;
+                        }
+                    }
+
+                    LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
+
+                    if (loadedEntries >= maxEntries)
+                    {
+                        break;
+                    }
                 }
-                return all;
-            });
 
-            _suppressAvailableTypesUpdate = true;
-            LogFilesEntries.Clear();
-            foreach (var e in entries)
-            {
-                LogFilesEntries.Add(e);
+                if (loadedEntries >= maxEntries)
+                {
+                    LoadingStatus = $"Maximale Eintragsanzahl erreicht ({maxEntries:N0}).";
+                }
+
+                _suppressAvailableTypesUpdate = false;
+                UpdateAvailableTypes(observedTypes);
+                UpdateAvailableDates(minDate, maxDate);
+                LogFilesView.Filter = FilterByType;
+                LogFilesView.Refresh();
+                EntriesReloaded?.Invoke(this, EventArgs.Empty);
             }
-            _suppressAvailableTypesUpdate = false;
-            LogFilesView.Refresh();
-            UpdateAvailableTypes();
-            UpdateAvailableDates();
-            EntriesReloaded?.Invoke(this, EventArgs.Empty);
+            catch (OperationCanceledException)
+            {
+                LoadingStatus = "Ladevorgang abgebrochen.";
+                _suppressAvailableTypesUpdate = false;
+                UpdateAvailableTypes(observedTypes);
+                UpdateAvailableDates(minDate, maxDate);
+                LogFilesView.Filter = FilterByType;
+                LogFilesView.Refresh();
+                EntriesReloaded?.Invoke(this, EventArgs.Empty);
+            }
+            finally
+            {
+                if (LogFilesView.Filter is null)
+                {
+                    LogFilesView.Filter = previousFilter ?? FilterByType;
+                    LogFilesView.Refresh();
+                }
+                _loadCancellation?.Dispose();
+                _loadCancellation = null;
+                IsLoading = false;
+            }
         }
-    }
-
-    private List<LogFileEntry> ParseLogFile(string fileName)
-    {
-        var list = new List<LogFileEntry>();
-        ILogParser parser = GetActiveParser();
-        foreach (var line in File.ReadLines(fileName))
-        {
-            if (parser.TryParse(line, out var entry))
-            {
-                entry.Detail = [];
-                list.Add(entry);
-            }
-            else
-            {
-                AddLineToLastEntryDetail(list, line);
-            }
-        }
-        return list;
-    }
-
-    private static void AddLineToLastEntryDetail(List<LogFileEntry> list, string line)
-    {
-        if (list.Count == 0) return;
-        var last = list[^1];
-        var details = last.Detail?.ToList() ?? [];
-        details.Add(line);
-        last.Detail = [.. details];
     }
 
     private ILogParser GetActiveParser()
@@ -171,6 +231,7 @@ public partial class LogListViewModel : ObservableObject
 
     partial void OnSelectedTypeChanged(LogType value)
     {
+        if (IsLoading) return;
         LogFilesView.Filter = FilterByType;
         LogFilesView.Refresh();
         UpdateAvailableTypes();
@@ -178,16 +239,19 @@ public partial class LogListViewModel : ObservableObject
 
     partial void OnFilterTextChanged(string value)
     {
+        if (IsLoading) return;
         LogFilesView.Refresh();
     }
 
     partial void OnFilterFromDateChanged(DateTime? value)
     {
+        if (IsLoading) return;
         LogFilesView.Refresh();
     }
 
     partial void OnFilterToDateChanged(DateTime? value)
     {
+        if (IsLoading) return;
         LogFilesView.Refresh();
     }
 
@@ -202,12 +266,11 @@ public partial class LogListViewModel : ObservableObject
         return (e.Text?.IndexOf(FilterText, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
     }
 
-    private void UpdateAvailableTypes()
+    private void UpdateAvailableTypes(IEnumerable<LogType>? observedTypes = null)
     {
         if (_suppressAvailableTypesUpdate) return;
         // Build distinct types from current entries
-        var types = LogFilesEntries
-            .Select(x => x.Type)
+        var types = (observedTypes ?? LogFilesEntries.Select(x => x.Type))
             .Distinct()
             .OrderBy(t => t)
             .ToList();
@@ -231,9 +294,16 @@ public partial class LogListViewModel : ObservableObject
         TypesChanged?.Invoke(this, SelectedType);
     }
 
-    private void UpdateAvailableDates()
+    private void UpdateAvailableDates(DateTime? minDate = null, DateTime? maxDate = null)
     {
         if (_suppressAvailableTypesUpdate) return;
+
+        if (minDate is not null && maxDate is not null)
+        {
+            FilterFromDate = minDate;
+            FilterToDate = maxDate;
+            return;
+        }
 
         if (LogFilesEntries == null || LogFilesEntries.Count == 0)
         {
