@@ -118,5 +118,45 @@ namespace LogAnalyzer.Tests
 
             Assert.Equal(LogType.All, last); // TypesChanged invoked with SelectedType (still All)
         }
+
+        [Fact]
+        public void SelectEntryCommand_Toggles_DetailVisibility_On_Repeated_Click()
+        {
+            var temp = CreateTempDir("detailtoggle");
+            AppSettingsManager.Initialize(temp);
+            var vm = new LogListViewModel(AppSettingsManager.Instance, null);
+
+            var entry = new LogFileEntry { Date = DateTime.Now, Type = LogType.Info, Text = "entry" };
+            vm.LogFilesEntries.Add(entry);
+
+            Assert.False(entry.IsDetailVisible);
+
+            vm.SelectEntryCommand.Execute(entry);
+            Assert.True(entry.IsDetailVisible);
+            Assert.Equal(entry, vm.SelectedEntry);
+
+            vm.SelectEntryCommand.Execute(entry);
+            Assert.False(entry.IsDetailVisible);
+            Assert.Equal(entry, vm.SelectedEntry);
+        }
+
+        [Fact]
+        public void SelectEntryFromOutside_Expands_Detail_For_Selected_Entry()
+        {
+            var temp = CreateTempDir("detailfromoutside");
+            AppSettingsManager.Initialize(temp);
+            var vm = new LogListViewModel(AppSettingsManager.Instance, null);
+
+            var now = DateTime.Now;
+            var entry = new LogFileEntry { Date = now, Type = LogType.Info, Text = "entry" };
+            vm.LogFilesEntries.Add(entry);
+
+            Assert.False(entry.IsDetailVisible);
+
+            vm.SelectEntryFromOutside(new LogFileEntry { Date = now }, TimeSpan.Zero);
+
+            Assert.Equal(entry, vm.SelectedEntry);
+            Assert.True(entry.IsDetailVisible);
+        }
     }
 }

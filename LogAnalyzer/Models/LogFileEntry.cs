@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace LogAnalyzer.Models
 {
@@ -11,11 +13,34 @@ namespace LogAnalyzer.Models
         Debug
     }
 
-    public class LogFileEntry
+    public class LogFileEntry : INotifyPropertyChanged
     {
         public DateTime Date { get; set; }
         public LogType Type { get; set; }
         public string Text { get; set; } = string.Empty;
         public string[] Detail { get; set; } = [];
+
+        private bool _isDetailVisible;
+        public bool IsDetailVisible
+        {
+            get => _isDetailVisible;
+            set
+            {
+                if (_isDetailVisible == value)
+                {
+                    return;
+                }
+
+                _isDetailVisible = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }
