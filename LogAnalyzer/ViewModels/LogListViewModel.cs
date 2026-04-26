@@ -90,26 +90,36 @@ public partial class LogListViewModel : ObservableObject
         };
         if (dlg.ShowDialog() == true)
         {
-            var entries = await Task.Run(() =>
-            {
-                var all = new List<LogFileEntry>();
-                foreach (var fn in dlg.FileNames)
-                {
-                    all.AddRange(ParseLogFile(fn));
-                }
-                return all;
-            });
-
+            DateTime? minDate = null;
+            DateTime? maxDate = null;
+            var observedTypes = new HashSet<LogType>();
             _suppressAvailableTypesUpdate = true;
             LogFilesEntries.Clear();
-            foreach (var e in entries)
+            using (LogFilesView.DeferRefresh())
             {
-                LogFilesEntries.Add(e);
+                foreach (var fn in dlg.FileNames)
+                {
+                    var entries = await Task.Run(() => ParseLogFile(fn));
+                    foreach (var e in entries)
+                    {
+                        LogFilesEntries.Add(e);
+                        observedTypes.Add(e.Type);
+
+                        var day = e.Date.Date;
+                        if (minDate is null || day < minDate.Value)
+                        {
+                            minDate = day;
+                        }
+                        if (maxDate is null || day > maxDate.Value)
+                        {
+                            maxDate = day;
+                        }
+                    }
+                }
             }
             _suppressAvailableTypesUpdate = false;
-            LogFilesView.Refresh();
-            UpdateAvailableTypes();
-            UpdateAvailableDates();
+            UpdateAvailableTypes(observedTypes);
+            UpdateAvailableDates(minDate, maxDate);
             EntriesReloaded?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -118,28 +128,43 @@ public partial class LogListViewModel : ObservableObject
     {
         var list = new List<LogFileEntry>();
         ILogParser parser = GetActiveParser();
-        foreach (var line in File.ReadLines(fileName))
+        using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 64 * 1024, FileOptions.SequentialScan);
+        using var reader = new StreamReader(stream);
+
+        LogFileEntry? currentEntry = null;
+        List<string>? currentDetail = null;
+        string? line;
+        while ((line = reader.ReadLine()) is not null)
         {
             if (parser.TryParse(line, out var entry))
             {
-                entry.Detail = [];
-                list.Add(entry);
+                if (currentEntry is not null)
+                {
+                    currentEntry.Detail = currentDetail is { Count: > 0 } ? [.. currentDetail] : [];
+                    list.Add(currentEntry);
+                }
+                currentEntry = entry;
+                currentDetail = null;
             }
             else
             {
-                AddLineToLastEntryDetail(list, line);
+                if (currentEntry is null)
+                {
+                    continue;
+                }
+
+                currentDetail ??= [];
+                currentDetail.Add(line);
             }
         }
-        return list;
-    }
 
-    private static void AddLineToLastEntryDetail(List<LogFileEntry> list, string line)
-    {
-        if (list.Count == 0) return;
-        var last = list[^1];
-        var details = last.Detail?.ToList() ?? [];
-        details.Add(line);
-        last.Detail = [.. details];
+        if (currentEntry is not null)
+        {
+            currentEntry.Detail = currentDetail is { Count: > 0 } ? [.. currentDetail] : [];
+            list.Add(currentEntry);
+        }
+
+        return list;
     }
 
     private ILogParser GetActiveParser()
@@ -202,12 +227,11 @@ public partial class LogListViewModel : ObservableObject
         return (e.Text?.IndexOf(FilterText, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
     }
 
-    private void UpdateAvailableTypes()
+    private void UpdateAvailableTypes(IEnumerable<LogType>? observedTypes = null)
     {
         if (_suppressAvailableTypesUpdate) return;
         // Build distinct types from current entries
-        var types = LogFilesEntries
-            .Select(x => x.Type)
+        var types = (observedTypes ?? LogFilesEntries.Select(x => x.Type))
             .Distinct()
             .OrderBy(t => t)
             .ToList();
@@ -231,9 +255,16 @@ public partial class LogListViewModel : ObservableObject
         TypesChanged?.Invoke(this, SelectedType);
     }
 
-    private void UpdateAvailableDates()
+    private void UpdateAvailableDates(DateTime? minDate = null, DateTime? maxDate = null)
     {
         if (_suppressAvailableTypesUpdate) return;
+
+        if (minDate is not null && maxDate is not null)
+        {
+            FilterFromDate = minDate;
+            FilterToDate = maxDate;
+            return;
+        }
 
         if (LogFilesEntries == null || LogFilesEntries.Count == 0)
         {
