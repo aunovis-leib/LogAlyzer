@@ -59,6 +59,10 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
             <TextBox Margin="8,0,0,0" MinWidth="90" Width="90" Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Margin="8,0,0,0"
+                     Width="90"
+                     Text="{Binding FilterTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     bh:TimeInputBehavior.IsEnabled="True" />
             <ctrls:DateRangePicker Margin="8,0,0,0"
                                    FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>

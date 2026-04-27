@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.IO;
+using System.Reflection;
+using LogAnalyzer.Behaviors;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
 using LogAnalyzer.ViewModels;
@@ -72,6 +74,21 @@ namespace LogAnalyzer.Tests
             vm.SelectedType = LogType.All;
             vm.FilterFromDate = d2;
             vm.FilterToDate = d2;
+            vm.LogFilesView.Refresh();
+            list = vm.LogFilesView.Cast<LogFileEntry>().ToList();
+            Assert.Single(list);
+            Assert.Equal(e2, list[0]);
+
+            // Filter by time (prefix match on HH:mm:ss)
+            vm.FilterFromDate = null;
+            vm.FilterToDate = null;
+            vm.FilterTime = "00:00:00";
+            vm.LogFilesView.Refresh();
+            list = vm.LogFilesView.Cast<LogFileEntry>().ToList();
+            Assert.Single(list);
+            Assert.Equal(e1, list[0]);
+
+            vm.FilterTime = "00:00:01";
             vm.LogFilesView.Refresh();
             list = vm.LogFilesView.Cast<LogFileEntry>().ToList();
             Assert.Single(list);
@@ -157,6 +174,65 @@ namespace LogAnalyzer.Tests
 
             Assert.Equal(entry, vm.SelectedEntry);
             Assert.True(entry.IsDetailVisible);
+        }
+
+        [Fact]
+        public void TimeInputBehavior_Normalize_HourAndMinute_DoesNotAppendSeconds()
+        {
+            var method = typeof(TimeInputBehavior).GetMethod(
+                "TryNormalizeToHMS",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+            var result = method!.Invoke(null, ["05:33"]) as string;
+
+            Assert.Equal("05:33", result);
+        }
+
+        [Fact]
+        public void TimeInputBehavior_AutoInsertSecondSeparator_WhenTypingAfterHourMinute()
+        {
+            var method = typeof(TimeInputBehavior).GetMethod(
+                "TryAutoInsertSecondSeparator",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+
+            var tb = new System.Windows.Controls.TextBox
+            {
+                Text = "05:33"
+            };
+            tb.SelectionStart = tb.Text.Length;
+            tb.SelectionLength = 0;
+
+            var handled = (bool?)method!.Invoke(null, [tb, "1"]);
+
+            Assert.True(handled);
+            Assert.Equal("05:33:1", tb.Text);
+            Assert.Equal(tb.Text.Length, tb.SelectionStart);
+        }
+
+        [Fact]
+        public void TimeInputBehavior_AutoInsertSeparator_WhenTypingAfterHour()
+        {
+            var method = typeof(TimeInputBehavior).GetMethod(
+                "TryAutoInsertSecondSeparator",
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+            Assert.NotNull(method);
+
+            var tb = new System.Windows.Controls.TextBox
+            {
+                Text = "05"
+            };
+            tb.SelectionStart = tb.Text.Length;
+            tb.SelectionLength = 0;
+
+            var handled = (bool?)method!.Invoke(null, [tb, "3"]);
+
+            Assert.True(handled);
+            Assert.Equal("05:3", tb.Text);
+            Assert.Equal(tb.Text.Length, tb.SelectionStart);
         }
     }
 }
