@@ -114,7 +114,7 @@
                         Header="#" Width="30"
                         DisplayMemberBinding="{Binding (ItemsControl.AlternationIndex),
                         RelativeSource={RelativeSource AncestorType=ListViewItem}}" />
-                    <GridViewColumn DisplayMemberBinding="{Binding Date}">
+                    <GridViewColumn DisplayMemberBinding="{Binding DateDisplay}">
                         <GridViewColumn.Header>
                             <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />
                         </GridViewColumn.Header>
