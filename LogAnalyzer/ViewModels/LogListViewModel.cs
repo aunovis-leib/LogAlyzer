@@ -122,7 +122,6 @@ public partial class LogListViewModel : ObservableObject
         {
             IsLoading = true;
             LoadingStatus = "Lade Logdateien...";
-            _loadCancellation = new CancellationTokenSource();
             var previousFilter = LogFilesView.Filter;
 
             DateTime? minDate = null;
