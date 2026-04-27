@@ -16,6 +16,10 @@ namespace LogAnalyzer.Models
     public class LogFileEntry : INotifyPropertyChanged
     {
         public DateTime Date { get; set; }
+    public bool IsTimeOnlyTimestamp { get; set; }
+    public string DateDisplay => IsTimeOnlyTimestamp
+        ? Date.ToString("HH:mm:ss.fff")
+        : Date.ToString("dd.MM.yyyy HH:mm:ss.fff");
         public LogType Type { get; set; }
         public string Text { get; set; } = string.Empty;
         public string[] Detail { get; set; } = [];
