@@ -6,7 +6,6 @@ using LogAnalyzer.Services.Parsing;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.Windows.Data;
 
 namespace LogAnalyzer.ViewModels;
@@ -50,6 +49,9 @@ public partial class LogListViewModel : ObservableObject
 
     [ObservableProperty]
     private string _filterText = string.Empty;
+
+    [ObservableProperty]
+    private string _filterTime = string.Empty;
 
     [ObservableProperty]
     private DateTime? _filterFromDate = null;
@@ -245,6 +247,15 @@ public partial class LogListViewModel : ObservableObject
         LogFilesView.Refresh();
     }
 
+    partial void OnFilterTimeChanged(string value)
+    {
+        if (IsLoading) return;
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            LogFilesView.Refresh();
+        }
+    }
+
     partial void OnFilterFromDateChanged(DateTime? value)
     {
         if (IsLoading) return;
@@ -264,6 +275,11 @@ public partial class LogListViewModel : ObservableObject
         if (!typeOk) return false;
         if (FilterFromDate is not null && e.Date.Date < FilterFromDate.Value.Date) return false;
         if (FilterToDate is not null && e.Date.Date > FilterToDate.Value.Date) return false;
+        if (!string.IsNullOrWhiteSpace(FilterTime)
+            && !e.Date.ToString("HH:mm:ss").StartsWith(FilterTime.Trim(), StringComparison.Ordinal))
+        {
+            return false;
+        }
         if (string.IsNullOrWhiteSpace(FilterText)) return true;
         return (e.Text?.IndexOf(FilterText, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
     }

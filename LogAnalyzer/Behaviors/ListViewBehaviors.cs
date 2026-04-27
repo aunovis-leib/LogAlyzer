@@ -2,50 +2,49 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-namespace LogAnalyzer.Behaviors
+namespace LogAnalyzer.Behaviors;
+
+public static class ListViewBehaviors
 {
-    public static class ListViewBehaviors
+    public static readonly DependencyProperty ScrollToItemProperty = DependencyProperty.RegisterAttached(
+        "ScrollToItem",
+        typeof(object),
+        typeof(ListViewBehaviors),
+        new PropertyMetadata(null, OnScrollToItemChanged));
+
+    public static void SetScrollToItem(DependencyObject element, object value)
     {
-        public static readonly DependencyProperty ScrollToItemProperty = DependencyProperty.RegisterAttached(
-            "ScrollToItem",
-            typeof(object),
-            typeof(ListViewBehaviors),
-            new PropertyMetadata(null, OnScrollToItemChanged));
+        element.SetValue(ScrollToItemProperty, value);
+    }
 
-        public static void SetScrollToItem(DependencyObject element, object value)
+    public static object GetScrollToItem(DependencyObject element)
+    {
+        return element.GetValue(ScrollToItemProperty);
+    }
+
+    private static void OnScrollToItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not ListView listView || e.NewValue is null)
+            return;
+
+        var item = e.NewValue;
+
+        void Scroll()
         {
-            element.SetValue(ScrollToItemProperty, value);
+            listView.SelectedItem = item;
+            listView.ScrollIntoView(item);
+            var container = listView.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem;
+            container?.BringIntoView();
         }
 
-        public static object GetScrollToItem(DependencyObject element)
+        if (listView.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
         {
-            return element.GetValue(ScrollToItemProperty);
+            Scroll();
         }
-
-        private static void OnScrollToItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        else
         {
-            if (d is not ListView listView || e.NewValue is null)
-                return;
-
-            var item = e.NewValue;
-
-            void Scroll()
-            {
-                listView.SelectedItem = item;
-                listView.ScrollIntoView(item);
-                var container = listView.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem;
-                container?.BringIntoView();
-            }
-
-            if (listView.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
-            {
-                Scroll();
-            }
-            else
-            {
-                // Defer until UI is ready
-                listView.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new System.Action(Scroll));
-            }
+            // Defer until UI is ready
+            listView.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new System.Action(Scroll));
         }
     }
 }
