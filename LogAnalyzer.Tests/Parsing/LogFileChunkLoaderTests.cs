@@ -80,4 +80,54 @@ public class LogFileChunkLoaderTests
             File.Delete(tempFile);
         }
     }
+
+    [Fact]
+    public async Task LoadAsync_TwoFilesWithDifferentDates_AllEntriesKeepCorrectDate()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "LogAnalyzerTests", "TwoFilesDifferentDates_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+
+        var file1 = Path.Combine(tempDir, "first.log");
+        var file2 = Path.Combine(tempDir, "second.log");
+
+        try
+        {
+            await File.WriteAllLinesAsync(file1,
+            [
+                "22.04.2026 10:00:00.000|Info|first-1",
+                "22.04.2026 10:01:00.000|Warning|first-2"
+            ]);
+
+            await File.WriteAllLinesAsync(file2,
+            [
+                "23.04.2026 11:00:00.000|Error|second-1",
+                "23.04.2026 11:01:00.000|Debug|second-2"
+            ]);
+
+            var loader = new LogFileChunkLoader(new LegacyLogParser());
+            var entries = new List<LogFileEntry>();
+
+            await foreach (var chunk in loader.LoadAsync([file1, file2], 10))
+            {
+                entries.AddRange(chunk.Entries);
+            }
+
+            Assert.Equal(4, entries.Count);
+
+            Assert.Equal(new DateTime(2026, 4, 22, 10, 0, 0, 0), entries[0].Date);
+            Assert.Equal(new DateTime(2026, 4, 22, 10, 1, 0, 0), entries[1].Date);
+            Assert.Equal(new DateTime(2026, 4, 23, 11, 0, 0, 0), entries[2].Date);
+            Assert.Equal(new DateTime(2026, 4, 23, 11, 1, 0, 0), entries[3].Date);
+
+            Assert.All(entries.Take(2), e => Assert.Equal(new DateTime(2026, 4, 22), e.Date.Date));
+            Assert.All(entries.Skip(2), e => Assert.Equal(new DateTime(2026, 4, 23), e.Date.Date));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+    }
 }
