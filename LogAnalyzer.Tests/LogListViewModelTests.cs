@@ -96,6 +96,39 @@ namespace LogAnalyzer.Tests
         }
 
         [Fact]
+        public void FilterByType_Text_Searches_Details()
+        {
+            var temp = CreateTempDir("filterdetails");
+            AppSettingsManager.Initialize(temp);
+            var vm = new LogListViewModel(AppSettingsManager.Instance, null);
+
+            var matchingEntry = new LogFileEntry
+            {
+                Date = DateTime.Now,
+                Type = LogType.Info,
+                Text = "main text",
+                Detail = ["first detail", "contains needle"]
+            };
+            var nonMatchingEntry = new LogFileEntry
+            {
+                Date = DateTime.Now,
+                Type = LogType.Info,
+                Text = "other main text",
+                Detail = ["other detail"]
+            };
+
+            vm.LogFilesEntries.Add(matchingEntry);
+            vm.LogFilesEntries.Add(nonMatchingEntry);
+
+            vm.FilterText = "needle";
+            vm.LogFilesView.Refresh();
+
+            var list = vm.LogFilesView.Cast<LogFileEntry>().ToList();
+            Assert.Single(list);
+            Assert.Equal(matchingEntry, list[0]);
+        }
+
+        [Fact]
         public void SelectEntryFromOutside_SelectsClosest_Within_Tolerance()
         {
             var temp = CreateTempDir("select");

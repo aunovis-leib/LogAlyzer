@@ -288,7 +288,14 @@ public partial class LogListViewModel : ObservableObject
             return false;
         }
         if (string.IsNullOrWhiteSpace(FilterText)) return true;
-        return (e.Text?.IndexOf(FilterText, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
+        var filter = FilterText.Trim();
+        var textMatch = (e.Text?.IndexOf(filter, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
+        if (textMatch)
+        {
+            return true;
+        }
+
+        return e.Detail?.Any(d => (d?.IndexOf(filter, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0) == true;
     }
 
     private void UpdateAvailableTypes(IEnumerable<LogType>? observedTypes = null)
