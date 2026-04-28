@@ -80,6 +80,13 @@ public partial class LogListViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ApplyFilterText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        FilterText = text.Trim();
+    }
+
+    [RelayCommand]
     private void SelectEntry(LogFileEntry? entry)
     {
         if (entry is null) return;

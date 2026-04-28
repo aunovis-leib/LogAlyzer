@@ -129,6 +129,18 @@ namespace LogAnalyzer.Tests
         }
 
         [Fact]
+        public void ApplyFilterTextCommand_Sets_Trimmed_FilterText()
+        {
+            var temp = CreateTempDir("applyfiltertext");
+            AppSettingsManager.Initialize(temp);
+            var vm = new LogListViewModel(AppSettingsManager.Instance, null);
+
+            vm.ApplyFilterTextCommand.Execute("  selected detail text  ");
+
+            Assert.Equal("selected detail text", vm.FilterText);
+        }
+
+        [Fact]
         public void SelectEntryFromOutside_SelectsClosest_Within_Tolerance()
         {
             var temp = CreateTempDir("select");

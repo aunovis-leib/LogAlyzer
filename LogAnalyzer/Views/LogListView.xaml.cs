@@ -77,6 +77,11 @@ public partial class LogListView : UserControl
         }
     }
 
+    private void DetailTextBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+    }
+
     // Programmatically select an entry and scroll it into view
     public void SelectAndScrollTo(LogFileEntry entry)
     {
