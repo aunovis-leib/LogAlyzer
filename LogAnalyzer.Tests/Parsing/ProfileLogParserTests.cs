@@ -52,7 +52,7 @@ public class ProfileLogParserTests
 
         Assert.True(ok);
         Assert.Equal(DateTime.Today.AddHours(5).AddMinutes(33).AddSeconds(31).AddMilliseconds(255), entry.Date);
-        Assert.Equal(LogType.Info, entry.Type);
+        Assert.Equal((LogType)4, entry.Type);
         Assert.Equal("0FAC* ==> UaCoreServerApplication::start", entry.Text);
     }
 }

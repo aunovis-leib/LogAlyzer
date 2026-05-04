@@ -47,8 +47,8 @@ namespace LogAnalyzer.Tests
             AppSettingsManager.Initialize(temp);
             var vm = new LogListViewModel(AppSettingsManager.Instance, null);
 
-            var d1 = new DateTime(2024, 1, 1);
-            var d2 = new DateTime(2024, 1, 2);
+            var d1 = new DateTime(2024, 1, 1, 0, 0, 0);
+            var d2 = new DateTime(2024, 1, 2, 0, 0, 1);
             var e1 = new LogFileEntry { Date = d1, Type = LogType.Error, Text = "hello error" };
             var e2 = new LogFileEntry { Date = d2, Type = LogType.Info, Text = "info message" };
 
@@ -237,47 +237,84 @@ namespace LogAnalyzer.Tests
         [Fact]
         public void TimeInputBehavior_AutoInsertSecondSeparator_WhenTypingAfterHourMinute()
         {
-            var method = typeof(TimeInputBehavior).GetMethod(
-                "TryAutoInsertSecondSeparator",
-                BindingFlags.NonPublic | BindingFlags.Static);
-
-            Assert.NotNull(method);
-
-            var tb = new System.Windows.Controls.TextBox
+            StaTestHelper.Run(() =>
             {
-                Text = "05:33"
-            };
-            tb.SelectionStart = tb.Text.Length;
-            tb.SelectionLength = 0;
+                var method = typeof(TimeInputBehavior).GetMethod(
+                    "TryAutoInsertSecondSeparator",
+                    BindingFlags.NonPublic | BindingFlags.Static);
 
-            var handled = (bool?)method!.Invoke(null, [tb, "1"]);
+                Assert.NotNull(method);
 
-            Assert.True(handled);
-            Assert.Equal("05:33:1", tb.Text);
-            Assert.Equal(tb.Text.Length, tb.SelectionStart);
+                var tb = new System.Windows.Controls.TextBox
+                {
+                    Text = "05:33"
+                };
+                tb.SelectionStart = tb.Text.Length;
+                tb.SelectionLength = 0;
+
+                var handled = (bool?)method!.Invoke(null, [tb, "1"]);
+
+                Assert.True(handled);
+                Assert.Equal("05:33:1", tb.Text);
+                Assert.Equal(tb.Text.Length, tb.SelectionStart);
+            });
         }
 
         [Fact]
         public void TimeInputBehavior_AutoInsertSeparator_WhenTypingAfterHour()
         {
-            var method = typeof(TimeInputBehavior).GetMethod(
-                "TryAutoInsertSecondSeparator",
-                BindingFlags.NonPublic | BindingFlags.Static);
-
-            Assert.NotNull(method);
-
-            var tb = new System.Windows.Controls.TextBox
+            StaTestHelper.Run(() =>
             {
-                Text = "05"
-            };
-            tb.SelectionStart = tb.Text.Length;
-            tb.SelectionLength = 0;
+                var method = typeof(TimeInputBehavior).GetMethod(
+                    "TryAutoInsertSecondSeparator",
+                    BindingFlags.NonPublic | BindingFlags.Static);
 
-            var handled = (bool?)method!.Invoke(null, [tb, "3"]);
+                Assert.NotNull(method);
 
-            Assert.True(handled);
-            Assert.Equal("05:3", tb.Text);
-            Assert.Equal(tb.Text.Length, tb.SelectionStart);
+                var tb = new System.Windows.Controls.TextBox
+                {
+                    Text = "05"
+                };
+                tb.SelectionStart = tb.Text.Length;
+                tb.SelectionLength = 0;
+
+                var handled = (bool?)method!.Invoke(null, [tb, "3"]);
+
+                Assert.True(handled);
+                Assert.Equal("05:3", tb.Text);
+                Assert.Equal(tb.Text.Length, tb.SelectionStart);
+            });
+        }
+
+        [Fact]
+        public void FilteredEntryCount_TracksCurrentFilter()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("filteredcount");
+                try
+                {
+                    AppSettingsManager.Initialize(temp);
+                    var vm = new LogListViewModel(AppSettingsManager.Instance, null);
+
+                    vm.FilterTime = string.Empty;
+                    vm.LogFilesEntries.Add(new LogFileEntry { Date = new DateTime(2024, 1, 1), Type = LogType.Info, Text = "alpha" });
+                    vm.LogFilesEntries.Add(new LogFileEntry { Date = new DateTime(2024, 1, 1), Type = LogType.Error, Text = "beta" });
+                    vm.LogFilesView.Refresh();
+
+                    Assert.Equal(2, vm.FilteredEntryCount);
+
+                    vm.FilterText = "alpha";
+                    Assert.Equal(1, vm.FilteredEntryCount);
+
+                    vm.FilterText = "not-found";
+                    Assert.Equal(0, vm.FilteredEntryCount);
+                }
+                finally
+                {
+                    if (Directory.Exists(temp)) Directory.Delete(temp, true);
+                }
+            });
         }
     }
 }

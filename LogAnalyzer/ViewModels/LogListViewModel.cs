@@ -15,6 +15,8 @@ public partial class LogListViewModel : ObservableObject
     private readonly AppSettingsManager _appSettings;
     private CancellationTokenSource? _loadCancellation;
 
+    public FileExplorerViewModel FileExplorerVM { get; } = new();
+
     [ObservableProperty]
     private ParserProfile? _selectedProfile;
 
@@ -58,6 +60,13 @@ public partial class LogListViewModel : ObservableObject
 
     [ObservableProperty]
     private DateTime? _filterToDate = null;
+
+    private int _filteredEntryCount;
+    public int FilteredEntryCount
+    {
+        get => _filteredEntryCount;
+        set => SetProperty(ref _filteredEntryCount, value);
+    }
 
     private bool _isLoading;
     public bool IsLoading
@@ -128,6 +137,15 @@ public partial class LogListViewModel : ObservableObject
             return;
         }
 
+        // Setze Explorer auf das Verzeichnis der ersten gewählten Datei
+        if (dlg.FileNames.Length > 0)
+        {
+            var dir = System.IO.Path.GetDirectoryName(dlg.FileNames[0]);
+            if (!string.IsNullOrEmpty(dir))
+                FileExplorerVM.LoadItems(dir);
+            FileExplorerVM.SetLoadedFiles(dlg.FileNames);
+        }
+
         IsLoading = true;
         LoadingStatus = "Lade Logdateien...";
         var previousFilter = LogFilesView.Filter;
@@ -193,7 +211,7 @@ public partial class LogListViewModel : ObservableObject
             UpdateAvailableTypes(observedTypes);
             UpdateAvailableDates(minDate, maxDate);
             LogFilesView.Filter = FilterByType;
-            LogFilesView.Refresh();
+            RefreshView();
             EntriesReloaded?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException)
@@ -203,7 +221,7 @@ public partial class LogListViewModel : ObservableObject
             UpdateAvailableTypes(observedTypes);
             UpdateAvailableDates(minDate, maxDate);
             LogFilesView.Filter = FilterByType;
-            LogFilesView.Refresh();
+            RefreshView();
             EntriesReloaded?.Invoke(this, EventArgs.Empty);
         }
         finally
@@ -211,7 +229,7 @@ public partial class LogListViewModel : ObservableObject
             if (LogFilesView.Filter is null)
             {
                 LogFilesView.Filter = previousFilter ?? FilterByType;
-                LogFilesView.Refresh();
+                RefreshView();
             }
 
             _loadCancellation?.Dispose();
@@ -235,6 +253,8 @@ public partial class LogListViewModel : ObservableObject
         _selectedProfile = selectedProfile;
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
+        FileExplorerVM.FilesSelected += OnExplorerFilesSelected;
+        UpdateFilteredEntryCount();
         // initialize available types with just 'Alle'
         UpdateAvailableTypes();
         // initialize available dates
@@ -244,21 +264,136 @@ public partial class LogListViewModel : ObservableObject
             if (_suppressAvailableTypesUpdate) return;
             UpdateAvailableTypes();
             UpdateAvailableDates();
+            UpdateFilteredEntryCount();
         };
+    }
+
+    private async void OnExplorerFilesSelected(object? sender, IReadOnlyList<string> filePaths)
+    {
+        if (ChooseFileCommand.IsRunning || IsLoading)
+        {
+            return;
+        }
+
+        await LoadFilesAsync(filePaths.ToArray());
+    }
+
+    private async Task LoadFilesAsync(string[] fileNames)
+    {
+        if (fileNames.Length == 0)
+        {
+            return;
+        }
+
+        var dir = System.IO.Path.GetDirectoryName(fileNames[0]);
+        if (!string.IsNullOrEmpty(dir))
+            FileExplorerVM.LoadItems(dir);
+        FileExplorerVM.SetLoadedFiles(fileNames);
+
+        IsLoading = true;
+        LoadingStatus = "Lade Logdateien...";
+        var previousFilter = LogFilesView.Filter;
+
+        DateTime? minDate = null;
+        DateTime? maxDate = null;
+        var observedTypes = new HashSet<LogType>();
+
+        _loadCancellation?.Dispose();
+        _loadCancellation = new CancellationTokenSource();
+        var token = _loadCancellation.Token;
+
+        try
+        {
+            _suppressAvailableTypesUpdate = true;
+            LogFilesView.Filter = null;
+            LogFilesEntries.Clear();
+
+            var parser = GetActiveParser();
+            var loader = new LogFileChunkLoader(parser);
+            var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
+            var loadedEntries = 0;
+
+            await foreach (var chunk in loader.LoadAsync(fileNames, 2000, token))
+            {
+                foreach (var e in chunk.Entries)
+                {
+                    if (loadedEntries >= maxEntries)
+                    {
+                        break;
+                    }
+
+                    LogFilesEntries.Add(e);
+                    loadedEntries++;
+                    observedTypes.Add(e.Type);
+
+                    var day = e.Date.Date;
+                    if (minDate is null || day < minDate.Value)
+                    {
+                        minDate = day;
+                    }
+
+                    if (maxDate is null || day > maxDate.Value)
+                    {
+                        maxDate = day;
+                    }
+                }
+
+                LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
+
+                if (loadedEntries >= maxEntries)
+                {
+                    break;
+                }
+            }
+
+            if (loadedEntries >= maxEntries)
+            {
+                LoadingStatus = $"Maximale Eintragsanzahl erreicht ({maxEntries:N0}).";
+            }
+
+            _suppressAvailableTypesUpdate = false;
+            UpdateAvailableTypes(observedTypes);
+            UpdateAvailableDates(minDate, maxDate);
+            LogFilesView.Filter = FilterByType;
+            RefreshView();
+            EntriesReloaded?.Invoke(this, EventArgs.Empty);
+        }
+        catch (OperationCanceledException)
+        {
+            LoadingStatus = "Ladevorgang abgebrochen.";
+            _suppressAvailableTypesUpdate = false;
+            UpdateAvailableTypes(observedTypes);
+            UpdateAvailableDates(minDate, maxDate);
+            LogFilesView.Filter = FilterByType;
+            RefreshView();
+            EntriesReloaded?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            if (LogFilesView.Filter is null)
+            {
+                LogFilesView.Filter = previousFilter ?? FilterByType;
+                RefreshView();
+            }
+
+            _loadCancellation?.Dispose();
+            _loadCancellation = null;
+            IsLoading = false;
+        }
     }
 
     partial void OnSelectedTypeChanged(LogType value)
     {
         if (IsLoading) return;
         LogFilesView.Filter = FilterByType;
-        LogFilesView.Refresh();
+        RefreshView();
         UpdateAvailableTypes();
     }
 
     partial void OnFilterTextChanged(string value)
     {
         if (IsLoading) return;
-        LogFilesView.Refresh();
+        RefreshView();
     }
 
     partial void OnFilterTimeChanged(string value)
@@ -266,20 +401,31 @@ public partial class LogListViewModel : ObservableObject
         if (IsLoading) return;
         if (!string.IsNullOrWhiteSpace(value))
         {
-            LogFilesView.Refresh();
+            RefreshView();
         }
     }
 
     partial void OnFilterFromDateChanged(DateTime? value)
     {
         if (IsLoading) return;
-        LogFilesView.Refresh();
+        RefreshView();
     }
 
     partial void OnFilterToDateChanged(DateTime? value)
     {
         if (IsLoading) return;
+        RefreshView();
+    }
+
+    private void RefreshView()
+    {
         LogFilesView.Refresh();
+        UpdateFilteredEntryCount();
+    }
+
+    private void UpdateFilteredEntryCount()
+    {
+        FilteredEntryCount = LogFilesView.Cast<object>().Count();
     }
 
     private bool FilterByType(object obj)
