@@ -20,6 +20,7 @@ namespace LogAnalyzer
         {
             InitializeComponent();
             DataContext = new ViewModels.MainViewModel(Services.AppServices.AppSettings);
+            // Ensure FileExplorerViewModel is initialized in MainViewModel
         }
 
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)
