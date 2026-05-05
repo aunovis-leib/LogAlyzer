@@ -128,4 +128,29 @@ public class FileExplorerViewModelTests
             Directory.Delete(dir, true);
         }
     }
+
+    [Fact]
+    public void SetRootFolder_RestrictsGoUpNavigation()
+    {
+        var root = CreateTempDir("explorer_root");
+        var child = Path.Combine(root, "child");
+        Directory.CreateDirectory(child);
+
+        try
+        {
+            var vm = new FileExplorerViewModel();
+            vm.SetRootFolder(root);
+            vm.LoadItems(child);
+
+            vm.GoUpCommand.Execute(null);
+            Assert.Equal(root, vm.CurrentPath);
+
+            vm.GoUpCommand.Execute(null);
+            Assert.Equal(root, vm.CurrentPath);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
 }

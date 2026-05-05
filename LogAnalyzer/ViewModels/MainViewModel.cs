@@ -39,11 +39,32 @@ public partial class MainViewModel : ObservableObject
         _appSettings = appSettings;
         Profiles = _appSettings.ParserProfiles;
         SelectedProfile = Profiles.FirstOrDefault();
+        SettingsVM = new SettingsViewModel();
+        SettingsVM.PropertyChanged += SettingsVM_PropertyChanged;
         var first = new LogListViewModel(_appSettings, SelectedProfile);
+        ApplyExplorerRootFolder(first);
         Lists.Add(first);
         SubscribeToList(first);
         Lists.CollectionChanged += Lists_CollectionChanged;
         RefreshChart();
+    }
+
+    private void SettingsVM_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(SettingsViewModel.ExplorerRootFolder))
+        {
+            return;
+        }
+
+        foreach (var list in Lists)
+        {
+            ApplyExplorerRootFolder(list);
+        }
+    }
+
+    private void ApplyExplorerRootFolder(LogListViewModel vm)
+    {
+        vm.FileExplorerVM.SetRootFolder(SettingsVM?.ExplorerRootFolder);
     }
 
     private void Lists_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -79,6 +100,7 @@ public partial class MainViewModel : ObservableObject
             FilterFromDate = FilterFromDate,
             FilterToDate = FilterToDate
         };
+        ApplyExplorerRootFolder(vm);
         Lists.Add(vm);
         SubscribeToList(vm);
         RefreshChart();

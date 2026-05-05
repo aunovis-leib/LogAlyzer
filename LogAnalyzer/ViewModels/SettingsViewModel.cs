@@ -20,6 +20,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private TimeSpan _syncTolerance = TimeSpan.FromHours(1);
 
+    [ObservableProperty]
+    private string _explorerRootFolder = string.Empty;
+
     public SettingsViewModel()
     {
         var settings = AppSettingsManager.Instance.Settings;
@@ -29,6 +32,7 @@ public partial class SettingsViewModel : ObservableObject
         SyncSelectionAcrossLists = settingsView.SyncSelectionAcrossLists;
         MaxEntriesPerList = settingsView.MaxEntriesPerList;
         SyncTolerance = settingsView.SyncTolerance;
+        ExplorerRootFolder = settingsView.ExplorerRootFolder;
     }
 
     partial void OnShowLiveChartChanged(bool value)
@@ -63,6 +67,14 @@ public partial class SettingsViewModel : ObservableObject
         manager.Save();
     }
 
+    partial void OnExplorerRootFolderChanged(string value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.ExplorerRootFolder = value?.Trim() ?? string.Empty;
+        manager.Save();
+    }
+
     [RelayCommand]
     private void ResetDefaults()
     {
@@ -70,6 +82,7 @@ public partial class SettingsViewModel : ObservableObject
         ShowLiveChart = false;
         MaxEntriesPerList = 10000;
         SyncTolerance = TimeSpan.FromHours(1);
+        ExplorerRootFolder = string.Empty;
     }
 
     private static LiveChartSettings GetOrCreateLiveChartSettings(AppSettings settings)

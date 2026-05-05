@@ -10,6 +10,7 @@ public partial class FileExplorerViewModel : ObservableObject
     public event EventHandler<IReadOnlyList<string>>? FilesSelected;
 
     private HashSet<string> _loadedFiles = new(StringComparer.OrdinalIgnoreCase);
+    private string _rootPath = string.Empty;
 
     public ObservableCollection<FileSystemItem> Items { get; } = new();
 
@@ -25,10 +26,29 @@ public partial class FileExplorerViewModel : ObservableObject
 
     public FileExplorerViewModel()
     {
-        // Setze Startverzeichnis auf Projektverzeichnis
         var startDir = Directory.GetCurrentDirectory();
         CurrentPath = startDir;
         LoadItems(startDir);
+    }
+
+    public void SetRootFolder(string? rootFolder)
+    {
+        var candidate = (rootFolder ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            _rootPath = string.Empty;
+            LoadItems(Directory.GetCurrentDirectory());
+            return;
+        }
+
+        if (!Directory.Exists(candidate))
+        {
+            return;
+        }
+
+        _rootPath = Path.GetFullPath(candidate);
+        LoadItems(_rootPath);
     }
 
     public void LoadItems(string path)
@@ -100,7 +120,7 @@ public partial class FileExplorerViewModel : ObservableObject
     private void GoUp()
     {
         var parent = Directory.GetParent(CurrentPath);
-        if (parent != null)
+        if (parent != null && (string.IsNullOrEmpty(_rootPath) || parent.FullName.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase)))
             LoadItems(parent.FullName);
     }
 }

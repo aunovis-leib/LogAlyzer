@@ -30,6 +30,7 @@ namespace LogAnalyzer.Tests
             Assert.True(vm.SyncSelectionAcrossLists);
             Assert.True(vm.ShowLiveChart);
             Assert.Equal(10000, vm.MaxEntriesPerList);
+            Assert.Equal(string.Empty, vm.ExplorerRootFolder);
         }
 
         [Fact]
@@ -43,12 +44,27 @@ namespace LogAnalyzer.Tests
             vm.SyncSelectionAcrossLists = false;
             vm.ShowLiveChart = true;
             vm.MaxEntriesPerList = 5;
+            vm.ExplorerRootFolder = tempDir;
 
             vm.ResetDefaultsCommand.Execute(null);
 
             Assert.True(vm.SyncSelectionAcrossLists);
             Assert.False(vm.ShowLiveChart);
             Assert.Equal(10000, vm.MaxEntriesPerList);
+            Assert.Equal(string.Empty, vm.ExplorerRootFolder);
+        }
+
+        [Fact]
+        public void ExplorerRootFolder_IsPersistedToSettings()
+        {
+            var tempDir = CreateTempDir("settings_root_folder");
+            AppSettingsManager.TestBaseDirectory = null;
+            AppSettingsManager.Initialize(tempDir);
+
+            var vm = new SettingsViewModel();
+            vm.ExplorerRootFolder = tempDir;
+
+            Assert.Equal(tempDir, AppSettingsManager.Instance.Settings.SettingsView.ExplorerRootFolder);
         }
     }
 }

@@ -16,6 +16,13 @@
                     <TextBlock VerticalAlignment="Center" Text="{x:Static res:Strings.MaxEntriesPerList}" />
                     <TextBox Width="80" Margin="6,0,0,0" Text="{Binding MaxEntriesPerList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,8,0,0">
+                    <TextBlock VerticalAlignment="Center" Text="Explorer root folder" />
+                    <DockPanel Margin="0,4,0,0">
+                        <Button DockPanel.Dock="Right" Content="..." Width="28" Margin="6,0,0,0" Click="ChooseExplorerRootFolder_Click" />
+                        <TextBox Text="{Binding ExplorerRootFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </DockPanel>
+                </StackPanel>
             </StackPanel>
         </GroupBox>
 
