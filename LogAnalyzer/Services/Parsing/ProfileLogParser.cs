@@ -86,6 +86,11 @@ namespace LogAnalyzer.Services.Parsing
         private static LogType TryParseLogType(ReadOnlySpan<char> typePart)
         {
             var sanitizedType = typePart.ToString().Replace("\t", string.Empty).Trim();
+            if (int.TryParse(sanitizedType, out var numeric))
+            {
+                return (LogType)numeric;
+            }
+
             if (!Enum.TryParse<LogType>(sanitizedType, true, out var type))
             {
                 type = LogType.Info;

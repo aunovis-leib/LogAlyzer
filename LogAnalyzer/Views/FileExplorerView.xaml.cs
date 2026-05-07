@@ -1,8 +1,6 @@
-using System.Windows;
+using LogAnalyzer.ViewModels;
 using System.Windows.Controls;
 using System.Windows.Input;
-using LogAnalyzer.ViewModels;
-using LogAnalyzer.Services;
 
 namespace LogAnalyzer.Views;
 
@@ -35,18 +33,5 @@ public partial class FileExplorerView : UserControl
             vm.OpenSelection(selectedItems);
             e.Handled = true;
         }
-    }
-
-    private void SaveCurrentPathAsRoot_Click(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not FileExplorerViewModel vm || string.IsNullOrWhiteSpace(vm.CurrentPath))
-        {
-            return;
-        }
-
-        var manager = AppSettingsManager.Instance;
-        manager.Settings.SettingsView.ExplorerRootFolder = vm.CurrentPath;
-        manager.Save();
-        vm.SetRootFolder(vm.CurrentPath);
     }
 }

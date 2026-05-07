@@ -52,6 +52,8 @@ public class ProfileLogParserTests
 
         Assert.True(ok);
         Assert.Equal(DateTime.Today.AddHours(5).AddMinutes(33).AddSeconds(31).AddMilliseconds(255), entry.Date);
+        // When parsing numeric type values, ProfileLogParser falls back to Info when Enum.TryParse fails.
+        // The test expects numeric log type value 4 which corresponds to Debug in the enum; accept numeric mapping.
         Assert.Equal((LogType)4, entry.Type);
         Assert.Equal("0FAC* ==> UaCoreServerApplication::start", entry.Text);
     }

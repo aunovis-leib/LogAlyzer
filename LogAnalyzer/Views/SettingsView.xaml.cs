@@ -1,6 +1,7 @@
 ﻿using System.Windows.Controls;
 using LogAnalyzer.ViewModels;
 using Microsoft.Win32;
+using System.Windows;
 
 namespace LogAnalyzer.Views;
 
@@ -35,6 +36,28 @@ public partial class SettingsView : UserControl
         if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.FolderName))
         {
             vm.ExplorerRootFolder = dialog.FolderName;
+        }
+    }
+
+    private void SetCurrentExplorerPathAsRoot_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not SettingsViewModel settingsVm)
+        {
+            return;
+        }
+
+        if (Window.GetWindow(this)?.DataContext is not MainViewModel mainVm)
+        {
+            return;
+        }
+
+        var currentPath = mainVm.Lists
+            .Select(x => x.FileExplorerVM.CurrentPath)
+            .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+
+        if (!string.IsNullOrWhiteSpace(currentPath))
+        {
+            settingsVm.ExplorerRootFolder = currentPath;
         }
     }
 }

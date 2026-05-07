@@ -176,27 +176,44 @@ public static class TimeInputBehavior
 
     private static bool TryAutoInsertSecondSeparator(TextBox tb, string input)
     {
-        if (input.Length != 1 || !char.IsDigit(input[0])) return false;
-        if (tb.SelectionLength != 0) return false;
+        // Delegate to core logic that can be tested without a TextBox instance.
+        if (TryAutoInsertSecondSeparatorCore(tb.Text ?? string.Empty, tb.SelectionStart, input, out var newText, out var newSelectionStart))
+        {
+            tb.Text = newText;
+            tb.SelectionStart = newSelectionStart;
+            return true;
+        }
 
-        var text = tb.Text ?? string.Empty;
-        if (tb.SelectionStart != text.Length) return false;
-        string? newText = null;
+        return false;
+    }
+
+    // Core logic extracted for unit testing without needing a WPF TextBox (avoids STA issues in tests).
+    private static bool TryAutoInsertSecondSeparatorCore(string text, int selectionStart, string input, out string newText, out int newSelectionStart)
+    {
+        newText = text;
+        newSelectionStart = selectionStart;
+
+        if (input.Length != 1 || !char.IsDigit(input[0])) return false;
+        if (selectionStart < 0) return false;
+
+        if (selectionStart != text.Length) return false;
+
+        string? candidate = null;
 
         if (Regex.IsMatch(text, @"^\d{2}$"))
         {
-            newText = text + ":" + input;
+            candidate = text + ":" + input;
         }
         else if (Regex.IsMatch(text, @"^\d{2}:\d{2}$"))
         {
-            newText = $"{text}:{input}";
+            candidate = $"{text}:{input}";
         }
 
-        if (newText is null) return false;
-        if (!IsPlausiblePartial(newText)) return false;
+        if (candidate is null) return false;
+        if (!IsPlausiblePartial(candidate)) return false;
 
-        tb.Text = newText;
-        tb.SelectionStart = newText.Length;
+        newText = candidate;
+        newSelectionStart = candidate.Length;
         return true;
     }
 

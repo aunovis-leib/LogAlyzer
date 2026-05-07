@@ -35,6 +35,23 @@ public partial class SettingsViewModel : ObservableObject
         ExplorerRootFolder = settingsView.ExplorerRootFolder;
     }
 
+    // Allow external callers (e.g. view tests or view code) to set the
+    // explorer root folder based on a MainViewModel instance. This extracts
+    // the logic from the view's click handler into a testable method.
+    public void SetExplorerRootFromMain(MainViewModel? mainVm)
+    {
+        if (mainVm is null) return;
+
+        var currentPath = mainVm.Lists
+            .Select(x => x.FileExplorerVM.CurrentPath)
+            .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+
+        if (!string.IsNullOrWhiteSpace(currentPath))
+        {
+            ExplorerRootFolder = currentPath;
+        }
+    }
+
     partial void OnShowLiveChartChanged(bool value)
     {
         var manager = AppSettingsManager.Instance;

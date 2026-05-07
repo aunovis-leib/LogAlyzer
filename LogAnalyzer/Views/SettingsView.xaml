@@ -22,6 +22,7 @@
                         <Button DockPanel.Dock="Right" Content="..." Width="28" Margin="6,0,0,0" Click="ChooseExplorerRootFolder_Click" />
                         <TextBox Text="{Binding ExplorerRootFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     </DockPanel>
+                    <Button Content="Current path as root" Width="140" HorizontalAlignment="Left" Margin="0,6,0,0" Click="SetCurrentExplorerPathAsRoot_Click" />
                 </StackPanel>
             </StackPanel>
         </GroupBox>
