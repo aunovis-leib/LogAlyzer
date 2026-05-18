@@ -2,7 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
-using System.Collections.ObjectModel;
+using LogAnalyzer.Views;
+using System.Windows;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -220,6 +221,36 @@ public partial class SettingsViewModel : ObservableObject
         var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
         settingsView.HighlightRules = new List<HighlightRule>(HighlightRules);
         manager.Save();
+    }
+
+    [RelayCommand]
+    private void OpenPatternEditor()
+    {
+        try
+        {
+            var patternService = App.PatternService;
+            if (patternService == null)
+            {
+                System.Windows.MessageBox.Show("Pattern Service not initialized.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return;
+            }
+
+            var editorVM = new PatternEditorViewModel(patternService);
+            var editorWindow = new Window
+            {
+                Title = "Log Pattern Editor",
+                Width = 1000,
+                Height = 700,
+                WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
+                Content = new PatternEditorView { DataContext = editorVM }
+            };
+
+            editorWindow.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error opening Pattern Editor: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
     }
 
     private static LiveChartSettings GetOrCreateLiveChartSettings(AppSettings settings)
