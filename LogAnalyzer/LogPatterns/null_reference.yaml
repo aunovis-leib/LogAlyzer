@@ -1,0 +1,19 @@
+Id: NullReferenceException
+Name: Null Reference Exception
+Description: Erkennt C# NullReferenceException-Fehler
+RegexPattern: "(?<timestamp>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?) .* (System\\.)?NullReferenceException: (?<message>.*)"
+Severity: error
+Tags:
+  - exception
+  - null
+  - csharp
+Fields:
+  - timestamp
+  - message
+Action:
+  ShowInPanel: true
+  Pin: true
+  UITag: NullRef
+  NotificationText: NullReferenceException erkannt
+Priority: 100
+IsDisabled: false

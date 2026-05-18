@@ -110,7 +110,20 @@
         </GroupBox>
 
         <Button Content="Reset defaults" Command="{Binding ResetDefaultsCommand}" HorizontalAlignment="Right" Width="120" Margin="0,12,0,0" />
+
+        <Separator Margin="0,12,0,8" />
+        <GroupBox Header="Log Pattern Editor">
+            <StackPanel Margin="6">
+                <TextBlock Text="Manage log pattern templates" FontSize="12" Foreground="#666666" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                <Button Content="📋 Open Pattern Editor" 
+                        Command="{Binding OpenPatternEditorCommand}"
+                        Padding="10,8"
+                        Background="#007ACC"
+                        Foreground="White"
+                        FontWeight="Bold"/>
+                <TextBlock Text="Create, edit, and test log pattern templates for automatic error detection" 
+                           FontSize="11" Foreground="#999999" TextWrapping="Wrap" Margin="0,8,0,0"/>
             </StackPanel>
-        </ScrollViewer>
+        </GroupBox>
     </StackPanel>
 </UserControl>

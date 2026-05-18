@@ -1,0 +1,22 @@
+Id: HttpErrorResponse
+Name: HTTP Error Response (5xx)
+Description: Erkennt HTTP 5xx Server-Fehler
+RegexPattern: "(?<timestamp>\\d{2}:\\d{2}:\\d{2}) .* \"(?<method>GET|POST|PUT|DELETE|PATCH) (?<url>/[^\\s]*) (?<protocol>HTTP/[\\d.]+)\" (?<status>[5]\\d{2}) (?<size>\\d+)"
+Severity: error
+Tags:
+  - http
+  - error
+  - server
+Fields:
+  - timestamp
+  - method
+  - url
+  - status
+  - size
+Action:
+  ShowInPanel: true
+  Pin: false
+  UITag: Http5xx
+  NotificationText: HTTP 5xx Fehler erkannt
+Priority: 90
+IsDisabled: false

@@ -1,0 +1,19 @@
+Id: OutOfMemory
+Name: Out of Memory Exception
+Description: Erkennt OutOfMemoryException
+RegexPattern: "(?<timestamp>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*?) .* (System\\.)?OutOfMemoryException: (?<message>.*)"
+Severity: critical
+Tags:
+  - exception
+  - memory
+  - critical
+Fields:
+  - timestamp
+  - message
+Action:
+  ShowInPanel: true
+  Pin: true
+  UITag: OOM
+  NotificationText: Out of Memory Exception - Sofort überprüfen!
+Priority: 200
+IsDisabled: false

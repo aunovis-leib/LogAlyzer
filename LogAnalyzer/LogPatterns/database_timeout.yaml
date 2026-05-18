@@ -1,0 +1,19 @@
+Id: DatabaseTimeout
+Name: Database Command Timeout
+Description: Erkennt Datenbank-Timeout-Fehler
+RegexPattern: "(?<timestamp>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*?) .* Timeout .* CommandTimeout=(?<timeout>\\d+) ms"
+Severity: warning
+Tags:
+  - database
+  - timeout
+  - performance
+Fields:
+  - timestamp
+  - timeout
+Action:
+  ShowInPanel: true
+  Pin: false
+  UITag: DbTimeout
+  NotificationText: null
+Priority: 80
+IsDisabled: false
