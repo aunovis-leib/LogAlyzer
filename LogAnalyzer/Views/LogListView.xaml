@@ -68,7 +68,7 @@
                      Text="{Binding FilterTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      bh:TimeInputBehavior.IsEnabled="True" />
             <TextBox Margin="8,0,0,0" MinWidth="90" Width="90" Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-            
+
             <ComboBox Margin="8,0,0,0"
                       Width="80"
                       IsEditable="True"
@@ -176,6 +176,21 @@
             <Separator />
             <StatusBarItem>
                 <TextBlock Text="{Binding FilteredEntryCount, StringFormat=Gefilterte Einträge: {0:N0}}" />
+            </StatusBarItem>
+            <Separator Visibility="{Binding HasNewEntries, Mode=OneWay}" />
+            <StatusBarItem Visibility="{Binding HasNewEntries, Mode=OneWay}">
+                <Button Command="{Binding ClearNewEntriesNotificationCommand}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Foreground="#0078D4"
+                        Padding="4,2"
+                        Cursor="Hand">
+                    <TextBlock>
+                        <Run Text="✓ "/>
+                        <Run Text="{Binding NewEntriesCount, Mode=OneWay}"/>
+                        <Run Text=" neue Einträge verfügbar"/>
+                    </TextBlock>
+                </Button>
             </StatusBarItem>
         </StatusBar>
     </Grid>

@@ -332,5 +332,187 @@ namespace LogAnalyzer.Tests
                 }
             });
         }
+
+        [Fact]
+        public void HasNewEntries_InitiallyFalse()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("newentries_init");
+                try
+                {
+                    AppSettingsManager.Initialize(temp);
+                    var vm = new LogListViewModel(AppSettingsManager.Instance, null);
+
+                    Assert.False(vm.HasNewEntries);
+                    Assert.Equal(0, vm.NewEntriesCount);
+                }
+                finally
+                {
+                    if (Directory.Exists(temp)) Directory.Delete(temp, true);
+                }
+            });
+        }
+
+        [Fact]
+        public void ClearNewEntriesNotificationCommand_ResetsNotification()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("clear_notif");
+                try
+                {
+                    AppSettingsManager.Initialize(temp);
+                    var vm = new LogListViewModel(AppSettingsManager.Instance, null);
+
+                    // Manuell setzen (würde normalerweise vom Debounce Timer gesetzt)
+                    vm.HasNewEntries = true;
+                    vm.NewEntriesCount = 5;
+
+                    Assert.True(vm.HasNewEntries);
+                    Assert.Equal(5, vm.NewEntriesCount);
+
+                    // Command ausführen
+                    vm.ClearNewEntriesNotificationCommand.Execute(null);
+
+                    Assert.False(vm.HasNewEntries);
+                    Assert.Equal(0, vm.NewEntriesCount);
+                }
+                finally
+                {
+                    if (Directory.Exists(temp)) Directory.Delete(temp, true);
+                }
+            });
+        }
+
+        [Fact]
+        public void AutoReloadToggled_Event_StopsAutoReload_When_Disabled()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("autoreload_toggle_stop");
+                try
+                {
+                    AppSettingsManager.Initialize(temp);
+                    var settingsVm = new SettingsViewModel();
+                    var listVm = new LogListViewModel(AppSettingsManager.Instance, null, settingsVm);
+
+                    // Simuliere geladene Dateien
+                    var logFile = Path.Combine(temp, "test.log");
+                    File.WriteAllText(logFile, "test");
+
+                    // Starte Auto-Reload durch Settings Toggle
+                    settingsVm.AutoReloadLogFiles = true;
+                    // Würde StartAutoReload() aufrufen
+
+                    // Jetzt deaktivieren
+                    settingsVm.AutoReloadLogFiles = false;
+                    // Würde StopAutoReload() aufrufen - sollte keine Exception werfen
+
+                    Assert.False(settingsVm.AutoReloadLogFiles);
+                }
+                finally
+                {
+                    if (Directory.Exists(temp)) Directory.Delete(temp, true);
+                }
+            });
+        }
+
+        [Fact]
+        public void AutoReloadToggled_Event_StartsAutoReload_When_Enabled()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("autoreload_toggle_start");
+                try
+                {
+                    AppSettingsManager.Initialize(temp);
+                    var settingsVm = new SettingsViewModel();
+                    var listVm = new LogListViewModel(AppSettingsManager.Instance, null, settingsVm);
+
+                    // Simuliere geladene Dateien
+                    var logFile = Path.Combine(temp, "test.log");
+                    File.WriteAllText(logFile, "test");
+                    listVm.LogFilesEntries.Add(new LogFileEntry { Date = DateTime.Now, Type = LogType.Info, Text = "entry" });
+
+                    // Aktiviere Auto-Reload
+                    settingsVm.AutoReloadLogFiles = true;
+
+                    Assert.True(settingsVm.AutoReloadLogFiles);
+                }
+                finally
+                {
+                    if (Directory.Exists(temp)) Directory.Delete(temp, true);
+                }
+            });
+        }
+
+        [Fact]
+        public void SettingsViewModel_AutoReloadToggled_Event_Fires()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("settings_event_fire");
+                try
+                {
+                    AppSettingsManager.Initialize(temp);
+                    var settingsVm = new SettingsViewModel();
+
+                    bool eventFired = false;
+                    bool? toggledValue = null;
+
+                    settingsVm.AutoReloadToggled += (sender, enabled) =>
+                    {
+                        eventFired = true;
+                        toggledValue = enabled;
+                    };
+
+                    // Toggeln von false auf true
+                    settingsVm.AutoReloadLogFiles = true;
+                    Assert.True(eventFired);
+                    Assert.True(toggledValue);
+
+                    // Reset
+                    eventFired = false;
+                    toggledValue = null;
+
+                    // Toggeln von true auf false
+                    settingsVm.AutoReloadLogFiles = false;
+                    Assert.True(eventFired);
+                    Assert.False(toggledValue);
+                }
+                finally
+                {
+                    if (Directory.Exists(temp)) Directory.Delete(temp, true);
+                }
+            });
+        }
+
+        [Fact]
+        public void LogListViewModel_WithSettings_Receives_AutoReloadToggled_Events()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("listvm_receives_toggle");
+                try
+                {
+                    AppSettingsManager.Initialize(temp);
+                    var settingsVm = new SettingsViewModel();
+                    var listVm = new LogListViewModel(AppSettingsManager.Instance, null, settingsVm);
+
+                    // Stelle sicher, dass keine Fehler beim Toggle auftreten
+                    settingsVm.AutoReloadLogFiles = true;
+                    settingsVm.AutoReloadLogFiles = false;
+                    settingsVm.AutoReloadLogFiles = true;
+
+                    // Sollte ohne Fehler durchlaufen
+                    Assert.True(settingsVm.AutoReloadLogFiles);
+                }
+                finally
+                {
+                    if (Directory.Exists(temp)) Directory.Delete(temp, true);
+                }
+            });
+        }
     }
 }

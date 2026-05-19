@@ -24,6 +24,8 @@
                     </DockPanel>
                     <Button Content="Current path as root" Width="140" HorizontalAlignment="Left" Margin="0,6,0,0" Click="SetCurrentExplorerPathAsRoot_Click" />
                 </StackPanel>
+                <CheckBox Content="Auto-reload log files" Margin="0,8,0,0"
+                          IsChecked="{Binding AutoReloadLogFiles, Mode=TwoWay}" />
             </StackPanel>
         </GroupBox>
 

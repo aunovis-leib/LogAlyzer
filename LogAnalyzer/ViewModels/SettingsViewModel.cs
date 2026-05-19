@@ -7,6 +7,8 @@ namespace LogAnalyzer.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
+    public event EventHandler<bool>? AutoReloadToggled;
+
     [ObservableProperty]
     private bool _syncSelectionAcrossLists = true;
 
@@ -23,6 +25,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _explorerRootFolder = string.Empty;
 
+    [ObservableProperty]
+    private bool _autoReloadLogFiles = false;
+
     public SettingsViewModel()
     {
         var settings = AppSettingsManager.Instance.Settings;
@@ -33,6 +38,7 @@ public partial class SettingsViewModel : ObservableObject
         MaxEntriesPerList = settingsView.MaxEntriesPerList;
         SyncTolerance = settingsView.SyncTolerance;
         ExplorerRootFolder = settingsView.ExplorerRootFolder;
+        AutoReloadLogFiles = settingsView.AutoReloadLogFiles;
     }
 
     // Allow external callers (e.g. view tests or view code) to set the
@@ -92,6 +98,15 @@ public partial class SettingsViewModel : ObservableObject
         manager.Save();
     }
 
+    partial void OnAutoReloadLogFilesChanged(bool value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.AutoReloadLogFiles = value;
+        manager.Save();
+        AutoReloadToggled?.Invoke(this, value);
+    }
+
     [RelayCommand]
     private void ResetDefaults()
     {
@@ -100,6 +115,7 @@ public partial class SettingsViewModel : ObservableObject
         MaxEntriesPerList = 10000;
         SyncTolerance = TimeSpan.FromHours(1);
         ExplorerRootFolder = string.Empty;
+        AutoReloadLogFiles = false;
     }
 
     private static LiveChartSettings GetOrCreateLiveChartSettings(AppSettings settings)

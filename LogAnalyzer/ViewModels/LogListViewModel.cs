@@ -6,7 +6,10 @@ using LogAnalyzer.Services.Parsing;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Windows.Data;
+using System.Windows.Threading;
+using System.Collections.Generic;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -14,6 +17,13 @@ public partial class LogListViewModel : ObservableObject
 {
     private readonly AppSettingsManager _appSettings;
     private CancellationTokenSource? _loadCancellation;
+    private string[] _currentLoadedFiles = [];
+    private FileSystemWatcher? _fileSystemWatcher;
+    private Dictionary<string, long> _filePositions = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, string> _partialLineBuffers = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, LogFileEntry> _incompleteEntryPerFile = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, List<string>> _incompleteEntryDetailsPerFile = new(StringComparer.OrdinalIgnoreCase);
+    private DispatcherTimer? _debounceTimer;
 
     public FileExplorerViewModel FileExplorerVM { get; } = new();
 
@@ -82,10 +92,31 @@ public partial class LogListViewModel : ObservableObject
         set => SetProperty(ref _loadingStatus, value);
     }
 
+    private bool _hasNewEntries = false;
+    public bool HasNewEntries
+    {
+        get => _hasNewEntries;
+        set => SetProperty(ref _hasNewEntries, value);
+    }
+
+    private int _newEntriesCount = 0;
+    public int NewEntriesCount
+    {
+        get => _newEntriesCount;
+        set => SetProperty(ref _newEntriesCount, value);
+    }
+
     [RelayCommand]
     private void CancelLoading()
     {
         _loadCancellation?.Cancel();
+    }
+
+    [RelayCommand]
+    private void ClearNewEntriesNotification()
+    {
+        HasNewEntries = false;
+        NewEntriesCount = 0;
     }
 
     [RelayCommand]
@@ -146,96 +177,7 @@ public partial class LogListViewModel : ObservableObject
             FileExplorerVM.SetLoadedFiles(dlg.FileNames);
         }
 
-        IsLoading = true;
-        LoadingStatus = "Lade Logdateien...";
-        var previousFilter = LogFilesView.Filter;
-
-        DateTime? minDate = null;
-        DateTime? maxDate = null;
-        var observedTypes = new HashSet<LogType>();
-
-        _loadCancellation?.Dispose();
-        _loadCancellation = new CancellationTokenSource();
-        var token = _loadCancellation.Token;
-
-        try
-        {
-            _suppressAvailableTypesUpdate = true;
-            LogFilesView.Filter = null;
-            LogFilesEntries.Clear();
-
-            var parser = GetActiveParser();
-            var loader = new LogFileChunkLoader(parser);
-            var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
-            var loadedEntries = 0;
-
-            await foreach (var chunk in loader.LoadAsync(dlg.FileNames, 2000, token))
-            {
-                foreach (var e in chunk.Entries)
-                {
-                    if (loadedEntries >= maxEntries)
-                    {
-                        break;
-                    }
-
-                    LogFilesEntries.Add(e);
-                    loadedEntries++;
-                    observedTypes.Add(e.Type);
-
-                    var day = e.Date.Date;
-                    if (minDate is null || day < minDate.Value)
-                    {
-                        minDate = day;
-                    }
-
-                    if (maxDate is null || day > maxDate.Value)
-                    {
-                        maxDate = day;
-                    }
-                }
-
-                LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
-
-                if (loadedEntries >= maxEntries)
-                {
-                    break;
-                }
-            }
-
-            if (loadedEntries >= maxEntries)
-            {
-                LoadingStatus = $"Maximale Eintragsanzahl erreicht ({maxEntries:N0}).";
-            }
-
-            _suppressAvailableTypesUpdate = false;
-            UpdateAvailableTypes(observedTypes);
-            UpdateAvailableDates(minDate, maxDate);
-            LogFilesView.Filter = FilterByType;
-            RefreshView();
-            EntriesReloaded?.Invoke(this, EventArgs.Empty);
-        }
-        catch (OperationCanceledException)
-        {
-            LoadingStatus = "Ladevorgang abgebrochen.";
-            _suppressAvailableTypesUpdate = false;
-            UpdateAvailableTypes(observedTypes);
-            UpdateAvailableDates(minDate, maxDate);
-            LogFilesView.Filter = FilterByType;
-            RefreshView();
-            EntriesReloaded?.Invoke(this, EventArgs.Empty);
-        }
-        finally
-        {
-            if (LogFilesView.Filter is null)
-            {
-                LogFilesView.Filter = previousFilter ?? FilterByType;
-                RefreshView();
-            }
-
-            _loadCancellation?.Dispose();
-            _loadCancellation = null;
-            IsLoading = false;
-        }
+        await LoadFilesAsync(dlg.FileNames);
     }
 
     private ILogParser GetActiveParser()
@@ -247,7 +189,7 @@ public partial class LogListViewModel : ObservableObject
         return new LegacyLogParser();
     }
 
-    public LogListViewModel(AppSettingsManager appSettings, ParserProfile? selectedProfile)
+    public LogListViewModel(AppSettingsManager appSettings, ParserProfile? selectedProfile, SettingsViewModel? settingsViewModel = null)
     {
         _appSettings = appSettings;
         _selectedProfile = selectedProfile;
@@ -255,6 +197,23 @@ public partial class LogListViewModel : ObservableObject
         LogFilesView.Filter = FilterByType;
         FileExplorerVM.FilesSelected += OnExplorerFilesSelected;
         UpdateFilteredEntryCount();
+
+        // Abonniere Auto-Reload Toggle Events
+        if (settingsViewModel != null)
+        {
+            settingsViewModel.AutoReloadToggled += (sender, enabled) =>
+            {
+                if (enabled && _currentLoadedFiles.Length > 0)
+                {
+                    StartAutoReload();
+                }
+                else
+                {
+                    StopAutoReload();
+                }
+            };
+        }
+
         // initialize available types with just 'Alle'
         UpdateAvailableTypes();
         // initialize available dates
@@ -266,6 +225,260 @@ public partial class LogListViewModel : ObservableObject
             UpdateAvailableDates();
             UpdateFilteredEntryCount();
         };
+    }
+
+    private void StartAutoReload()
+    {
+        if (_fileSystemWatcher != null) return;
+
+        if (_currentLoadedFiles.Length == 0) return;
+
+        var watcherDirectory = Path.GetDirectoryName(_currentLoadedFiles[0]);
+        if (string.IsNullOrEmpty(watcherDirectory))
+            return;
+
+        try
+        {
+            _fileSystemWatcher = new FileSystemWatcher(watcherDirectory)
+            {
+                Filter = "*.log",
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                EnableRaisingEvents = false
+            };
+
+            _fileSystemWatcher.Changed += FileSystemWatcher_Changed;
+            _fileSystemWatcher.EnableRaisingEvents = true;
+        }
+        catch
+        {
+            _fileSystemWatcher?.Dispose();
+            _fileSystemWatcher = null;
+        }
+    }
+
+    private void StopAutoReload()
+    {
+        if (_fileSystemWatcher != null)
+        {
+            _fileSystemWatcher.EnableRaisingEvents = false;
+            _fileSystemWatcher.Changed -= FileSystemWatcher_Changed;
+            _fileSystemWatcher.Dispose();
+            _fileSystemWatcher = null;
+        }
+
+        if (_debounceTimer != null)
+        {
+            _debounceTimer.Stop();
+            _debounceTimer.Tick -= DebounceTimer_Tick;
+            _debounceTimer = null;
+        }
+    }
+
+    private HashSet<string> _pendingFileChanges = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _changeSync = new();
+
+    private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
+    {
+        if (IsLoading || _currentLoadedFiles.Length == 0)
+            return;
+
+        lock (_changeSync)
+        {
+            _pendingFileChanges.Add(e.FullPath);
+        }
+
+        // Sicherstellen, dass die Timer-Erstellung auf dem UI-Thread erfolgt
+        App.Current.Dispatcher.Invoke(() =>
+        {
+            if (_debounceTimer == null)
+            {
+                _debounceTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(500)
+                };
+                _debounceTimer.Tick += DebounceTimer_Tick;
+            }
+
+            _debounceTimer.Stop();
+            _debounceTimer.Start();
+        });
+    }
+
+    private async void DebounceTimer_Tick(object? sender, EventArgs e)
+    {
+        _debounceTimer?.Stop();
+
+        string[] filesToProcess;
+        lock (_changeSync)
+        {
+            filesToProcess = _pendingFileChanges.ToArray();
+            _pendingFileChanges.Clear();
+        }
+
+        if (filesToProcess.Length == 0)
+            return;
+
+        var token = _loadCancellation?.Token ?? CancellationToken.None;
+        int totalNewEntries = 0;
+
+        foreach (var filePath in filesToProcess)
+        {
+            if (!_currentLoadedFiles.Contains(filePath, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            try
+            {
+                if (!File.Exists(filePath))
+                    continue;
+
+                var newEntries = await ReadAndParseAppendedEntriesAsync(filePath, token).ConfigureAwait(false);
+                if (newEntries is { Count: > 0 })
+                {
+                    totalNewEntries += newEntries.Count;
+                    await App.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
+                        var remaining = Math.Max(0, maxEntries - LogFilesEntries.Count);
+                        foreach (var entry in newEntries.Take(remaining))
+                        {
+                            LogFilesEntries.Add(entry);
+                        }
+                        if (newEntries.Count > 0)
+                        {
+                            NewEntriesCount = totalNewEntries;
+                            HasNewEntries = true;
+                            UpdateAvailableTypes();
+                            UpdateAvailableDates();
+                            RefreshView();
+                            EntriesReloaded?.Invoke(this, EventArgs.Empty);
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error processing file {filePath}: {ex}");
+            }
+        }
+    }
+
+    private async Task<List<LogFileEntry>> ReadAndParseAppendedEntriesAsync(string filePath, CancellationToken cancellationToken)
+    {
+        var result = new List<LogFileEntry>();
+        try
+        {
+            if (!File.Exists(filePath)) return result;
+
+            return await Task.Run(async () =>
+            {
+                var entries = new List<LogFileEntry>();
+                try
+                {
+                    long lastPos = _filePositions.TryGetValue(filePath, out var p) ? p : 0L;
+                    using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 64 * 1024, FileOptions.SequentialScan);
+
+                    if (fs.Length < lastPos)
+                    {
+                        // file truncated/rotated
+                        lastPos = 0;
+                        _partialLineBuffers[filePath] = string.Empty;
+                        _incompleteEntryPerFile.Remove(filePath);
+                        _incompleteEntryDetailsPerFile.Remove(filePath);
+                    }
+
+                    fs.Seek(lastPos, SeekOrigin.Begin);
+                    using var sr = new StreamReader(fs);
+                    var appended = await sr.ReadToEndAsync().ConfigureAwait(false);
+
+                    // update stored position
+                    _filePositions[filePath] = fs.Position;
+
+                    if (string.IsNullOrEmpty(appended))
+                    {
+                        if (!_partialLineBuffers.TryGetValue(filePath, out var existingPrefix) || string.IsNullOrEmpty(existingPrefix))
+                        {
+                            return entries;
+                        }
+                    }
+
+                    var prefix = _partialLineBuffers.TryGetValue(filePath, out var pref) ? pref : string.Empty;
+                    var combined = (prefix ?? string.Empty) + appended;
+                    var lines = combined.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+                    var endsWithNewline = appended.EndsWith("\n") || appended.EndsWith("\r\n");
+
+                    if (!endsWithNewline && lines.Length > 0)
+                    {
+                        _partialLineBuffers[filePath] = lines[^1];
+                        lines = lines.Take(lines.Length - 1).ToArray();
+                    }
+                    else
+                    {
+                        _partialLineBuffers[filePath] = string.Empty;
+                    }
+
+                    // restore incomplete entry if present
+                    LogFileEntry? currentEntry = null;
+                    List<string>? currentDetail = null;
+                    if (_incompleteEntryPerFile.TryGetValue(filePath, out var inc))
+                    {
+                        currentEntry = inc;
+                        if (_incompleteEntryDetailsPerFile.TryGetValue(filePath, out var det))
+                            currentDetail = new List<string>(det);
+                    }
+
+                    var parser = GetActiveParser();
+
+                    foreach (var ln in lines)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (parser.TryParse(ln, out var entry))
+                        {
+                            if (currentEntry is not null)
+                            {
+                                currentEntry.Detail = currentDetail is { Count: > 0 } ? [.. currentDetail] : [];
+                                entries.Add(currentEntry);
+                            }
+                            currentEntry = entry;
+                            currentDetail = null;
+                        }
+                        else if (currentEntry is not null)
+                        {
+                            currentDetail ??= new List<string>();
+                            currentDetail.Add(ln);
+                        }
+                        // else: no current entry and line didn't parse -> ignore
+                    }
+
+                    // finalize or keep incomplete
+                    if (currentEntry is not null)
+                    {
+                        if (endsWithNewline)
+                        {
+                            currentEntry.Detail = currentDetail is { Count: > 0 } ? [.. currentDetail] : [];
+                            entries.Add(currentEntry);
+                            _incompleteEntryPerFile.Remove(filePath);
+                            _incompleteEntryDetailsPerFile.Remove(filePath);
+                        }
+                        else
+                        {
+                            // keep as incomplete for next tick
+                            _incompleteEntryPerFile[filePath] = currentEntry;
+                            _incompleteEntryDetailsPerFile[filePath] = currentDetail ?? new List<string>();
+                        }
+                    }
+                }
+                catch
+                {
+                    // ignore parse/read errors
+                }
+
+                return entries;
+            }, cancellationToken).ConfigureAwait(false) ?? result;
+        }
+        catch
+        {
+            return result;
+        }
     }
 
     private async void OnExplorerFilesSelected(object? sender, IReadOnlyList<string> filePaths)
@@ -283,6 +496,15 @@ public partial class LogListViewModel : ObservableObject
         if (fileNames.Length == 0)
         {
             return;
+        }
+
+        _currentLoadedFiles = fileNames;
+
+        // Prüfe ob Auto-Reload aktiviert ist
+        var autoReloadEnabled = _appSettings.Settings.SettingsView?.AutoReloadLogFiles ?? false;
+        if (autoReloadEnabled)
+        {
+            StartAutoReload();
         }
 
         var dir = System.IO.Path.GetDirectoryName(fileNames[0]);
@@ -344,6 +566,19 @@ public partial class LogListViewModel : ObservableObject
                 {
                     break;
                 }
+            }
+
+            // Speichere die aktuellen Dateipositionen nach dem Laden
+            foreach (var filePath in fileNames)
+            {
+                try
+                {
+                    if (File.Exists(filePath))
+                    {
+                        _filePositions[filePath] = new FileInfo(filePath).Length;
+                    }
+                }
+                catch { }
             }
 
             if (loadedEntries >= maxEntries)
@@ -496,5 +731,11 @@ public partial class LogListViewModel : ObservableObject
         }
         FilterFromDate = LogFilesEntries.Min(e => e.Date.Date);
         FilterToDate = LogFilesEntries.Max(e => e.Date.Date);
+    }
+
+    ~LogListViewModel()
+    {
+        StopAutoReload();
+        _loadCancellation?.Dispose();
     }
 }

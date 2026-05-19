@@ -41,7 +41,7 @@ public partial class MainViewModel : ObservableObject
         SelectedProfile = Profiles.FirstOrDefault();
         SettingsVM = new SettingsViewModel();
         SettingsVM.PropertyChanged += SettingsVM_PropertyChanged;
-        var first = new LogListViewModel(_appSettings, SelectedProfile);
+        var first = new LogListViewModel(_appSettings, SelectedProfile, SettingsVM);
         ApplyExplorerRootFolder(first);
         Lists.Add(first);
         SubscribeToList(first);
@@ -95,7 +95,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AddList()
     {
-        var vm = new LogListViewModel(_appSettings, SelectedProfile)
+        var vm = new LogListViewModel(_appSettings, SelectedProfile, SettingsVM)
         {
             FilterFromDate = FilterFromDate,
             FilterToDate = FilterToDate
