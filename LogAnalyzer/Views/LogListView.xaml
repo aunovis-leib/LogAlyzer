@@ -12,6 +12,7 @@
              mc:Ignorable="d">
     <UserControl.Resources>
         <conv:AddOneConverter x:Key="AddOne" />
+        <conv:ListIndexConverter x:Key="ListIndex" />
         <conv:LogTypeStringToNullableConverter x:Key="LogTypeStringToNullableConverter" />
         <ObjectDataProvider x:Key="LogTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
@@ -90,7 +91,7 @@
                 <TextBlock Text="Abbrechen" />
             </Button>
         </StackPanel>
-        <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="2" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" AlternationCount="1000000" Grid.ColumnSpan="2"
+        <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="2" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" Grid.ColumnSpan="2"
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling"
                   ScrollViewer.CanContentScroll="True"
@@ -146,10 +147,20 @@
             </ListView.ItemContainerStyle>
             <ListView.View>
                 <GridView>
-                    <GridViewColumn
-                        Header="#" Width="30"
-                        DisplayMemberBinding="{Binding (ItemsControl.AlternationIndex),
-                        RelativeSource={RelativeSource AncestorType=ListViewItem}}" />
+                    <GridViewColumn Header="#" Width="50">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Margin="4,0" TextAlignment="Right">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource ListIndex}">
+                                            <Binding />
+                                            <Binding Path="ItemsSource" RelativeSource="{RelativeSource AncestorType=ListView}" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
                     <GridViewColumn DisplayMemberBinding="{Binding DateDisplay}">
                         <GridViewColumn.Header>
                             <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />
