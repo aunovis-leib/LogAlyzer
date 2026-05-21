@@ -624,6 +624,20 @@ public partial class LogListViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Reloads the currently loaded files with a new max entries limit.
+    /// Called when the MaxEntriesPerList setting changes.
+    /// </summary>
+    public async Task ReloadWithNewMaxEntriesAsync()
+    {
+        if (_currentLoadedFiles.Length == 0)
+        {
+            return;
+        }
+
+        await LoadFilesAsync(_currentLoadedFiles);
+    }
+
     partial void OnSelectedTypeChanged(LogType value)
     {
         if (IsLoading) return;

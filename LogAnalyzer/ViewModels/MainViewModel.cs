@@ -41,6 +41,7 @@ public partial class MainViewModel : ObservableObject
         SelectedProfile = Profiles.FirstOrDefault();
         SettingsVM = new SettingsViewModel();
         SettingsVM.PropertyChanged += SettingsVM_PropertyChanged;
+        SettingsVM.MaxEntriesPerListChanged += SettingsVM_MaxEntriesPerListChanged;
         var first = new LogListViewModel(_appSettings, SelectedProfile, SettingsVM);
         ApplyExplorerRootFolder(first);
         Lists.Add(first);
@@ -59,6 +60,14 @@ public partial class MainViewModel : ObservableObject
         foreach (var list in Lists)
         {
             ApplyExplorerRootFolder(list);
+        }
+    }
+
+    private async void SettingsVM_MaxEntriesPerListChanged(object? sender, int maxEntries)
+    {
+        foreach (var list in Lists)
+        {
+            await list.ReloadWithNewMaxEntriesAsync();
         }
     }
 

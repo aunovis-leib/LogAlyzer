@@ -8,6 +8,7 @@ namespace LogAnalyzer.ViewModels;
 public partial class SettingsViewModel : ObservableObject
 {
     public event EventHandler<bool>? AutoReloadToggled;
+    public event EventHandler<int>? MaxEntriesPerListChanged;
 
     [ObservableProperty]
     private bool _syncSelectionAcrossLists = true;
@@ -84,6 +85,7 @@ public partial class SettingsViewModel : ObservableObject
         var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
         settingsView.MaxEntriesPerList = value;
         manager.Save();
+        MaxEntriesPerListChanged?.Invoke(this, value);
     }
 
     partial void OnSyncToleranceChanged(TimeSpan value)

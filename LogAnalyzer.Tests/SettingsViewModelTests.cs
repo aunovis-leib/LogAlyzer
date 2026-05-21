@@ -116,5 +116,41 @@ namespace LogAnalyzer.Tests
                 Assert.Equal("initial", vm.ExplorerRootFolder);
             });
         }
+
+        [Fact]
+        public void MaxEntriesPerListChanged_Event_RaisedWhenValueChanges()
+        {
+            var tempDir = CreateTempDir("max_entries_event");
+            AppSettingsManager.TestBaseDirectory = null;
+            AppSettingsManager.Initialize(tempDir);
+
+            var vm = new SettingsViewModel();
+            var eventRaised = false;
+            var eventValue = 0;
+
+            vm.MaxEntriesPerListChanged += (sender, value) =>
+            {
+                eventRaised = true;
+                eventValue = value;
+            };
+
+            vm.MaxEntriesPerList = 5000;
+
+            Assert.True(eventRaised);
+            Assert.Equal(5000, eventValue);
+        }
+
+        [Fact]
+        public void MaxEntriesPerListChanged_UpdatesAppSettings()
+        {
+            var tempDir = CreateTempDir("max_entries_settings");
+            AppSettingsManager.TestBaseDirectory = null;
+            AppSettingsManager.Initialize(tempDir);
+
+            var vm = new SettingsViewModel();
+            vm.MaxEntriesPerList = 3000;
+
+            Assert.Equal(3000, AppSettingsManager.Instance.Settings.SettingsView.MaxEntriesPerList);
+        }
     }
 }
