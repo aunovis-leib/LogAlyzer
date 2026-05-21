@@ -153,4 +153,94 @@ public class FileExplorerViewModelTests
             Directory.Delete(root, true);
         }
     }
+
+    [Fact]
+    public void ClearFileCommand_ClearsFileContent()
+    {
+        var dir = CreateTempDir("explorer_clear_file");
+        try
+        {
+            var logFile = Path.Combine(dir, "test.log");
+            File.WriteAllText(logFile, "initial content");
+
+            var vm = new FileExplorerViewModel();
+            vm.LoadItems(dir);
+
+            var fileItem = vm.Items.Single(i => i.Path == logFile);
+            vm.ClearFileCommand.Execute(fileItem);
+
+            var fileContent = File.ReadAllText(logFile);
+            Assert.Equal(string.Empty, fileContent);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void ClearFileCommand_RaisesFileClearedEvent()
+    {
+        var dir = CreateTempDir("explorer_clear_event");
+        try
+        {
+            var logFile = Path.Combine(dir, "test.log");
+            File.WriteAllText(logFile, "content");
+
+            var vm = new FileExplorerViewModel();
+            vm.LoadItems(dir);
+
+            string? clearedFilePath = null;
+            vm.FileCleared += (_, filePath) => clearedFilePath = filePath;
+
+            var fileItem = vm.Items.Single(i => i.Path == logFile);
+            vm.ClearFileCommand.Execute(fileItem);
+
+            Assert.NotNull(clearedFilePath);
+            Assert.Equal(logFile, clearedFilePath);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void ClearFileCommand_IgnoresDirectories()
+    {
+        var dir = CreateTempDir("explorer_clear_dir");
+        try
+        {
+            var subDir = Path.Combine(dir, "subdir");
+            Directory.CreateDirectory(subDir);
+
+            var vm = new FileExplorerViewModel();
+            vm.LoadItems(dir);
+
+            bool eventRaised = false;
+            vm.FileCleared += (_, _) => eventRaised = true;
+
+            var dirItem = vm.Items.Single(i => i.IsDirectory && i.Path == subDir);
+            vm.ClearFileCommand.Execute(dirItem);
+
+            Assert.False(eventRaised);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void ClearFileCommand_IgnoresNullItem()
+    {
+        var vm = new FileExplorerViewModel();
+
+        bool eventRaised = false;
+        vm.FileCleared += (_, _) => eventRaised = true;
+
+        vm.ClearFileCommand.Execute(null);
+
+        Assert.False(eventRaised);
+    }
 }

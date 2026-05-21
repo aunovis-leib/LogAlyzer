@@ -8,6 +8,7 @@ namespace LogAnalyzer.ViewModels;
 public partial class FileExplorerViewModel : ObservableObject
 {
     public event EventHandler<IReadOnlyList<string>>? FilesSelected;
+    public event EventHandler<string>? FileCleared;
 
     private HashSet<string> _loadedFiles = new(StringComparer.OrdinalIgnoreCase);
     private string _rootPath = string.Empty;
@@ -122,6 +123,20 @@ public partial class FileExplorerViewModel : ObservableObject
         var parent = Directory.GetParent(CurrentPath);
         if (parent != null && (string.IsNullOrEmpty(_rootPath) || parent.FullName.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase)))
             LoadItems(parent.FullName);
+    }
+
+    [RelayCommand]
+    private void ClearFile(FileSystemItem? item)
+    {
+        if (item is null || item.IsDirectory)
+            return;
+
+        try
+        {
+            File.WriteAllText(item.Path, string.Empty);
+            FileCleared?.Invoke(this, item.Path);
+        }
+        catch { /* Fehler ignorieren, z.B. Zugriffsprobleme */ }
     }
 }
 

@@ -19,6 +19,15 @@
                       SelectionMode="Extended"
                       KeyDown="ExplorerListView_KeyDown"
                       MouseDoubleClick="ListBox_MouseDoubleClick">
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Datei leeren" Command="{Binding ClearFileCommand}" CommandParameter="{Binding SelectedItem}">
+                            <MenuItem.Icon>
+                                <TextBlock Text="🗑" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </ListView.ContextMenu>
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Style.Triggers>

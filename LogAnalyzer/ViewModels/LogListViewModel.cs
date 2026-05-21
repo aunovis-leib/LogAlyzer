@@ -199,6 +199,7 @@ public partial class LogListViewModel : ObservableObject
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
         FileExplorerVM.FilesSelected += OnExplorerFilesSelected;
+        FileExplorerVM.FileCleared += OnExplorerFileCleared;
         UpdateFilteredEntryCount();
 
         // Abonniere Auto-Reload Toggle Events
@@ -496,6 +497,28 @@ public partial class LogListViewModel : ObservableObject
         }
 
         await LoadFilesAsync(filePaths.ToArray());
+    }
+
+    private void OnExplorerFileCleared(object? sender, string clearedFilePath)
+    {
+        if (!_currentLoadedFiles.Contains(clearedFilePath, StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        // Clear all entries since we don't have source file tracking
+        // The Auto-Reload watcher will detect the file size change and handle it
+        LogFilesEntries.Clear();
+
+        // Reset file position tracking for this file
+        _filePositions[clearedFilePath] = 0;
+        _partialLineBuffers[clearedFilePath] = string.Empty;
+        _incompleteEntryPerFile.Remove(clearedFilePath);
+        _incompleteEntryDetailsPerFile.Remove(clearedFilePath);
+
+        UpdateAvailableTypes();
+        UpdateAvailableDates();
+        RefreshView();
     }
 
     private async Task LoadFilesAsync(string[] fileNames)
