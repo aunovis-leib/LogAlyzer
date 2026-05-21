@@ -19,4 +19,5 @@ public sealed class SettingsViewSettings
     public TimeSpan SyncTolerance { get; set; } = TimeSpan.FromHours(1);
     public string ExplorerRootFolder { get; set; } = string.Empty;
     public bool AutoReloadLogFiles { get; set; } = false;
+    public bool DateSortDescending { get; set; } = true;
 }

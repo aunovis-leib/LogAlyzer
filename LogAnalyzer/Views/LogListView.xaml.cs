@@ -11,6 +11,8 @@ namespace LogAnalyzer.Views;
 
 public partial class LogListView : UserControl
 {
+    private SettingsViewModel? _settingsViewModel;
+
     public LogListView()
     {
         InitializeComponent();
@@ -30,13 +32,20 @@ public partial class LogListView : UserControl
         if (view == null)
             return;
 
-        UpdateSortDescriptions(view, sortBy);
+        // Get settings from data context if available
+        if (_settingsViewModel == null && DataContext is LogListViewModel vm)
+        {
+            _settingsViewModel = vm.Settings;
+        }
+
+        UpdateSortDescriptions(view, sortBy, _settingsViewModel);
         view.Refresh();
     }
 
-    private static void UpdateSortDescriptions(ICollectionView view, string sortBy)
+    private static void UpdateSortDescriptions(ICollectionView view, string sortBy, SettingsViewModel? settings)
     {
         var current = ListSortDirection.Ascending;
+
         if (view.SortDescriptions.Count > 0)
         {
             var existing = view.SortDescriptions[0];
@@ -48,6 +57,12 @@ public partial class LogListView : UserControl
             }
             view.SortDescriptions.Clear();
         }
+        else if (sortBy == "Date" && settings != null)
+        {
+            // For initial Date column sort, use the setting
+            current = settings.DateSortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending;
+        }
+
         view.SortDescriptions.Add(new SortDescription(sortBy, current));
     }
 

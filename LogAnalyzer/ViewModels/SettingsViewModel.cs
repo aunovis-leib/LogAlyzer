@@ -28,6 +28,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _autoReloadLogFiles = false;
 
+    [ObservableProperty]
+    private bool _dateSortDescending = true;
+
     public SettingsViewModel()
     {
         var settings = AppSettingsManager.Instance.Settings;
@@ -39,6 +42,7 @@ public partial class SettingsViewModel : ObservableObject
         SyncTolerance = settingsView.SyncTolerance;
         ExplorerRootFolder = settingsView.ExplorerRootFolder;
         AutoReloadLogFiles = settingsView.AutoReloadLogFiles;
+        DateSortDescending = settingsView.DateSortDescending;
     }
 
     // Allow external callers (e.g. view tests or view code) to set the
@@ -107,6 +111,14 @@ public partial class SettingsViewModel : ObservableObject
         AutoReloadToggled?.Invoke(this, value);
     }
 
+    partial void OnDateSortDescendingChanged(bool value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.DateSortDescending = value;
+        manager.Save();
+    }
+
     [RelayCommand]
     private void ResetDefaults()
     {
@@ -116,6 +128,7 @@ public partial class SettingsViewModel : ObservableObject
         SyncTolerance = TimeSpan.FromHours(1);
         ExplorerRootFolder = string.Empty;
         AutoReloadLogFiles = false;
+        DateSortDescending = true;
     }
 
     private static LiveChartSettings GetOrCreateLiveChartSettings(AppSettings settings)

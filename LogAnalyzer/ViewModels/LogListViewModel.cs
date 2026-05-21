@@ -27,6 +27,8 @@ public partial class LogListViewModel : ObservableObject
 
     public FileExplorerViewModel FileExplorerVM { get; } = new();
 
+    public SettingsViewModel? Settings { get; private set; }
+
     [ObservableProperty]
     private ParserProfile? _selectedProfile;
 
@@ -193,6 +195,7 @@ public partial class LogListViewModel : ObservableObject
     {
         _appSettings = appSettings;
         _selectedProfile = selectedProfile;
+        Settings = settingsViewModel;
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
         FileExplorerVM.FilesSelected += OnExplorerFilesSelected;
@@ -218,6 +221,10 @@ public partial class LogListViewModel : ObservableObject
         UpdateAvailableTypes();
         // initialize available dates
         UpdateAvailableDates();
+
+        // Initialize default sort by Date
+        ApplyDefaultDateSort(settingsViewModel);
+
         LogFilesEntries.CollectionChanged += (_, __) =>
         {
             if (_suppressAvailableTypesUpdate) return;
@@ -731,6 +738,16 @@ public partial class LogListViewModel : ObservableObject
         }
         FilterFromDate = LogFilesEntries.Min(e => e.Date.Date);
         FilterToDate = LogFilesEntries.Max(e => e.Date.Date);
+    }
+
+    private void ApplyDefaultDateSort(SettingsViewModel? settingsViewModel)
+    {
+        if (settingsViewModel == null || LogFilesView == null)
+            return;
+
+        var sortDirection = settingsViewModel.DateSortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending;
+        LogFilesView.SortDescriptions.Clear();
+        LogFilesView.SortDescriptions.Add(new SortDescription(nameof(LogFileEntry.Date), sortDirection));
     }
 
     ~LogListViewModel()

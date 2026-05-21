@@ -4,7 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:res="clr-namespace:LogAnalyzer.Resources"
+             xmlns:conv="clr-namespace:LogAnalyzer.Converters"
              mc:Ignorable="d">
+    <UserControl.Resources>
+        <conv:InverseBoolConverter x:Key="InverseBoolConverter" />
+    </UserControl.Resources>
     <StackPanel Margin="12">
         <TextBlock Text="{x:Static res:Strings.Settings}" FontWeight="Bold" FontSize="16" />
         <Separator Margin="0,8,0,8" />
@@ -26,6 +30,14 @@
                 </StackPanel>
                 <CheckBox Content="Auto-reload log files" Margin="0,8,0,0"
                           IsChecked="{Binding AutoReloadLogFiles, Mode=TwoWay}" />
+                <GroupBox Header="Date column sorting" Margin="0,8,0,0">
+                    <StackPanel Margin="6">
+                        <RadioButton Content="Newest entries on top (descending)" Margin="0,4,0,0"
+                                     IsChecked="{Binding DateSortDescending, Mode=TwoWay}" />
+                        <RadioButton Content="Oldest entries on top (ascending)" Margin="0,4,0,0"
+                                     IsChecked="{Binding DateSortDescending, Mode=TwoWay, Converter={StaticResource InverseBoolConverter}}" />
+                    </StackPanel>
+                </GroupBox>
             </StackPanel>
         </GroupBox>
 
