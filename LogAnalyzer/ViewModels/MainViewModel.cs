@@ -74,6 +74,10 @@ public partial class MainViewModel : ObservableObject
     private void ApplyExplorerRootFolder(LogListViewModel vm)
     {
         vm.FileExplorerVM.SetRootFolder(SettingsVM?.ExplorerRootFolder);
+        if (SettingsVM?.ExplorerRootFolderHistory != null)
+        {
+            vm.FileExplorerVM.SetExplorerRootFolderHistory(SettingsVM.ExplorerRootFolderHistory);
+        }
     }
 
     private void Lists_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

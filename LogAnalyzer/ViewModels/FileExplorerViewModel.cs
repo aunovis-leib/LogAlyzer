@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LogAnalyzer.Services;
 using System.Collections.ObjectModel;
 using System.IO;
 
@@ -16,13 +17,42 @@ public partial class FileExplorerViewModel : ObservableObject
     public ObservableCollection<FileSystemItem> Items { get; } = new();
 
     [ObservableProperty]
+    private ObservableCollection<string> _explorerRootFolderHistory = new();
+
+    [ObservableProperty]
     private FileSystemItem? _selectedItem;
 
     private string _currentPath;
     public string CurrentPath
     {
         get => _currentPath;
-        set => SetProperty(ref _currentPath, value);
+        set
+        {
+            if (SetProperty(ref _currentPath, value))
+            {
+                AddToHistory(value);
+            }
+        }
+    }
+
+    private void AddToHistory(string path)
+    {
+        if (!string.IsNullOrWhiteSpace(path) && !ExplorerRootFolderHistory.Contains(path, StringComparer.OrdinalIgnoreCase))
+        {
+            ExplorerRootFolderHistory.Add(path);
+            SaveHistoryToSettings();
+        }
+    }
+
+    private void SaveHistoryToSettings()
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = manager.Settings.SettingsView;
+        if (settingsView != null)
+        {
+            settingsView.ExplorerRootFolderHistory = new List<string>(ExplorerRootFolderHistory);
+            manager.Save();
+        }
     }
 
     public FileExplorerViewModel()
@@ -30,6 +60,11 @@ public partial class FileExplorerViewModel : ObservableObject
         var startDir = Directory.GetCurrentDirectory();
         CurrentPath = startDir;
         LoadItems(startDir);
+    }
+
+    public void SetExplorerRootFolderHistory(ObservableCollection<string> history)
+    {
+        ExplorerRootFolderHistory = history;
     }
 
     public void SetRootFolder(string? rootFolder)

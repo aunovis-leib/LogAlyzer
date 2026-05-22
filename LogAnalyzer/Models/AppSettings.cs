@@ -18,6 +18,7 @@ public sealed class SettingsViewSettings
     public int MaxEntriesPerList { get; set; } = 10000;
     public TimeSpan SyncTolerance { get; set; } = TimeSpan.FromHours(1);
     public string ExplorerRootFolder { get; set; } = string.Empty;
+    public List<string> ExplorerRootFolderHistory { get; set; } = new();
     public bool AutoReloadLogFiles { get; set; } = false;
     public bool DateSortDescending { get; set; } = true;
 }

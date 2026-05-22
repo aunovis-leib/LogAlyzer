@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
+using System.Collections.ObjectModel;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -27,6 +28,9 @@ public partial class SettingsViewModel : ObservableObject
     private string _explorerRootFolder = string.Empty;
 
     [ObservableProperty]
+    private ObservableCollection<string> _explorerRootFolderHistory = new();
+
+    [ObservableProperty]
     private bool _autoReloadLogFiles = false;
 
     [ObservableProperty]
@@ -41,9 +45,18 @@ public partial class SettingsViewModel : ObservableObject
         SyncSelectionAcrossLists = settingsView.SyncSelectionAcrossLists;
         MaxEntriesPerList = settingsView.MaxEntriesPerList;
         SyncTolerance = settingsView.SyncTolerance;
-        ExplorerRootFolder = settingsView.ExplorerRootFolder;
         AutoReloadLogFiles = settingsView.AutoReloadLogFiles;
         DateSortDescending = settingsView.DateSortDescending;
+
+        var history = settingsView.ExplorerRootFolderHistory ?? new List<string>();
+        var uniqueHistory = history.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        foreach (var folder in uniqueHistory)
+        {
+            ExplorerRootFolderHistory.Add(folder);
+        }
+        settingsView.ExplorerRootFolderHistory = uniqueHistory;
+
+        ExplorerRootFolder = settingsView.ExplorerRootFolder;
     }
 
     // Allow external callers (e.g. view tests or view code) to set the
@@ -100,7 +113,15 @@ public partial class SettingsViewModel : ObservableObject
     {
         var manager = AppSettingsManager.Instance;
         var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
-        settingsView.ExplorerRootFolder = value?.Trim() ?? string.Empty;
+        var trimmedValue = value?.Trim() ?? string.Empty;
+        settingsView.ExplorerRootFolder = trimmedValue;
+
+        if (!string.IsNullOrWhiteSpace(trimmedValue) && !ExplorerRootFolderHistory.Contains(trimmedValue, StringComparer.OrdinalIgnoreCase))
+        {
+            ExplorerRootFolderHistory.Add(trimmedValue);
+            settingsView.ExplorerRootFolderHistory = new List<string>(ExplorerRootFolderHistory);
+        }
+
         manager.Save();
     }
 
