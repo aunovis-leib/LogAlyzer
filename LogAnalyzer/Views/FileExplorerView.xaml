@@ -21,6 +21,11 @@
                       MouseDoubleClick="ListBox_MouseDoubleClick">
                 <ListView.ContextMenu>
                     <ContextMenu>
+                        <MenuItem Header="Im Explorer öffnen" Command="{Binding OpenInExplorerCommand}" CommandParameter="{Binding SelectedItem}">
+                            <MenuItem.Icon>
+                                <TextBlock Text="📁" />
+                            </MenuItem.Icon>
+                        </MenuItem>
                         <MenuItem Header="Datei leeren" Command="{Binding ClearFileCommand}" CommandParameter="{Binding SelectedItem}">
                             <MenuItem.Icon>
                                 <TextBlock Text="🗑" />

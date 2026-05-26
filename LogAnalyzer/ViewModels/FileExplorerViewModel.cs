@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Services;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 
 namespace LogAnalyzer.ViewModels;
@@ -172,6 +173,37 @@ public partial class FileExplorerViewModel : ObservableObject
             FileCleared?.Invoke(this, item.Path);
         }
         catch { /* Fehler ignorieren, z.B. Zugriffsprobleme */ }
+    }
+
+    [RelayCommand]
+    private void OpenInExplorer(FileSystemItem? item)
+    {
+        if (item is null)
+            return;
+
+        try
+        {
+            var path = item.Path;
+            if (item.IsDirectory)
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = path,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"/select,\"{path}\"",
+                    UseShellExecute = true
+                });
+            }
+        }
+        catch { /* Fehler ignorieren */ }
     }
 }
 

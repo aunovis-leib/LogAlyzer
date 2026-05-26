@@ -243,4 +243,59 @@ public class FileExplorerViewModelTests
 
         Assert.False(eventRaised);
     }
+
+    [Fact]
+    public void OpenInExplorerCommand_AcceptsFile()
+    {
+        var dir = CreateTempDir("explorer_open_file");
+        try
+        {
+            var logFile = Path.Combine(dir, "test.log");
+            File.WriteAllText(logFile, "content");
+
+            var vm = new FileExplorerViewModel();
+            vm.LoadItems(dir);
+
+            var fileItem = vm.Items.Single(i => !i.IsDirectory && i.Path == logFile);
+
+            // The command should not throw
+            vm.OpenInExplorerCommand.Execute(fileItem);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void OpenInExplorerCommand_AcceptsDirectory()
+    {
+        var root = CreateTempDir("explorer_open_dir");
+        try
+        {
+            var subDir = Path.Combine(root, "subdir");
+            Directory.CreateDirectory(subDir);
+
+            var vm = new FileExplorerViewModel();
+            vm.LoadItems(root);
+
+            var dirItem = vm.Items.Single(i => i.IsDirectory && i.Path == subDir);
+
+            // The command should not throw
+            vm.OpenInExplorerCommand.Execute(dirItem);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
+    public void OpenInExplorerCommand_IgnoresNullItem()
+    {
+        var vm = new FileExplorerViewModel();
+
+        // The command should not throw when given null
+        vm.OpenInExplorerCommand.Execute(null);
+    }
 }
