@@ -1,0 +1,22 @@
+<UserControl x:Class="LogAnalyzer.Controls.SimpleColorPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:LogAnalyzer.Converters"
+             mc:Ignorable="d" Height="Auto">
+    <UserControl.Resources>
+        <conv:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
+    </UserControl.Resources>
+    <DockPanel LastChildFill="True">
+        <!-- Color Preview Button -->
+        <Button DockPanel.Dock="Left" Click="OpenColorDialog_Click" Width="45" Height="32" Padding="0" Margin="0,0,8,0"
+                ToolTip="Click to open color picker" Background="{Binding SelectedColor, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource HexColorToBrushConverter}}"
+                BorderBrush="#999" BorderThickness="1">
+            <TextBlock Text="..." Foreground="White" FontWeight="Bold" FontSize="16" TextAlignment="Center" />
+        </Button>
+        <!-- HEX Input TextBox -->
+        <TextBox Text="{Binding SelectedColor, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Padding="4,4,4,4" ToolTip="Enter HEX color (#RRGGBB)" />
+    </DockPanel>
+</UserControl>

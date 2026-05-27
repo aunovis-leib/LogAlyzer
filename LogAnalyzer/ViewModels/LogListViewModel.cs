@@ -137,6 +137,16 @@ public partial class LogListViewModel : ObservableObject
         EntrySelected?.Invoke(this, entry);
     }
 
+    [RelayCommand]
+    private void AddHighlightRuleFromEntry(LogFileEntry? entry)
+    {
+        if (entry is null || Settings is null) return;
+        if (string.IsNullOrWhiteSpace(entry.Text)) return;
+
+        Settings.HighlightSearchText = entry.Text;
+        Settings.AddHighlightRuleCommand.Execute(null);
+    }
+
     public void SelectEntryFromOutside(LogFileEntry? entry, TimeSpan syncTolerance)
     {
         if (entry is null) return;
@@ -216,6 +226,18 @@ public partial class LogListViewModel : ObservableObject
                     StopAutoReload();
                 }
             };
+
+            // Subscribe to HighlightRules collection changes
+            settingsViewModel.HighlightRules.CollectionChanged += (sender, e) =>
+            {
+                UpdateHighlights();
+            };
+
+            // Subscribe to individual HighlightRule property changes
+            settingsViewModel.HighlightRulesChanged += (sender, e) =>
+            {
+                UpdateHighlights();
+            };
         }
 
         // initialize available types with just 'Alle'
@@ -232,6 +254,7 @@ public partial class LogListViewModel : ObservableObject
             UpdateAvailableTypes();
             UpdateAvailableDates();
             UpdateFilteredEntryCount();
+            UpdateHighlights();
         };
     }
 
@@ -357,6 +380,7 @@ public partial class LogListViewModel : ObservableObject
                             HasNewEntries = true;
                             UpdateAvailableTypes();
                             UpdateAvailableDates();
+                            UpdateHighlights();
                             RefreshView();
                             EntriesReloaded?.Invoke(this, EventArgs.Empty);
                         }
@@ -621,6 +645,7 @@ public partial class LogListViewModel : ObservableObject
             UpdateAvailableDates(minDate, maxDate);
             LogFilesView.Filter = FilterByType;
             RefreshView();
+            UpdateHighlights();
             EntriesReloaded?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException)
@@ -631,6 +656,7 @@ public partial class LogListViewModel : ObservableObject
             UpdateAvailableDates(minDate, maxDate);
             LogFilesView.Filter = FilterByType;
             RefreshView();
+            UpdateHighlights();
             EntriesReloaded?.Invoke(this, EventArgs.Empty);
         }
         finally
@@ -694,6 +720,21 @@ public partial class LogListViewModel : ObservableObject
     {
         if (IsLoading) return;
         RefreshView();
+    }
+
+    public void UpdateHighlights()
+    {
+        if (Settings?.HighlightRules == null) return;
+
+        foreach (var entry in LogFilesEntries)
+        {
+            var matchedRule = Settings.HighlightRules.FirstOrDefault(rule =>
+                rule.IsEnabled &&
+                !string.IsNullOrWhiteSpace(rule.SearchText) &&
+                entry.Text.Contains(rule.SearchText, StringComparison.OrdinalIgnoreCase));
+
+            entry.HighlightColor = matchedRule?.Color;
+        }
     }
 
     private void RefreshView()

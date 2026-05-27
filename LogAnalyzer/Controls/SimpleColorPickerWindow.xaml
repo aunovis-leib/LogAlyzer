@@ -1,0 +1,51 @@
+<Window x:Class="LogAnalyzer.Controls.SimpleColorPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:LogAnalyzer.Converters"
+        Title="Color Picker" Height="500" Width="450"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Background="White">
+    <Window.Resources>
+        <conv:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
+    </Window.Resources>
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="OK" Click="OK_Click" Width="80" Height="32" Margin="0,0,6,0" IsDefault="True" />
+            <Button Content="Cancel" Click="Cancel_Click" Width="80" Height="32" IsCancel="True" />
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <!-- Color Preview and Hex Input -->
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="{Binding SelectedColor, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource HexColorToBrushConverter}}"
+                        BorderBrush="#999" BorderThickness="1" Height="60" Margin="0,0,8,0" />
+                <StackPanel Grid.Column="1" Orientation="Vertical">
+                    <TextBlock Text="Hex Color:" FontSize="12" FontWeight="Bold" Margin="0,0,0,4" />
+                    <TextBox x:Name="HexInput" Text="{Binding SelectedColor, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Height="32" Padding="4,6,4,6" FontSize="12" />
+                    <TextBlock Text="Format: #RRGGBB (e.g., #FF5733)" FontSize="10" Foreground="#666" Margin="0,4,0,0" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Main Color Area (Saturation & Brightness) -->
+            <TextBlock Text="Select Color:" FontWeight="Bold" Margin="0,0,0,8" FontSize="12" />
+            <Border x:Name="ColorGradientArea" Height="200" BorderBrush="#DDD" BorderThickness="1" Margin="0,0,0,12" 
+                    Background="Red" MouseDown="ColorArea_MouseDown" MouseMove="ColorArea_MouseMove" 
+                    ToolTip="Click to select saturation and brightness" Cursor="Hand" />
+
+            <!-- Hue Slider -->
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Select Hue:" FontSize="12" FontWeight="Bold" Margin="0,0,0,4" />
+                <Slider x:Name="HueSlider" Minimum="0" Maximum="360" Value="0" Height="28" 
+                        PreviewMouseDown="HueSlider_PreviewMouseDown" 
+                        PreviewMouseMove="HueSlider_PreviewMouseMove" />
+            </StackPanel>
+        </StackPanel>
+    </DockPanel>
+</Window>

@@ -13,6 +13,7 @@
     <UserControl.Resources>
         <conv:AddOneConverter x:Key="AddOne" />
         <conv:LogTypeStringToNullableConverter x:Key="LogTypeStringToNullableConverter" />
+        <conv:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
         <ObjectDataProvider x:Key="LogTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="models:LogType" />
@@ -22,6 +23,10 @@
         <ContextMenu x:Key="LogEntryContextMenu">
             <MenuItem Header="Synchronisieren"
                       Command="{Binding Path=DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+            <Separator />
+            <MenuItem Header="Add Rule"
+                      Command="{Binding Path=DataContext.AddHighlightRuleFromEntryCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
         </ContextMenu>
 
@@ -104,7 +109,7 @@
                         <Setter.Value>
                             <ControlTemplate TargetType="ListViewItem">
                                 <StackPanel>
-                                    <Border x:Name="RowBorder" Padding="2,1">
+                                    <Border x:Name="RowBorder" Padding="2,1" Background="{Binding HighlightColor, Converter={StaticResource HexColorToBrushConverter}}">
                                         <GridViewRowPresenter Content="{TemplateBinding Content}"
                                                               Columns="{Binding View.Columns, RelativeSource={RelativeSource AncestorType=ListView}}" />
                                     </Border>

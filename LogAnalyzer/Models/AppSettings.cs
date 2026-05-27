@@ -1,3 +1,5 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace LogAnalyzer.Models;
 
 public sealed class AppSettings
@@ -21,4 +23,30 @@ public sealed class SettingsViewSettings
     public List<string> ExplorerRootFolderHistory { get; set; } = new();
     public bool AutoReloadLogFiles { get; set; } = false;
     public bool DateSortDescending { get; set; } = true;
+    public List<HighlightRule> HighlightRules { get; set; } = new();
+}
+
+public sealed class HighlightRule : ObservableObject
+{
+    private string _searchText = string.Empty;
+    private string _color = "#FFFF00";
+    private bool _isEnabled = true;
+
+    public string SearchText
+    {
+        get => _searchText;
+        set => SetProperty(ref _searchText, value);
+    }
+
+    public string Color
+    {
+        get => _color;
+        set => SetProperty(ref _color, value);
+    }
+
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        set => SetProperty(ref _isEnabled, value);
+    }
 }

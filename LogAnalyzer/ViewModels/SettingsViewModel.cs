@@ -10,6 +10,7 @@ public partial class SettingsViewModel : ObservableObject
 {
     public event EventHandler<bool>? AutoReloadToggled;
     public event EventHandler<int>? MaxEntriesPerListChanged;
+    public event EventHandler? HighlightRulesChanged;
 
     [ObservableProperty]
     private bool _syncSelectionAcrossLists = true;
@@ -36,6 +37,15 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _dateSortDescending = true;
 
+    [ObservableProperty]
+    private ObservableCollection<HighlightRule> _highlightRules = new();
+
+    [ObservableProperty]
+    private string _highlightSearchText = string.Empty;
+
+    [ObservableProperty]
+    private string _highlightColor = "#FFFF00";
+
     public SettingsViewModel()
     {
         var settings = AppSettingsManager.Instance.Settings;
@@ -57,6 +67,17 @@ public partial class SettingsViewModel : ObservableObject
         settingsView.ExplorerRootFolderHistory = uniqueHistory;
 
         ExplorerRootFolder = settingsView.ExplorerRootFolder;
+
+        foreach (var rule in settingsView.HighlightRules)
+        {
+            HighlightRules.Add(rule);
+            // Subscribe to property changes for auto-save and update highlights
+            rule.PropertyChanged += (s, e) => 
+            {
+                SaveHighlightRules();
+                HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
+            };
+        }
     }
 
     // Allow external callers (e.g. view tests or view code) to set the
@@ -152,6 +173,44 @@ public partial class SettingsViewModel : ObservableObject
         ExplorerRootFolder = string.Empty;
         AutoReloadLogFiles = false;
         DateSortDescending = true;
+        HighlightRules.Clear();
+        HighlightSearchText = string.Empty;
+        HighlightColor = "#FFFF00";
+    }
+
+    [RelayCommand]
+    private void AddHighlightRule()
+    {
+        if (string.IsNullOrWhiteSpace(HighlightSearchText))
+            return;
+
+        var rule = new HighlightRule { SearchText = HighlightSearchText, Color = HighlightColor };
+        // Subscribe to property changes for auto-save and update highlights
+        rule.PropertyChanged += (s, e) => 
+        {
+            SaveHighlightRules();
+            HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
+        };
+        HighlightRules.Add(rule);
+        SaveHighlightRules();
+        HighlightSearchText = string.Empty;
+        HighlightColor = "#FFFF00";
+    }
+
+    [RelayCommand]
+    private void RemoveHighlightRule(HighlightRule rule)
+    {
+        if (rule == null) return;
+        HighlightRules.Remove(rule);
+        SaveHighlightRules();
+    }
+
+    private void SaveHighlightRules()
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.HighlightRules = new List<HighlightRule>(HighlightRules);
+        manager.Save();
     }
 
     private static LiveChartSettings GetOrCreateLiveChartSettings(AppSettings settings)

@@ -29,7 +29,7 @@
                 <Storyboard>
                     <DoubleAnimation Storyboard.TargetName="SettingsPaneTransform"
                                      Storyboard.TargetProperty="X"
-                                     To="320" Duration="0:0:0.2" />
+                                     To="420" Duration="0:0:0.2" />
                 </Storyboard>
             </BeginStoryboard>
         </EventTrigger>
@@ -137,9 +137,9 @@
         </views:LiveChartView>
 
         <!-- Sliding Settings Pane -->
-        <Border x:Name="SettingsPane" Grid.RowSpan="5" Width="320" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
+        <Border x:Name="SettingsPane" Grid.RowSpan="5" Width="420" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
             <Border.RenderTransform>
-                <TranslateTransform x:Name="SettingsPaneTransform" X="320" />
+                <TranslateTransform x:Name="SettingsPaneTransform" X="420" />
             </Border.RenderTransform>
             <views:SettingsView />
         </Border>
