@@ -84,20 +84,21 @@ namespace LogAnalyzer.Tests
                 Assert.Single(list);
                 Assert.Equal(e2, list[0]);
 
-                // Filter by time (prefix match on HH:mm:ss)
+                // Filter by time range
                 vm.FilterFromDate = null;
                 vm.FilterToDate = null;
-                vm.FilterTime = "00:00:00";
+                vm.FilterFromTime = "00:00:00";
+                vm.FilterToTime = "00:00:00";
                 vm.LogFilesView.Refresh();
                 list = vm.LogFilesView.Cast<LogFileEntry>().ToList();
                 Assert.Single(list);
                 Assert.Equal(e1, list[0]);
 
-                vm.FilterTime = "00:00:01";
+                vm.FilterFromTime = "00:00:00";
+                vm.FilterToTime = "00:00:01";
                 vm.LogFilesView.Refresh();
                 list = vm.LogFilesView.Cast<LogFileEntry>().ToList();
-                Assert.Single(list);
-                Assert.Equal(e2, list[0]);
+                Assert.Equal(2, list.Count);
             });
         }
 

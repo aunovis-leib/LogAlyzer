@@ -67,7 +67,10 @@ public partial class LogListViewModel : ObservableObject
     private string _filterText = string.Empty;
 
     [ObservableProperty]
-    private string _filterTime = string.Empty;
+    private string _filterFromTime = string.Empty;
+
+    [ObservableProperty]
+    private string _filterToTime = string.Empty;
 
     [ObservableProperty]
     private DateTime? _filterFromDate = null;
@@ -714,13 +717,16 @@ public partial class LogListViewModel : ObservableObject
         _filterDebounceTimer.Start();
     }
 
-    partial void OnFilterTimeChanged(string value)
+    partial void OnFilterFromTimeChanged(string value)
     {
         if (IsLoading) return;
-        if (!string.IsNullOrWhiteSpace(value))
-        {
-            RefreshView();
-        }
+        RefreshView();
+    }
+
+    partial void OnFilterToTimeChanged(string value)
+    {
+        if (IsLoading) return;
+        RefreshView();
     }
 
     partial void OnFilterFromDateChanged(DateTime? value)
@@ -768,11 +774,27 @@ public partial class LogListViewModel : ObservableObject
         if (!typeOk) return false;
         if (FilterFromDate is not null && e.Date.Date < FilterFromDate.Value.Date) return false;
         if (FilterToDate is not null && e.Date.Date > FilterToDate.Value.Date) return false;
-        if (!string.IsNullOrWhiteSpace(FilterTime)
-            && !e.Date.ToString("HH:mm:ss").StartsWith(FilterTime.Trim(), StringComparison.Ordinal))
+
+        // Time range filtering
+        if (!string.IsNullOrWhiteSpace(FilterFromTime) || !string.IsNullOrWhiteSpace(FilterToTime))
         {
-            return false;
+            var entryTime = e.Date.ToString("HH:mm:ss");
+
+            if (!string.IsNullOrWhiteSpace(FilterFromTime))
+            {
+                var fromTime = FilterFromTime.Trim();
+                if (string.Compare(entryTime, fromTime, StringComparison.Ordinal) < 0)
+                    return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(FilterToTime))
+            {
+                var toTime = FilterToTime.Trim();
+                if (string.Compare(entryTime, toTime, StringComparison.Ordinal) > 0)
+                    return false;
+            }
         }
+
         if (string.IsNullOrWhiteSpace(FilterText)) return true;
 
         var filter = FilterText.Trim();

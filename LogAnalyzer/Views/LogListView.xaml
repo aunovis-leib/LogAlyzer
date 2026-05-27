@@ -69,9 +69,16 @@
                                    FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             <TextBox Margin="8,0,0,0"
-                     Width="90"
-                     Text="{Binding FilterTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     bh:TimeInputBehavior.IsEnabled="True" />
+                     Width="70"
+                     Text="{Binding FilterFromTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     bh:TimeInputBehavior.IsEnabled="True"
+                     ToolTip="Von Uhrzeit (HH:mm:ss)" />
+            <TextBlock Margin="4,0,0,0" Text="bis" VerticalAlignment="Center" />
+            <TextBox Margin="4,0,0,0"
+                     Width="70"
+                     Text="{Binding FilterToTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     bh:TimeInputBehavior.IsEnabled="True"
+                     ToolTip="Bis Uhrzeit (HH:mm:ss)" />
             <TextBox Margin="8,0,0,0" MinWidth="90" Width="90" Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
             <ComboBox Margin="8,0,0,0"
