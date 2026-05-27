@@ -24,6 +24,8 @@ public partial class LogListViewModel : ObservableObject
     private Dictionary<string, LogFileEntry> _incompleteEntryPerFile = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, List<string>> _incompleteEntryDetailsPerFile = new(StringComparer.OrdinalIgnoreCase);
     private DispatcherTimer? _debounceTimer;
+    private DispatcherTimer? _filterDebounceTimer;
+    private string? _cachedFilterLower;
 
     public FileExplorerViewModel FileExplorerVM { get; } = new();
 
@@ -698,7 +700,18 @@ public partial class LogListViewModel : ObservableObject
     partial void OnFilterTextChanged(string value)
     {
         if (IsLoading) return;
-        RefreshView();
+
+        // Stop existing debounce timer
+        _filterDebounceTimer?.Stop();
+
+        // Create new debounce timer to delay filter refresh
+        _filterDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        _filterDebounceTimer.Tick += (s, e) =>
+        {
+            _filterDebounceTimer?.Stop();
+            RefreshView();
+        };
+        _filterDebounceTimer.Start();
     }
 
     partial void OnFilterTimeChanged(string value)
@@ -745,7 +758,7 @@ public partial class LogListViewModel : ObservableObject
 
     private void UpdateFilteredEntryCount()
     {
-        FilteredEntryCount = LogFilesView.Cast<object>().Count();
+        FilteredEntryCount = LogFilesView.OfType<object>().Count();
     }
 
     private bool FilterByType(object obj)
@@ -761,14 +774,17 @@ public partial class LogListViewModel : ObservableObject
             return false;
         }
         if (string.IsNullOrWhiteSpace(FilterText)) return true;
-        var filter = FilterText.Trim();
-        var textMatch = (e.Text?.IndexOf(filter, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
-        if (textMatch)
-        {
-            return true;
-        }
 
-        return e.Detail?.Any(d => (d?.IndexOf(filter, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0) == true;
+        var filter = FilterText.Trim();
+        // Update cache if filter text changed
+        if (_cachedFilterLower != filter)
+            _cachedFilterLower = filter.ToLowerInvariant();
+
+        // Use cached lowercase filter for comparison
+        var textMatch = e.Text?.Contains(_cachedFilterLower, StringComparison.Ordinal) ?? false;
+        if (textMatch) return true;
+
+        return e.Detail?.Any(d => d?.Contains(_cachedFilterLower, StringComparison.Ordinal) ?? false) == true;
     }
 
     private void UpdateAvailableTypes(IEnumerable<LogType>? observedTypes = null)
@@ -831,6 +847,8 @@ public partial class LogListViewModel : ObservableObject
     ~LogListViewModel()
     {
         StopAutoReload();
+        _filterDebounceTimer?.Stop();
+        _filterDebounceTimer = null;
         _loadCancellation?.Dispose();
     }
 }
