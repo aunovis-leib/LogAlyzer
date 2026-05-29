@@ -140,9 +140,18 @@ public partial class SettingsViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(trimmedValue) && !ExplorerRootFolderHistory.Contains(trimmedValue, StringComparer.OrdinalIgnoreCase))
         {
             ExplorerRootFolderHistory.Add(trimmedValue);
-            settingsView.ExplorerRootFolderHistory = new List<string>(ExplorerRootFolderHistory);
         }
 
+        // Always sync the current history to settings
+        settingsView.ExplorerRootFolderHistory = new List<string>(ExplorerRootFolderHistory);
+        manager.Save();
+    }
+
+    partial void OnExplorerRootFolderHistoryChanged(ObservableCollection<string> value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.ExplorerRootFolderHistory = new List<string>(value);
         manager.Save();
     }
 
