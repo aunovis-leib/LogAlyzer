@@ -11,7 +11,7 @@
         <DockPanel>
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="2">
                 <Button Content="↑" Command="{Binding GoUpCommand}" Width="24" Height="24" Margin="0,0,4,0" />
-                <TextBlock Text="{Binding CurrentPath}" VerticalAlignment="Center" FontSize="10" Foreground="#888" TextTrimming="CharacterEllipsis" Width="150"/>
+                <TextBlock Text="{Binding CurrentPath}" VerticalAlignment="Center" FontSize="10" Foreground="#888" TextTrimming="CharacterEllipsis" Width="Auto" ToolTip="{Binding CurrentPath}"/>
             </StackPanel>
             <ListView x:Name="ExplorerListView"
                       ItemsSource="{Binding Items}"
