@@ -803,10 +803,10 @@ public partial class LogListViewModel : ObservableObject
             _cachedFilterLower = filter.ToLowerInvariant();
 
         // Use cached lowercase filter for comparison
-        var textMatch = e.Text?.Contains(_cachedFilterLower, StringComparison.Ordinal) ?? false;
+        var textMatch = e.Text?.Contains(_cachedFilterLower, StringComparison.OrdinalIgnoreCase) ?? false;
         if (textMatch) return true;
 
-        return e.Detail?.Any(d => d?.Contains(_cachedFilterLower, StringComparison.Ordinal) ?? false) == true;
+        return e.Detail?.Any(d => d?.Contains(_cachedFilterLower, StringComparison.OrdinalIgnoreCase) ?? false) == true;
     }
 
     private void UpdateAvailableTypes(IEnumerable<LogType>? observedTypes = null)
