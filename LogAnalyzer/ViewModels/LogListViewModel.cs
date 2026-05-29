@@ -9,7 +9,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows.Data;
 using System.Windows.Threading;
-using System.Collections.Generic;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -25,7 +24,6 @@ public partial class LogListViewModel : ObservableObject
     private Dictionary<string, List<string>> _incompleteEntryDetailsPerFile = new(StringComparer.OrdinalIgnoreCase);
     private DispatcherTimer? _debounceTimer;
     private DispatcherTimer? _filterDebounceTimer;
-    private string? _cachedFilterLower;
 
     public FileExplorerViewModel FileExplorerVM { get; } = new();
 
@@ -155,12 +153,20 @@ public partial class LogListViewModel : ObservableObject
     public void SelectEntryFromOutside(LogFileEntry? entry, TimeSpan syncTolerance)
     {
         if (entry is null) return;
+
         LogFileEntry? foundEntry;
         if (syncTolerance == TimeSpan.Zero)
-            foundEntry = LogFilesEntries.FirstOrDefault(x => x.Date.ToString() == entry.Date.ToString());
-        foundEntry = LogFilesEntries
-            .OrderBy(x => Math.Abs((x.Date - entry.Date).TotalSeconds))
-            .FirstOrDefault(x => Math.Abs((x.Date - entry.Date).TotalSeconds) <= syncTolerance.TotalSeconds);
+        {
+            foundEntry = LogFilesEntries.FirstOrDefault(x => x.Date == entry.Date);
+        }
+        else
+        {
+            var toleranceSeconds = syncTolerance.TotalSeconds;
+            foundEntry = LogFilesEntries
+                .Where(x => Math.Abs((x.Date - entry.Date).TotalSeconds) <= toleranceSeconds)
+                .MinBy(x => Math.Abs((x.Date - entry.Date).TotalSeconds));
+        }
+
         if (foundEntry is not null)
         {
             foundEntry.IsDetailVisible = true;
@@ -307,6 +313,13 @@ public partial class LogListViewModel : ObservableObject
             _debounceTimer.Stop();
             _debounceTimer.Tick -= DebounceTimer_Tick;
             _debounceTimer = null;
+        }
+
+        if (_filterDebounceTimer != null)
+        {
+            _filterDebounceTimer.Stop();
+            _filterDebounceTimer.Tick -= (s, e) => { };
+            _filterDebounceTimer = null;
         }
     }
 
@@ -630,14 +643,10 @@ public partial class LogListViewModel : ObservableObject
             // Speichere die aktuellen Dateipositionen nach dem Laden
             foreach (var filePath in fileNames)
             {
-                try
+                if (File.Exists(filePath))
                 {
-                    if (File.Exists(filePath))
-                    {
-                        _filePositions[filePath] = new FileInfo(filePath).Length;
-                    }
+                    _filePositions[filePath] = new FileInfo(filePath).Length;
                 }
-                catch { }
             }
 
             if (loadedEntries >= maxEntries)
@@ -704,16 +713,18 @@ public partial class LogListViewModel : ObservableObject
     {
         if (IsLoading) return;
 
-        // Stop existing debounce timer
         _filterDebounceTimer?.Stop();
 
-        // Create new debounce timer to delay filter refresh
-        _filterDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
-        _filterDebounceTimer.Tick += (s, e) =>
+        if (_filterDebounceTimer == null)
         {
-            _filterDebounceTimer?.Stop();
-            RefreshView();
-        };
+            _filterDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            _filterDebounceTimer.Tick += (s, e) =>
+            {
+                _filterDebounceTimer?.Stop();
+                RefreshView();
+            };
+        }
+
         _filterDebounceTimer.Start();
     }
 
@@ -779,46 +790,34 @@ public partial class LogListViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(FilterFromTime) || !string.IsNullOrWhiteSpace(FilterToTime))
         {
             var entryTime = e.Date.ToString("HH:mm:ss");
+            var fromTime = FilterFromTime?.Trim();
+            var toTime = FilterToTime?.Trim();
 
-            if (!string.IsNullOrWhiteSpace(FilterFromTime))
-            {
-                var fromTime = FilterFromTime.Trim();
-                if (string.Compare(entryTime, fromTime, StringComparison.Ordinal) < 0)
-                    return false;
-            }
+            if (!string.IsNullOrEmpty(fromTime) && string.Compare(entryTime, fromTime, StringComparison.Ordinal) < 0)
+                return false;
 
-            if (!string.IsNullOrWhiteSpace(FilterToTime))
-            {
-                var toTime = FilterToTime.Trim();
-                if (string.Compare(entryTime, toTime, StringComparison.Ordinal) > 0)
-                    return false;
-            }
+            if (!string.IsNullOrEmpty(toTime) && string.Compare(entryTime, toTime, StringComparison.Ordinal) > 0)
+                return false;
         }
 
-        if (string.IsNullOrWhiteSpace(FilterText)) return true;
-
-        var filter = FilterText.Trim();
-        // Update cache if filter text changed
-        if (_cachedFilterLower != filter)
-            _cachedFilterLower = filter.ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(FilterText))
+            return true;
 
         // Use cached lowercase filter for comparison
-        var textMatch = e.Text?.Contains(_cachedFilterLower, StringComparison.OrdinalIgnoreCase) ?? false;
-        if (textMatch) return true;
-
-        return e.Detail?.Any(d => d?.Contains(_cachedFilterLower, StringComparison.OrdinalIgnoreCase) ?? false) == true;
+        var filterLower = FilterText.Trim().ToLowerInvariant();
+        return (e.Text?.Contains(filterLower, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (e.Detail?.Any(d => d?.Contains(filterLower, StringComparison.OrdinalIgnoreCase) ?? false) ?? false);
     }
 
     private void UpdateAvailableTypes(IEnumerable<LogType>? observedTypes = null)
     {
         if (_suppressAvailableTypesUpdate) return;
-        // Build distinct types from current entries
+
         var types = (observedTypes ?? LogFilesEntries.Select(x => x.Type))
             .Distinct()
             .OrderBy(t => t)
             .ToList();
 
-        // Always include Alle as first entry
         AvailableTypes.Clear();
         AvailableTypes.Add(LogType.All);
         foreach (var t in types)
@@ -826,14 +825,12 @@ public partial class LogListViewModel : ObservableObject
             AvailableTypes.Add(t);
         }
 
-        // Ensure SelectedType is valid; reset to All if not present
         if (SelectedType != LogType.All && !types.Contains(SelectedType))
         {
             SelectedType = LogType.All;
         }
 
         OnPropertyChanged(nameof(SelectedType));
-        // notify subscribers (e.g. main VM) about available types
         TypesChanged?.Invoke(this, SelectedType);
     }
 
@@ -869,8 +866,11 @@ public partial class LogListViewModel : ObservableObject
     ~LogListViewModel()
     {
         StopAutoReload();
-        _filterDebounceTimer?.Stop();
-        _filterDebounceTimer = null;
+        if (_filterDebounceTimer != null)
+        {
+            _filterDebounceTimer.Stop();
+            _filterDebounceTimer = null;
+        }
         _loadCancellation?.Dispose();
     }
 }

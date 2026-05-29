@@ -139,6 +139,44 @@ namespace LogAnalyzer.Tests
         }
 
         [Fact]
+        public void AvailableTypes_ShowsAll_AfterLoadingFile()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("showall");
+                AppSettingsManager.Initialize(temp);
+                var vm = new LogListViewModel(AppSettingsManager.Instance, null);
+
+                // Initially, only "Alle" should be present
+                Assert.Single(vm.AvailableTypes);
+                Assert.Equal(LogType.All, vm.AvailableTypes[0]);
+
+                // Simulate loading a file with multiple entry types
+                var entry1 = new LogFileEntry { Date = DateTime.Now, Type = LogType.Error, Text = "error entry" };
+                var entry2 = new LogFileEntry { Date = DateTime.Now.AddSeconds(1), Type = LogType.Warning, Text = "warning entry" };
+                var entry3 = new LogFileEntry { Date = DateTime.Now.AddSeconds(2), Type = LogType.Info, Text = "info entry" };
+
+                vm.LogFilesEntries.Add(entry1);
+                vm.LogFilesEntries.Add(entry2);
+                vm.LogFilesEntries.Add(entry3);
+
+                // After loading, AvailableTypes should contain:
+                // 1. "Alle" (LogType.All) - must be first
+                // 2. Error
+                // 3. Warning
+                // 4. Info (sorted alphabetically after first)
+                Assert.Equal(4, vm.AvailableTypes.Count);
+                Assert.Equal(LogType.All, vm.AvailableTypes[0]);
+                Assert.Contains(LogType.Error, vm.AvailableTypes);
+                Assert.Contains(LogType.Warning, vm.AvailableTypes);
+                Assert.Contains(LogType.Info, vm.AvailableTypes);
+
+                // Verify the UI binding is triggered - SelectedType should be "Alle"
+                Assert.Equal(LogType.All, vm.SelectedType);
+            });
+        }
+
+        [Fact]
         public void ApplyFilterTextCommand_Sets_Trimmed_FilterText()
         {
             StaTestHelper.Run(() =>
@@ -314,7 +352,7 @@ namespace LogAnalyzer.Tests
                     AppSettingsManager.Initialize(temp);
                     var vm = new LogListViewModel(AppSettingsManager.Instance, null);
 
-                    vm.FilterTime = string.Empty;
+                    vm.FilterFromTime = string.Empty;
                     vm.LogFilesEntries.Add(new LogFileEntry { Date = new DateTime(2024, 1, 1), Type = LogType.Info, Text = "alpha" });
                     vm.LogFilesEntries.Add(new LogFileEntry { Date = new DateTime(2024, 1, 1), Type = LogType.Error, Text = "beta" });
                     vm.LogFilesView.Refresh();
