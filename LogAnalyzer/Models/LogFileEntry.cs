@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace LogAnalyzer.Models
@@ -15,6 +14,7 @@ namespace LogAnalyzer.Models
 
     public class LogFileEntry : INotifyPropertyChanged
     {
+        public int LineNumber { get; set; }
         public DateTime Date { get; set; }
         public bool IsTimeOnlyTimestamp { get; set; }
         public string DateDisplay => IsTimeOnlyTimestamp

@@ -102,7 +102,7 @@
                 <TextBlock Text="Abbrechen" />
             </Button>
         </StackPanel>
-        <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="2" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" AlternationCount="1000000" Grid.ColumnSpan="2"
+        <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="2" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" Grid.ColumnSpan="2"
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling"
                   ScrollViewer.CanContentScroll="True"
@@ -160,8 +160,7 @@
                 <GridView>
                     <GridViewColumn
                         Header="#" Width="30"
-                        DisplayMemberBinding="{Binding (ItemsControl.AlternationIndex),
-                        RelativeSource={RelativeSource AncestorType=ListViewItem}}" />
+                        DisplayMemberBinding="{Binding LineNumber}" />
                     <GridViewColumn DisplayMemberBinding="{Binding DateDisplay}">
                         <GridViewColumn.Header>
                             <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />

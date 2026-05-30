@@ -390,6 +390,7 @@ public partial class LogListViewModel : ObservableObject
                         var remaining = Math.Max(0, maxEntries - LogFilesEntries.Count);
                         foreach (var entry in newEntries.Take(remaining))
                         {
+                            entry.LineNumber = LogFilesEntries.Count + 1;
                             LogFilesEntries.Add(entry);
                         }
                         if (newEntries.Count > 0)
@@ -616,6 +617,7 @@ public partial class LogListViewModel : ObservableObject
                         break;
                     }
 
+                    e.LineNumber = loadedEntries + 1;
                     LogFilesEntries.Add(e);
                     loadedEntries++;
                     observedTypes.Add(e.Type);
