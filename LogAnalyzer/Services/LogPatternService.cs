@@ -19,6 +19,7 @@ namespace LogAnalyzer.Services
         private readonly string _patternDirectory;
 
         public event EventHandler<PatternMatch>? PatternMatched;
+        public event EventHandler<LogPattern>? PatternSaved;
 
         public LogPatternService(string patternDirectory = "LogPatterns")
         {
@@ -86,9 +87,21 @@ namespace LogAnalyzer.Services
         /// </summary>
         public List<PatternMatch> MatchLine(LogFileEntry logEntry)
         {
+            return MatchLine(logEntry, null);
+        }
+
+        /// <summary>
+        /// Versucht, ein einzelnes Pattern (oder alle Patterns) auf eine Log-Zeile anzuwenden.
+        /// </summary>
+        public List<PatternMatch> MatchLine(LogFileEntry logEntry, string? patternId)
+        {
             var matches = new List<PatternMatch>();
 
-            foreach (var pattern in _patterns)
+            var patternsToMatch = string.IsNullOrWhiteSpace(patternId)
+                ? _patterns
+                : _patterns.Where(p => string.Equals(p.Id, patternId, StringComparison.Ordinal));
+
+            foreach (var pattern in patternsToMatch)
             {
                 if (!_compiledRegexes.TryGetValue(pattern.Id, out var regex))
                 {
@@ -167,6 +180,7 @@ namespace LogAnalyzer.Services
             }
 
             CompileRegex(pattern);
+            PatternSaved?.Invoke(this, pattern);
         }
 
         /// <summary>

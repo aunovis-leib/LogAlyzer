@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Data;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
 
@@ -82,10 +83,15 @@ namespace LogAnalyzer.ViewModels
         private PatternMatchViewModel? _selectedMatch;
         private string _filterText = string.Empty;
         private string _selectedSeverity = "All";
+        private readonly ICollectionView _matchesView;
 
         public ObservableCollection<PatternMatchViewModel> Matches { get; } = [];
+        public ICollectionView MatchesView => _matchesView;
         public ObservableCollection<string> Severities { get; } = ["All", "debug", "info", "warning", "error", "critical"];
         public ObservableCollection<string> AvailableTags { get; } = [];
+        public int PinnedCount => Matches.Count(x => x.IsPinned);
+
+        public event EventHandler<LogFileEntry?>? MatchSelected;
 
         private RelayCommand? _clearAllCommand;
         private RelayCommand? _pinSelectedCommand;
@@ -95,6 +101,8 @@ namespace LogAnalyzer.ViewModels
         public PatternMatchPanelViewModel(LogPatternService patternService)
         {
             _patternService = patternService;
+            _matchesView = CollectionViewSource.GetDefaultView(Matches);
+            _matchesView.Filter = FilterMatch;
             _patternService.PatternMatched += OnPatternMatched;
             InitializeTags();
         }
@@ -108,6 +116,7 @@ namespace LogAnalyzer.ViewModels
                     return;
                 _selectedMatch = value;
                 OnPropertyChanged();
+                MatchSelected?.Invoke(this, _selectedMatch?.Match?.LogEntry);
             }
         }
 
@@ -137,13 +146,18 @@ namespace LogAnalyzer.ViewModels
             }
         }
 
-        public ICommand ClearAllCommand => _clearAllCommand ??= new RelayCommand(_ => Matches.Clear());
+        public ICommand ClearAllCommand => _clearAllCommand ??= new RelayCommand(_ =>
+        {
+            Matches.Clear();
+            OnPropertyChanged(nameof(PinnedCount));
+        });
 
         public ICommand PinSelectedCommand => _pinSelectedCommand ??= new RelayCommand(_ =>
         {
             if (SelectedMatch != null)
             {
                 SelectedMatch.IsPinned = !SelectedMatch.IsPinned;
+                OnPropertyChanged(nameof(PinnedCount));
             }
         });
 
@@ -153,6 +167,8 @@ namespace LogAnalyzer.ViewModels
             {
                 match.IsPinned = false;
             }
+
+            OnPropertyChanged(nameof(PinnedCount));
         });
 
         public ICommand ExportCommand => _exportCommand ??= new RelayCommand(_ => ExportMatches());
@@ -167,13 +183,24 @@ namespace LogAnalyzer.ViewModels
                     IsPinned = match.Pattern.Action.Pin
                 };
 
+                viewModel.PropertyChanged += (_, args) =>
+                {
+                    if (args.PropertyName == nameof(PatternMatchViewModel.IsPinned))
+                    {
+                        OnPropertyChanged(nameof(PinnedCount));
+                    }
+                };
+
                 Matches.Insert(0, viewModel);
+                OnPropertyChanged(nameof(PinnedCount));
 
                 // Begrenze auf letzten 1000 Matches
                 while (Matches.Count > 1000)
                 {
                     Matches.RemoveAt(Matches.Count - 1);
                 }
+
+                OnPropertyChanged(nameof(PinnedCount));
 
                 // Bei kritischem Severity automatisch zeigen
                 if (match.Pattern.Severity == "critical")
@@ -197,18 +224,28 @@ namespace LogAnalyzer.ViewModels
 
         private void RefreshFilter()
         {
-            var filtered = _patternService.GetPatterns()
-                .SelectMany(p =>
-                {
-                    var filterLower = FilterText.ToLowerInvariant();
-                    return Matches.Where(m =>
-                        (m.Match.Pattern.Id == p.Id) &&
-                        (_selectedSeverity == "All" || m.Match.Pattern.Severity == _selectedSeverity) &&
-                        (string.IsNullOrEmpty(FilterText) ||
-                         m.Match.LogEntry.Text.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ||
-                         m.Match.Pattern.Name.Contains(FilterText, StringComparison.OrdinalIgnoreCase))
-                    );
-                });
+            _matchesView.Refresh();
+        }
+
+        private bool FilterMatch(object obj)
+        {
+            if (obj is not PatternMatchViewModel m)
+            {
+                return false;
+            }
+
+            if (_selectedSeverity != "All" && !string.Equals(m.Match.Pattern.Severity, _selectedSeverity, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(FilterText))
+            {
+                return true;
+            }
+
+            return (m.Match.LogEntry.Text?.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ?? false)
+                   || (m.Match.Pattern.Name?.Contains(FilterText, StringComparison.OrdinalIgnoreCase) ?? false);
         }
 
         private void ExportMatches()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Windows.Input;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
@@ -91,9 +92,10 @@ namespace LogAnalyzer.ViewModels
         {
             if (CurrentPattern?.Id != null)
             {
+                CurrentPattern.RegexPattern = NormalizePatternInput(CurrentPattern.RegexPattern);
                 await _patternService.SavePatternAsync(CurrentPattern);
                 LoadPatterns();
-                TestResult = "Pattern gespeichert.";
+                TestResult = "Pattern gespeichert. Bereits geladene Log-Einträge werden neu geprüft.";
             }
         });
 
@@ -107,7 +109,8 @@ namespace LogAnalyzer.ViewModels
 
             try
             {
-                var regex = new System.Text.RegularExpressions.Regex(CurrentPattern.RegexPattern);
+                var normalizedPattern = NormalizePatternInput(CurrentPattern.RegexPattern);
+                var regex = new Regex(normalizedPattern);
                 var match = regex.Match(TestLine);
 
                 if (match.Success)
@@ -121,11 +124,11 @@ namespace LogAnalyzer.ViewModels
                             fields.AppendLine($"  {groupName}: {value}");
                         }
                     }
-                    TestResult = $"✓ Match erfolgreich!\n\nExtrahierte Felder:\n{fields}";
+                    TestResult = $"✓ Match erfolgreich!\nRegex: {normalizedPattern}\n\nExtrahierte Felder:\n{fields}";
                 }
                 else
                 {
-                    TestResult = "✗ Keine Übereinstimmung gefunden.";
+                    TestResult = $"✗ Keine Übereinstimmung gefunden.\nRegex: {normalizedPattern}";
                 }
             }
             catch (System.Exception ex)
@@ -133,6 +136,33 @@ namespace LogAnalyzer.ViewModels
                 TestResult = $"✗ Regex-Fehler: {ex.Message}";
             }
         });
+
+        private static string NormalizePatternInput(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return string.Empty;
+            }
+
+            // Bei klaren Regex-Indikatoren Eingabe unverändert lassen.
+            if (input.Contains("(?<", StringComparison.Ordinal)
+                || input.Contains("\\d", StringComparison.Ordinal)
+                || input.Contains("\\s", StringComparison.Ordinal)
+                || input.Contains("\\w", StringComparison.Ordinal)
+                || input.Contains("[", StringComparison.Ordinal)
+                || input.Contains("]", StringComparison.Ordinal)
+                || input.Contains("|", StringComparison.Ordinal)
+                || input.Contains("^", StringComparison.Ordinal)
+                || input.Contains("$", StringComparison.Ordinal)
+                || input.Contains("\\", StringComparison.Ordinal))
+            {
+                return input;
+            }
+
+            // Wildcard-Text in Regex umwandeln: '*' => '.*', Rest escapen.
+            var escaped = Regex.Escape(input);
+            return escaped.Replace("\\*", ".*");
+        }
 
         private void LoadPatterns()
         {

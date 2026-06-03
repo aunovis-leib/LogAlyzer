@@ -10,7 +10,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Windows.Data;
-using System.Windows.Threading;
+using System.Diagnostics;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -18,14 +18,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 {
     private readonly AppSettingsManager _appSettings;
     private CancellationTokenSource? _loadCancellation;
-    private string[] _currentLoadedFiles = [];
-    private FileSystemWatcher? _fileSystemWatcher;
-    private Dictionary<string, long> _filePositions = new(StringComparer.OrdinalIgnoreCase);
-    private Dictionary<string, string> _partialLineBuffers = new(StringComparer.OrdinalIgnoreCase);
-    private Dictionary<string, LogFileEntry> _incompleteEntryPerFile = new(StringComparer.OrdinalIgnoreCase);
-    private Dictionary<string, List<string>> _incompleteEntryDetailsPerFile = new(StringComparer.OrdinalIgnoreCase);
-    private DispatcherTimer? _debounceTimer;
-    private DispatcherTimer? _filterDebounceTimer;
+    private readonly LogPatternService? _patternService;
 
     public FileExplorerViewModel FileExplorerVM { get; } = new();
 
@@ -46,6 +39,30 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         {
             SetProperty(ref _logFilesEntries, value);
         }
+    }
+
+    public int ReapplyPatternToLoadedEntries(string patternId)
+    {
+        if (_patternService == null || string.IsNullOrWhiteSpace(patternId))
+        {
+            return 0;
+        }
+
+        var matchCount = 0;
+        foreach (var entry in LogFilesEntries)
+        {
+            try
+            {
+                var matches = _patternService.MatchLine(entry, patternId);
+                matchCount += matches.Count;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Pattern Error] Fehler beim Re-Apply von '{patternId}': {ex.Message}");
+            }
+        }
+
+        return matchCount;
     }
     public ICollectionView LogFilesView { get; }
 
@@ -243,7 +260,8 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     {
         _appSettings = appSettings;
         _selectedProfile = selectedProfile;
-        Settings = settingsViewModel;
+        _patternService = App.PatternService;  // Pattern Service laden
+
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
         FileExplorerVM.FilesSelected += OnExplorerFilesSelected;
@@ -646,6 +664,10 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
                     e.LineNumber = loadedEntries + 1;
                     LogFilesEntries.Add(e);
+
+                    // ? PATTERNS ANWENDEN!
+                    ApplyPatternsToEntry(e);
+
                     loadedEntries++;
                     observedTypes.Add(e.Type);
 
@@ -883,6 +905,41 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         var filterLower = FilterText.Trim().ToLowerInvariant();
         return (e.Text?.Contains(filterLower, StringComparison.OrdinalIgnoreCase) ?? false) ||
                (e.Detail?.Any(d => d?.Contains(filterLower, StringComparison.OrdinalIgnoreCase) ?? false) ?? false);
+    }
+
+    /// <summary>
+    /// Wendet alle definierten Log-Patterns auf einen einzelnen Log-Eintrag an.
+    /// Dies wird automatisch aufgerufen, wenn ein neuer Eintrag hinzugefügt wird.
+    /// </summary>
+    private void ApplyPatternsToEntry(LogFileEntry entry)
+    {
+        if (_patternService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var matches = _patternService.MatchLine(entry);
+
+            if (matches.Any())
+            {
+                // Debug-Ausgabe: Patterns gefunden
+                Debug.WriteLine($"[Pattern Match] {entry.Text?.Substring(0, Math.Min(60, entry.Text?.Length ?? 0))}");
+                foreach (var match in matches)
+                {
+                    Debug.WriteLine($"  ? {match.Pattern.Name} ({match.Pattern.Severity})");
+                    foreach (var field in match.ExtractedFields)
+                    {
+                        Debug.WriteLine($"    - {field.Key}: {field.Value}");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Pattern Error] Fehler beim Anwenden von Patterns: {ex.Message}");
+        }
     }
 
     private void UpdateAvailableTypes(IEnumerable<LogType>? observedTypes = null)
