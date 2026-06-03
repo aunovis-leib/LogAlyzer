@@ -22,6 +22,7 @@ namespace LogAnalyzer
             base.OnStartup(e);
 
             // Initialize Pattern Service
+            _patternService ??= new LogPatternService("LogPatterns");
             InitializePatternServiceAsync();
         }
 
@@ -29,7 +30,11 @@ namespace LogAnalyzer
         {
             try
             {
-                _patternService = new LogPatternService("LogPatterns");
+                if (_patternService is null)
+                {
+                    _patternService = new LogPatternService("LogPatterns");
+                }
+
                 await _patternService.LoadPatternsAsync();
                 System.Diagnostics.Debug.WriteLine($"✓ Loaded {_patternService.GetPatterns().Count} patterns");
             }

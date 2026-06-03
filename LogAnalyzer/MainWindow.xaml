@@ -1,4 +1,7 @@
-﻿<Window x:Class="LogAnalyzer.MainWindow"
+﻿
+    
+    
+    <Window x:Class="LogAnalyzer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -40,6 +43,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="2*" />
+            <RowDefinition Height="1.2*" />
             <RowDefinition Height="Auto">
                 <RowDefinition.Style>
                     <Style TargetType="RowDefinition">
@@ -107,7 +111,9 @@
         </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <GridSplitter Grid.Row="3" HorizontalAlignment="Stretch" Height="6" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000">
+        <views:PatternMatchPanelView Grid.Row="3" DataContext="{Binding PatternMatchPanelVM}" Margin="0,8,0,0" />
+
+        <GridSplitter Grid.Row="4" HorizontalAlignment="Stretch" Height="6" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000">
             <GridSplitter.Style>
                 <Style TargetType="GridSplitter">
                     <Setter Property="Visibility" Value="Visible" />
@@ -121,7 +127,7 @@
                 </Style>
             </GridSplitter.Style>
         </GridSplitter>
-        <views:LiveChartView Grid.Row="4" DataContext="{Binding ChartVM}">
+        <views:LiveChartView Grid.Row="5" DataContext="{Binding ChartVM}">
             <views:LiveChartView.Style>
                 <Style TargetType="{x:Type views:LiveChartView}">
                     <Setter Property="Visibility" Value="Visible" />
@@ -137,7 +143,7 @@
         </views:LiveChartView>
 
         <!-- Sliding Settings Pane -->
-        <Border x:Name="SettingsPane" Grid.RowSpan="5" Width="420" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
+        <Border x:Name="SettingsPane" Grid.RowSpan="6" Width="320" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
             <Border.RenderTransform>
                 <TranslateTransform x:Name="SettingsPaneTransform" X="420" />
             </Border.RenderTransform>

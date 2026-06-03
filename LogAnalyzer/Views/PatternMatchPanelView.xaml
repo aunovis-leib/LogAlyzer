@@ -64,7 +64,7 @@
 
             <!-- Matches-Liste -->
             <ListBox DockPanel.Dock="Top"
-                     ItemsSource="{Binding Matches}"
+                     ItemsSource="{Binding MatchesView}"
                      SelectedItem="{Binding SelectedMatch}"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      Background="White">
@@ -132,9 +132,9 @@
             <Border DockPanel.Dock="Bottom" Background="#E8E8E8" Padding="10">
                 <TextBlock>
                     <Run Text="Matches: "/>
-                    <Run Text="{Binding Matches.Count}"/>
+                    <Run Text="{Binding Matches.Count, Mode=OneWay}"/>
                     <Run Text=" | Pinned: "/>
-                    <Run Text="{Binding Matches.Count}"/>
+                    <Run Text="{Binding PinnedCount, Mode=OneWay}"/>
                 </TextBlock>
             </Border>
         </DockPanel>
