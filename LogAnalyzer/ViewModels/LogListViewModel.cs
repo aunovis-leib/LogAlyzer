@@ -5,14 +5,16 @@ using LogAnalyzer.Services;
 using LogAnalyzer.Services.Parsing;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.Collections;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Windows.Data;
 using System.Windows.Threading;
 
 namespace LogAnalyzer.ViewModels;
 
-public partial class LogListViewModel : ObservableObject
+public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 {
     private readonly AppSettingsManager _appSettings;
     private CancellationTokenSource? _loadCancellation;
@@ -65,10 +67,16 @@ public partial class LogListViewModel : ObservableObject
     private string _filterText = string.Empty;
 
     [ObservableProperty]
-    private string _filterFromTime = string.Empty;
+    private TimeOnly? _filterFromTime;
 
     [ObservableProperty]
-    private string _filterToTime = string.Empty;
+    private TimeOnly? _filterToTime;
+
+    [ObservableProperty]
+    private string _filterFromTimeText = string.Empty;
+
+    [ObservableProperty]
+    private string _filterToTimeText = string.Empty;
 
     [ObservableProperty]
     private DateTime? _filterFromDate = null;
@@ -109,6 +117,25 @@ public partial class LogListViewModel : ObservableObject
     {
         get => _newEntriesCount;
         set => SetProperty(ref _newEntriesCount, value);
+    }
+
+    private readonly Dictionary<string, List<string>> _validationErrors = new();
+    private static readonly string[] TimeInputFormats = ["HH:mm:ss", "HH:mm"];
+
+    public bool HasErrors => _validationErrors.Count != 0;
+
+    public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
+
+    public IEnumerable GetErrors(string? propertyName)
+    {
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            return _validationErrors.SelectMany(x => x.Value);
+        }
+
+        return _validationErrors.TryGetValue(propertyName, out var errors)
+            ? errors
+            : Enumerable.Empty<string>();
     }
 
     [RelayCommand]
@@ -730,13 +757,69 @@ public partial class LogListViewModel : ObservableObject
         _filterDebounceTimer.Start();
     }
 
-    partial void OnFilterFromTimeChanged(string value)
+    partial void OnFilterFromTimeTextChanged(string value)
+    {
+        if (IsLoading) return;
+
+        if (TryParseTimeInput(value, out var parsedTime, out var normalized))
+        {
+            ClearErrors(nameof(FilterFromTimeText));
+            FilterFromTime = parsedTime;
+
+            if (!string.IsNullOrWhiteSpace(value) && !string.Equals(value, normalized, StringComparison.Ordinal))
+            {
+                FilterFromTimeText = normalized;
+            }
+
+            return;
+        }
+
+        FilterFromTime = null;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            ClearErrors(nameof(FilterFromTimeText));
+            return;
+        }
+
+        SetErrors(nameof(FilterFromTimeText), ["Ungültige Uhrzeit. Bitte HH:mm:ss verwenden."]);
+    }
+
+    partial void OnFilterToTimeTextChanged(string value)
+    {
+        if (IsLoading) return;
+
+        if (TryParseTimeInput(value, out var parsedTime, out var normalized))
+        {
+            ClearErrors(nameof(FilterToTimeText));
+            FilterToTime = parsedTime;
+
+            if (!string.IsNullOrWhiteSpace(value) && !string.Equals(value, normalized, StringComparison.Ordinal))
+            {
+                FilterToTimeText = normalized;
+            }
+
+            return;
+        }
+
+        FilterToTime = null;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            ClearErrors(nameof(FilterToTimeText));
+            return;
+        }
+
+        SetErrors(nameof(FilterToTimeText), ["Ungültige Uhrzeit. Bitte HH:mm:ss verwenden."]);
+    }
+
+    partial void OnFilterFromTimeChanged(TimeOnly? value)
     {
         if (IsLoading) return;
         RefreshView();
     }
 
-    partial void OnFilterToTimeChanged(string value)
+    partial void OnFilterToTimeChanged(TimeOnly? value)
     {
         if (IsLoading) return;
         RefreshView();
@@ -789,18 +872,9 @@ public partial class LogListViewModel : ObservableObject
         if (FilterToDate is not null && e.Date.Date > FilterToDate.Value.Date) return false;
 
         // Time range filtering
-        if (!string.IsNullOrWhiteSpace(FilterFromTime) || !string.IsNullOrWhiteSpace(FilterToTime))
-        {
-            var entryTime = e.Date.ToString("HH:mm:ss");
-            var fromTime = FilterFromTime?.Trim();
-            var toTime = FilterToTime?.Trim();
-
-            if (!string.IsNullOrEmpty(fromTime) && string.Compare(entryTime, fromTime, StringComparison.Ordinal) < 0)
-                return false;
-
-            if (!string.IsNullOrEmpty(toTime) && string.Compare(entryTime, toTime, StringComparison.Ordinal) > 0)
-                return false;
-        }
+        var entryTime = TimeOnly.FromDateTime(e.Date);
+        if (FilterFromTime is not null && entryTime < FilterFromTime.Value) return false;
+        if (FilterToTime is not null && entryTime > FilterToTime.Value) return false;
 
         if (string.IsNullOrWhiteSpace(FilterText))
             return true;
@@ -863,6 +937,41 @@ public partial class LogListViewModel : ObservableObject
         var sortDirection = settingsViewModel.DateSortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending;
         LogFilesView.SortDescriptions.Clear();
         LogFilesView.SortDescriptions.Add(new SortDescription(nameof(LogFileEntry.Date), sortDirection));
+    }
+
+    private static bool TryParseTimeInput(string? value, out TimeOnly? parsed, out string normalized)
+    {
+        parsed = null;
+        normalized = string.Empty;
+
+        var input = value?.Trim();
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return true;
+        }
+
+        if (!TimeOnly.TryParseExact(input, TimeInputFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var time))
+        {
+            return false;
+        }
+
+        parsed = time;
+        normalized = time.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+        return true;
+    }
+
+    private void SetErrors(string propertyName, List<string> errors)
+    {
+        _validationErrors[propertyName] = errors;
+        ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+    }
+
+    private void ClearErrors(string propertyName)
+    {
+        if (_validationErrors.Remove(propertyName))
+        {
+            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+        }
     }
 
     ~LogListViewModel()
