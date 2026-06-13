@@ -71,9 +71,11 @@ namespace LogAnalyzer.ViewModels
 
         public ICommand AddPatternCommand => _addPatternCommand ??= new RelayCommand(_ =>
         {
+            var newId = $"pattern_{System.Guid.NewGuid().ToString().Substring(0, 8)}";
             CurrentPattern = new LogPattern
             {
-                Id = $"pattern_{System.Guid.NewGuid().ToString().Substring(0, 8)}",
+                Id = newId,
+                Name = newId,
                 Priority = 50
             };
         });
@@ -90,13 +92,30 @@ namespace LogAnalyzer.ViewModels
 
         public ICommand SavePatternCommand => _savePatternCommand ??= new RelayCommand(async _ =>
         {
-            if (CurrentPattern?.Id != null)
+            if (CurrentPattern is null)
             {
-                CurrentPattern.RegexPattern = NormalizePatternInput(CurrentPattern.RegexPattern);
-                await _patternService.SavePatternAsync(CurrentPattern);
-                LoadPatterns();
-                TestResult = "Pattern gespeichert. Bereits geladene Log-Einträge werden neu geprüft.";
+                return;
             }
+
+            CurrentPattern.Id = CurrentPattern.Id?.Trim() ?? string.Empty;
+            CurrentPattern.Name = CurrentPattern.Name?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(CurrentPattern.Id))
+            {
+                TestResult = "✗ ID ist ein Pflichtfeld.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CurrentPattern.Name))
+            {
+                TestResult = "✗ Name ist ein Pflichtfeld.";
+                return;
+            }
+
+            CurrentPattern.RegexPattern = NormalizePatternInput(CurrentPattern.RegexPattern);
+            await _patternService.SavePatternAsync(CurrentPattern);
+            LoadPatterns();
+            TestResult = "Pattern gespeichert. Bereits geladene Log-Einträge werden neu geprüft.";
         });
 
         public ICommand TestPatternCommand => _testPatternCommand ??= new RelayCommand(_ =>

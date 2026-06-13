@@ -25,6 +25,10 @@
                       Command="{Binding Path=DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
             <Separator />
+            <MenuItem Header="Add to Pattern"
+                      Command="{Binding Path=DataContext.AddToPatternCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+            <Separator />
             <MenuItem Header="Add Rule"
                       Command="{Binding Path=DataContext.AddHighlightRuleFromEntryCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
