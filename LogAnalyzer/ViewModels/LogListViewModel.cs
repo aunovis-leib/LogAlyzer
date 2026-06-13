@@ -11,6 +11,8 @@ using System.Globalization;
 using System.IO;
 using System.Windows.Data;
 using System.Diagnostics;
+using LogAnalyzer.Views;
+using System.Windows;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -192,6 +194,49 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
         Settings.HighlightSearchText = entry.Text;
         Settings.AddHighlightRuleCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private void AddToPattern(LogFileEntry? entry)
+    {
+        if (entry is null)
+        {
+            return;
+        }
+
+        var patternService = App.PatternService;
+        if (patternService == null)
+        {
+            MessageBox.Show("Pattern Service not initialized.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var generatedId = $"pattern_{Guid.NewGuid().ToString()[..8]}";
+        var editorVM = new PatternEditorViewModel(patternService);
+        editorVM.CurrentPattern.Id = generatedId;
+        editorVM.CurrentPattern.Name = generatedId;
+        editorVM.CurrentPattern.Severity = entry.Type switch
+        {
+            LogType.Error => "error",
+            LogType.Warning => "warning",
+            LogType.Debug => "debug",
+            LogType.Info => "info",
+            _ => "info"
+        };
+        editorVM.CurrentPattern.RegexPattern = !string.IsNullOrWhiteSpace(entry.RawLine)
+            ? entry.RawLine
+            : entry.Text;
+
+        var editorWindow = new Window
+        {
+            Title = "Log Pattern Editor",
+            Width = 1000,
+            Height = 700,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            Content = new PatternEditorView { DataContext = editorVM }
+        };
+
+        editorWindow.ShowDialog();
     }
 
     public void SelectEntryFromOutside(LogFileEntry? entry, TimeSpan syncTolerance)
