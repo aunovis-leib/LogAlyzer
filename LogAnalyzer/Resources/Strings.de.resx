@@ -123,6 +123,9 @@
   <data name="ShowLiveChart" xml:space="preserve">
     <value>Live-Chart anzeigen</value>
   </data>
+  <data name="ShowPatternMatchPanel" xml:space="preserve">
+    <value>Pattern-Match-Panel anzeigen</value>
+  </data>
   <data name="File" xml:space="preserve">
     <value>Datei</value>
   </data>

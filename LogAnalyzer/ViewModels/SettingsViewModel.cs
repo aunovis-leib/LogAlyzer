@@ -20,6 +20,9 @@ public partial class SettingsViewModel : ObservableObject
     private bool _showLiveChart = false;
 
     [ObservableProperty]
+    private bool _showPatternMatchPanel = false;
+
+    [ObservableProperty]
     private int _maxEntriesPerList = 10000;
 
     // Tolerance for date/time synchronization
@@ -51,8 +54,10 @@ public partial class SettingsViewModel : ObservableObject
     {
         var settings = AppSettingsManager.Instance.Settings;
         var liveChart = GetOrCreateLiveChartSettings(settings);
+        var patternMatchPanel = GetOrCreatePatternMatchPanelSettings(settings);
         var settingsView = GetOrCreateSettingsViewSettings(settings);
         ShowLiveChart = liveChart.ShowLiveChart;
+        ShowPatternMatchPanel = patternMatchPanel.ShowPatternMatchPanel;
         SyncSelectionAcrossLists = settingsView.SyncSelectionAcrossLists;
         MaxEntriesPerList = settingsView.MaxEntriesPerList;
         SyncTolerance = settingsView.SyncTolerance;
@@ -103,6 +108,14 @@ public partial class SettingsViewModel : ObservableObject
         var manager = AppSettingsManager.Instance;
         var liveChart = GetOrCreateLiveChartSettings(manager.Settings);
         liveChart.ShowLiveChart = value;
+        manager.Save();
+    }
+
+    partial void OnShowPatternMatchPanelChanged(bool value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var patternMatchPanel = GetOrCreatePatternMatchPanelSettings(manager.Settings);
+        patternMatchPanel.ShowPatternMatchPanel = value;
         manager.Save();
     }
 
@@ -178,6 +191,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         SyncSelectionAcrossLists = true;
         ShowLiveChart = false;
+        ShowPatternMatchPanel = false;
         MaxEntriesPerList = 10000;
         SyncTolerance = TimeSpan.FromHours(1);
         ExplorerRootFolder = string.Empty;
@@ -257,6 +271,12 @@ public partial class SettingsViewModel : ObservableObject
     {
         settings.LivChart ??= new LiveChartSettings();
         return settings.LivChart;
+    }
+
+    private static PatternMatchPanelSettings GetOrCreatePatternMatchPanelSettings(AppSettings settings)
+    {
+        settings.PatternMatchPanel ??= new PatternMatchPanelSettings();
+        return settings.PatternMatchPanel;
     }
 
     private static SettingsViewSettings GetOrCreateSettingsViewSettings(AppSettings settings)

@@ -43,7 +43,22 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="2*" />
-            <RowDefinition Height="1.2*" />
+            <RowDefinition>
+                <RowDefinition.Style>
+                    <Style TargetType="RowDefinition">
+                        <Setter Property="Height" Value="1.2*" />
+                        <Setter Property="MaxHeight" Value="Infinity" />
+                        <Style.Triggers>
+                            <DataTrigger Value="False"
+                                         Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
+                                                           RelativeSource={RelativeSource AncestorType=Window}}">
+                                <Setter Property="Height" Value="0" />
+                                <Setter Property="MaxHeight" Value="0" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </RowDefinition.Style>
+            </RowDefinition>
             <RowDefinition Height="Auto">
                 <RowDefinition.Style>
                     <Style TargetType="RowDefinition">
@@ -111,7 +126,20 @@
         </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <views:PatternMatchPanelView Grid.Row="3" DataContext="{Binding PatternMatchPanelVM}" Margin="0,8,0,0" />
+        <views:PatternMatchPanelView Grid.Row="3" DataContext="{Binding PatternMatchPanelVM}" Margin="0,8,0,0">
+            <views:PatternMatchPanelView.Style>
+                <Style TargetType="{x:Type views:PatternMatchPanelView}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Value="False"
+                                     Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
+                                                       RelativeSource={RelativeSource AncestorType=Window}}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </views:PatternMatchPanelView.Style>
+        </views:PatternMatchPanelView>
 
         <GridSplitter Grid.Row="4" HorizontalAlignment="Stretch" Height="6" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000">
             <GridSplitter.Style>

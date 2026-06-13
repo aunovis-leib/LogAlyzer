@@ -22,6 +22,7 @@ namespace LogAnalyzer.Models
             : Date.ToString("dd.MM.yyyy HH:mm:ss.fff");
         public LogType Type { get; set; }
         public string Text { get; set; } = string.Empty;
+        public string RawLine { get; set; } = string.Empty;
         public string[] Detail { get; set; } = [];
 
         private string? _highlightColor;

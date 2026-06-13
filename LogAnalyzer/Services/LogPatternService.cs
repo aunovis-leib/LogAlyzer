@@ -101,6 +101,27 @@ namespace LogAnalyzer.Services
                 ? _patterns
                 : _patterns.Where(p => string.Equals(p.Id, patternId, StringComparison.Ordinal));
 
+            // Match against all relevant text surfaces of an entry:
+            // - RawLine (original main log line)
+            // - Text (parsed message part)
+            // - Detail lines (stack traces / continuation lines)
+            var textCandidates = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(logEntry.RawLine))
+            {
+                textCandidates.Add(logEntry.RawLine);
+            }
+
+            if (!string.IsNullOrWhiteSpace(logEntry.Text))
+            {
+                textCandidates.Add(logEntry.Text);
+            }
+
+            if (logEntry.Detail is { Length: > 0 })
+            {
+                textCandidates.AddRange(logEntry.Detail.Where(d => !string.IsNullOrWhiteSpace(d)));
+            }
+
             foreach (var pattern in patternsToMatch)
             {
                 if (!_compiledRegexes.TryGetValue(pattern.Id, out var regex))
@@ -108,14 +129,24 @@ namespace LogAnalyzer.Services
                     continue;
                 }
 
-                var match = regex.Match(logEntry.Text);
-                if (match.Success)
+                Match? firstMatch = null;
+                foreach (var candidate in textCandidates)
+                {
+                    var match = regex.Match(candidate);
+                    if (match.Success)
+                    {
+                        firstMatch = match;
+                        break;
+                    }
+                }
+
+                if (firstMatch is not null)
                 {
                     var patternMatch = new PatternMatch
                     {
                         Pattern = pattern,
                         LogEntry = logEntry,
-                        ExtractedFields = ExtractFields(pattern, match)
+                        ExtractedFields = ExtractFields(pattern, firstMatch)
                     };
 
                     matches.Add(patternMatch);

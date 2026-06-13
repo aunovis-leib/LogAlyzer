@@ -146,9 +146,18 @@ namespace LogAnalyzer.ViewModels
 
             // Bei klaren Regex-Indikatoren Eingabe unverändert lassen.
             if (input.Contains("(?<", StringComparison.Ordinal)
+                || input.Contains(".*", StringComparison.Ordinal)
+                || input.Contains(".+", StringComparison.Ordinal)
+                || input.Contains(".?", StringComparison.Ordinal)
                 || input.Contains("\\d", StringComparison.Ordinal)
                 || input.Contains("\\s", StringComparison.Ordinal)
                 || input.Contains("\\w", StringComparison.Ordinal)
+                || input.Contains("(", StringComparison.Ordinal)
+                || input.Contains(")", StringComparison.Ordinal)
+                || input.Contains("{", StringComparison.Ordinal)
+                || input.Contains("}", StringComparison.Ordinal)
+                || input.Contains("+", StringComparison.Ordinal)
+                || input.Contains("?", StringComparison.Ordinal)
                 || input.Contains("[", StringComparison.Ordinal)
                 || input.Contains("]", StringComparison.Ordinal)
                 || input.Contains("|", StringComparison.Ordinal)

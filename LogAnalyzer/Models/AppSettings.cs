@@ -5,6 +5,7 @@ namespace LogAnalyzer.Models;
 public sealed class AppSettings
 {
     public LiveChartSettings LivChart { get; set; } = new();
+    public PatternMatchPanelSettings PatternMatchPanel { get; set; } = new();
     public List<ParserProfile> ParserProfiles { get; set; } = new();
     public SettingsViewSettings SettingsView { get; set; } = new();
 }
@@ -12,6 +13,11 @@ public sealed class AppSettings
 public sealed class LiveChartSettings
 {
     public bool ShowLiveChart { get; set; } = true;
+}
+
+public sealed class PatternMatchPanelSettings
+{
+    public bool ShowPatternMatchPanel { get; set; } = true;
 }
 
 public sealed class SettingsViewSettings
