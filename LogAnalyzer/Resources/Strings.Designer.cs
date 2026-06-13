@@ -158,5 +158,194 @@ namespace LogAnalyzer.Resources {
                 return ResourceManager.GetString("Time", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Explorer root folder.
+        /// </summary>
+        public static string ExplorerRootFolder {
+            get {
+                return ResourceManager.GetString("ExplorerRootFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Current path as root.
+        /// </summary>
+        public static string CurrentPathAsRoot {
+            get {
+                return ResourceManager.GetString("CurrentPathAsRoot", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Auto-reload log files.
+        /// </summary>
+        public static string AutoReloadLogFiles {
+            get {
+                return ResourceManager.GetString("AutoReloadLogFiles", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Date column sorting.
+        /// </summary>
+        public static string DateColumnSorting {
+            get {
+                return ResourceManager.GetString("DateColumnSorting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Newest entries on top (descending).
+        /// </summary>
+        public static string NewestEntriesOnTopDescending {
+            get {
+                return ResourceManager.GetString("NewestEntriesOnTopDescending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Oldest entries on top (ascending).
+        /// </summary>
+        public static string OldestEntriesOnTopAscending {
+            get {
+                return ResourceManager.GetString("OldestEntriesOnTopAscending", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Live chart.
+        /// </summary>
+        public static string LiveChart {
+            get {
+                return ResourceManager.GetString("LiveChart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Pattern match panel.
+        /// </summary>
+        public static string PatternMatchPanel {
+            get {
+                return ResourceManager.GetString("PatternMatchPanel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tolerance (hh:mm:ss).
+        /// </summary>
+        public static string ToleranceHhMmSs {
+            get {
+                return ResourceManager.GetString("ToleranceHhMmSs", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Highlight rules.
+        /// </summary>
+        public static string HighlightRules {
+            get {
+                return ResourceManager.GetString("HighlightRules", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Search text:.
+        /// </summary>
+        public static string SearchText {
+            get {
+                return ResourceManager.GetString("SearchText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Color:.
+        /// </summary>
+        public static string Color {
+            get {
+                return ResourceManager.GetString("Color", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add rule.
+        /// </summary>
+        public static string AddRule {
+            get {
+                return ResourceManager.GetString("AddRule", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Active rules:.
+        /// </summary>
+        public static string ActiveRules {
+            get {
+                return ResourceManager.GetString("ActiveRules", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Enabled.
+        /// </summary>
+        public static string Enabled {
+            get {
+                return ResourceManager.GetString("Enabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Remove.
+        /// </summary>
+        public static string Remove {
+            get {
+                return ResourceManager.GetString("Remove", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reset defaults.
+        /// </summary>
+        public static string ResetDefaults {
+            get {
+                return ResourceManager.GetString("ResetDefaults", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Log Pattern Editor.
+        /// </summary>
+        public static string LogPatternEditor {
+            get {
+                return ResourceManager.GetString("LogPatternEditor", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Manage log pattern templates.
+        /// </summary>
+        public static string ManageLogPatternTemplates {
+            get {
+                return ResourceManager.GetString("ManageLogPatternTemplates", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 📋 Open Pattern Editor.
+        /// </summary>
+        public static string OpenPatternEditor {
+            get {
+                return ResourceManager.GetString("OpenPatternEditor", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Create, edit, and test log pattern templates for automatic error detection.
+        /// </summary>
+        public static string CreateEditAndTestLogPatternTemplates {
+            get {
+                return ResourceManager.GetString("CreateEditAndTestLogPatternTemplates", resourceCulture);
+            }
+        }
     }
 }

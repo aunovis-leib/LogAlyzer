@@ -31,22 +31,22 @@
                     <TextBox Width="80" Margin="6,0,0,0" Text="{Binding MaxEntriesPerList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="0,8,0,0">
-                    <TextBlock VerticalAlignment="Center" Text="Explorer root folder" />
+                    <TextBlock VerticalAlignment="Center" Text="{x:Static res:Strings.ExplorerRootFolder}" />
                     <DockPanel Margin="0,4,0,0">
                         <Button DockPanel.Dock="Right" Content="..." Width="28" Margin="6,0,0,0" Click="ChooseExplorerRootFolder_Click" />
                                 <ComboBox ItemsSource="{Binding ExplorerRootFolderHistory, Mode=OneWay}"
                                   SelectedItem="{Binding ExplorerRootFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   IsEditable="True" />
                     </DockPanel>
-                    <Button Content="Current path as root" Width="140" HorizontalAlignment="Left" Margin="0,6,0,0" Click="SetCurrentExplorerPathAsRoot_Click" />
+                    <Button Content="{x:Static res:Strings.CurrentPathAsRoot}" Width="140" HorizontalAlignment="Left" Margin="0,6,0,0" Click="SetCurrentExplorerPathAsRoot_Click" />
                 </StackPanel>
-                <CheckBox Content="Auto-reload log files" Margin="0,8,0,0"
+                <CheckBox Content="{x:Static res:Strings.AutoReloadLogFiles}" Margin="0,8,0,0"
                           IsChecked="{Binding AutoReloadLogFiles, Mode=TwoWay}" />
-                <GroupBox Header="Date column sorting" Margin="0,8,0,0">
+                <GroupBox Header="{x:Static res:Strings.DateColumnSorting}" Margin="0,8,0,0">
                     <StackPanel Margin="6">
-                        <RadioButton Content="Newest entries on top (descending)" Margin="0,4,0,0"
+                        <RadioButton Content="{x:Static res:Strings.NewestEntriesOnTopDescending}" Margin="0,4,0,0"
                                      IsChecked="{Binding DateSortDescending, Mode=TwoWay}" />
-                        <RadioButton Content="Oldest entries on top (ascending)" Margin="0,4,0,0"
+                        <RadioButton Content="{x:Static res:Strings.OldestEntriesOnTopAscending}" Margin="0,4,0,0"
                                      IsChecked="{Binding DateSortDescending, Mode=TwoWay, Converter={StaticResource InverseBoolConverter}}" />
                     </StackPanel>
                 </GroupBox>
@@ -54,13 +54,13 @@
         </GroupBox>
 
 
-        <GroupBox Header="Live chart">
+        <GroupBox Header="{x:Static res:Strings.LiveChart}">
             <CheckBox Margin="6" Content="{x:Static res:Strings.ShowLiveChart}"
                   IsChecked="{Binding ShowLiveChart, Mode=TwoWay}" />
         </GroupBox>
 
 
-        <GroupBox Header="Pattern match panel">
+        <GroupBox Header="{x:Static res:Strings.PatternMatchPanel}">
             <CheckBox Margin="6" Content="{x:Static res:Strings.ShowPatternMatchPanel}"
                   IsChecked="{Binding ShowPatternMatchPanel, Mode=TwoWay}" />
         </GroupBox>
@@ -68,33 +68,33 @@
 
         <GroupBox Header="{x:Static res:Strings.SynchronizationTolerance}" Margin="0,8,0,0">
             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <TextBlock VerticalAlignment="Center" Margin="6,0,0,0" Text="Tolerance (hh:mm:ss)" />
+                <TextBlock VerticalAlignment="Center" Margin="6,0,0,0" Text="{x:Static res:Strings.ToleranceHhMmSs}" />
                 <TextBox Width="100" Margin="6,0,0,0" Text="{Binding SyncTolerance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
         </GroupBox>
 
-        <GroupBox Header="Highlight rules" Margin="0,8,0,0">
+        <GroupBox Header="{x:Static res:Strings.HighlightRules}" Margin="0,8,0,0">
             <StackPanel Margin="6">
                 <StackPanel Orientation="Vertical" Margin="0,0,0,8">
                     <StackPanel Orientation="Vertical">
-                        <TextBlock Text="Search text:" Margin="0,0,0,2" FontSize="11" />
+                        <TextBlock Text="{x:Static res:Strings.SearchText}" Margin="0,0,0,2" FontSize="11" />
                         <TextBox Text="{Binding HighlightSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="24" />
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Margin="0,6,0,0">
-                        <TextBlock Text="Color:" Margin="0,0,0,2" FontSize="11" />
+                        <TextBlock Text="{x:Static res:Strings.Color}" Margin="0,0,0,2" FontSize="11" />
                         <ctrls:SimpleColorPicker SelectedColor="{Binding HighlightColor, Mode=TwoWay}" />
                     </StackPanel>
-                    <Button Content="Add rule" Command="{Binding AddHighlightRuleCommand}" Margin="0,6,0,0" Height="28" />
+                    <Button Content="{x:Static res:Strings.AddRule}" Command="{Binding AddHighlightRuleCommand}" Margin="0,6,0,0" Height="28" />
                 </StackPanel>
-                <TextBlock Text="Active rules:" Margin="0,8,0,4" FontSize="11" FontWeight="Bold" />
+                <TextBlock Text="{x:Static res:Strings.ActiveRules}" Margin="0,8,0,4" FontSize="11" FontWeight="Bold" />
                 <DataGrid ItemsSource="{Binding HighlightRules}" MinHeight="100" MaxHeight="150"
                           AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                           CanUserReorderColumns="False" CanUserResizeColumns="False"
                           ScrollViewer.VerticalScrollBarVisibility="Auto" AlternationCount="2">
                     <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Header="Enabled" Binding="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="60" />
-                        <DataGridTextColumn Header="Search Text" Binding="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                        <DataGridTemplateColumn Header="Color" Width="50">
+                        <DataGridCheckBoxColumn Header="{x:Static res:Strings.Enabled}" Binding="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="60" />
+                        <DataGridTextColumn Header="{x:Static res:Strings.SearchText}" Binding="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                        <DataGridTemplateColumn Header="{x:Static res:Strings.Color}" Width="50">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border Background="{Binding Color, Converter={StaticResource HexColorToBrushConverter}}" 
@@ -108,7 +108,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellEditingTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Remove" Width="50">
+                        <DataGridTemplateColumn Header="{x:Static res:Strings.Remove}" Width="50">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Content="X" Command="{Binding DataContext.RemoveHighlightRuleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
@@ -121,19 +121,19 @@
             </StackPanel>
         </GroupBox>
 
-        <Button Content="Reset defaults" Command="{Binding ResetDefaultsCommand}" HorizontalAlignment="Right" Width="120" Margin="0,12,0,0" />
+        <Button Content="{x:Static res:Strings.ResetDefaults}" Command="{Binding ResetDefaultsCommand}" HorizontalAlignment="Right" Width="120" Margin="0,12,0,0" />
 
         <Separator Margin="0,12,0,8" />
-        <GroupBox Header="Log Pattern Editor">
+        <GroupBox Header="{x:Static res:Strings.LogPatternEditor}">
             <StackPanel Margin="6">
-                <TextBlock Text="Manage log pattern templates" FontSize="12" Foreground="#666666" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                <Button Content="📋 Open Pattern Editor" 
+                <TextBlock Text="{x:Static res:Strings.ManageLogPatternTemplates}" FontSize="12" Foreground="#666666" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                <Button Content="{x:Static res:Strings.OpenPatternEditor}" 
                         Command="{Binding OpenPatternEditorCommand}"
                         Padding="10,8"
                         Background="#007ACC"
                         Foreground="White"
                         FontWeight="Bold"/>
-                <TextBlock Text="Create, edit, and test log pattern templates for automatic error detection" 
+                <TextBlock Text="{x:Static res:Strings.CreateEditAndTestLogPatternTemplates}" 
                            FontSize="11" Foreground="#999999" TextWrapping="Wrap" Margin="0,8,0,0"/>
             </StackPanel>
         </GroupBox>

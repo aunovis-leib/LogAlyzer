@@ -150,4 +150,67 @@
   <data name="Time" xml:space="preserve">
     <value>Zeit</value>
   </data>
+  <data name="ExplorerRootFolder" xml:space="preserve">
+    <value>Explorer-Stammordner</value>
+  </data>
+  <data name="CurrentPathAsRoot" xml:space="preserve">
+    <value>Aktuellen Pfad als Stamm verwenden</value>
+  </data>
+  <data name="AutoReloadLogFiles" xml:space="preserve">
+    <value>Logdateien automatisch neu laden</value>
+  </data>
+  <data name="DateColumnSorting" xml:space="preserve">
+    <value>Sortierung der Datumsspalte</value>
+  </data>
+  <data name="NewestEntriesOnTopDescending" xml:space="preserve">
+    <value>Neueste Einträge oben (absteigend)</value>
+  </data>
+  <data name="OldestEntriesOnTopAscending" xml:space="preserve">
+    <value>Älteste Einträge oben (aufsteigend)</value>
+  </data>
+  <data name="LiveChart" xml:space="preserve">
+    <value>Live-Diagramm</value>
+  </data>
+  <data name="PatternMatchPanel" xml:space="preserve">
+    <value>Pattern-Match-Panel</value>
+  </data>
+  <data name="ToleranceHhMmSs" xml:space="preserve">
+    <value>Toleranz (hh:mm:ss)</value>
+  </data>
+  <data name="HighlightRules" xml:space="preserve">
+    <value>Highlight-Regeln</value>
+  </data>
+  <data name="SearchText" xml:space="preserve">
+    <value>Suchtext:</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>Farbe:</value>
+  </data>
+  <data name="AddRule" xml:space="preserve">
+    <value>Regel hinzufügen</value>
+  </data>
+  <data name="ActiveRules" xml:space="preserve">
+    <value>Aktive Regeln:</value>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Entfernen</value>
+  </data>
+  <data name="ResetDefaults" xml:space="preserve">
+    <value>Standards zurücksetzen</value>
+  </data>
+  <data name="LogPatternEditor" xml:space="preserve">
+    <value>Log-Pattern-Editor</value>
+  </data>
+  <data name="ManageLogPatternTemplates" xml:space="preserve">
+    <value>Log-Pattern-Vorlagen verwalten</value>
+  </data>
+  <data name="OpenPatternEditor" xml:space="preserve">
+    <value>📋 Pattern-Editor öffnen</value>
+  </data>
+  <data name="CreateEditAndTestLogPatternTemplates" xml:space="preserve">
+    <value>Log-Pattern-Vorlagen für die automatische Fehlererkennung erstellen, bearbeiten und testen</value>
+  </data>
 </root>

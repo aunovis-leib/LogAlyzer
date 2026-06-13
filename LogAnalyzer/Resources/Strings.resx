@@ -150,4 +150,67 @@
   <data name="Time" xml:space="preserve">
     <value>Time</value>
   </data>
+  <data name="ExplorerRootFolder" xml:space="preserve">
+    <value>Explorer root folder</value>
+  </data>
+  <data name="CurrentPathAsRoot" xml:space="preserve">
+    <value>Current path as root</value>
+  </data>
+  <data name="AutoReloadLogFiles" xml:space="preserve">
+    <value>Auto-reload log files</value>
+  </data>
+  <data name="DateColumnSorting" xml:space="preserve">
+    <value>Date column sorting</value>
+  </data>
+  <data name="NewestEntriesOnTopDescending" xml:space="preserve">
+    <value>Newest entries on top (descending)</value>
+  </data>
+  <data name="OldestEntriesOnTopAscending" xml:space="preserve">
+    <value>Oldest entries on top (ascending)</value>
+  </data>
+  <data name="LiveChart" xml:space="preserve">
+    <value>Live chart</value>
+  </data>
+  <data name="PatternMatchPanel" xml:space="preserve">
+    <value>Pattern match panel</value>
+  </data>
+  <data name="ToleranceHhMmSs" xml:space="preserve">
+    <value>Tolerance (hh:mm:ss)</value>
+  </data>
+  <data name="HighlightRules" xml:space="preserve">
+    <value>Highlight rules</value>
+  </data>
+  <data name="SearchText" xml:space="preserve">
+    <value>Search text:</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>Color:</value>
+  </data>
+  <data name="AddRule" xml:space="preserve">
+    <value>Add rule</value>
+  </data>
+  <data name="ActiveRules" xml:space="preserve">
+    <value>Active rules:</value>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="ResetDefaults" xml:space="preserve">
+    <value>Reset defaults</value>
+  </data>
+  <data name="LogPatternEditor" xml:space="preserve">
+    <value>Log Pattern Editor</value>
+  </data>
+  <data name="ManageLogPatternTemplates" xml:space="preserve">
+    <value>Manage log pattern templates</value>
+  </data>
+  <data name="OpenPatternEditor" xml:space="preserve">
+    <value>📋 Open Pattern Editor</value>
+  </data>
+  <data name="CreateEditAndTestLogPatternTemplates" xml:space="preserve">
+    <value>Create, edit, and test log pattern templates for automatic error detection</value>
+  </data>
 </root>
