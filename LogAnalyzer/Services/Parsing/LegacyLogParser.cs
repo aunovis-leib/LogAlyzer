@@ -29,6 +29,7 @@ namespace LogAnalyzer.Services.Parsing
             entry.Date = dt;
             entry.Type = TryParseLogType(typePart);
             entry.Text = textPart.ToString();
+            entry.RawLine = line;
             return true;
         }
 

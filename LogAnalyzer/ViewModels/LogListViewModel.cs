@@ -259,6 +259,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     public LogListViewModel(AppSettingsManager appSettings, ParserProfile? selectedProfile, SettingsViewModel? settingsViewModel = null)
     {
         _appSettings = appSettings;
+        _patternService = App.PatternService;
         _selectedProfile = selectedProfile;
         _patternService = App.PatternService;  // Pattern Service laden
 

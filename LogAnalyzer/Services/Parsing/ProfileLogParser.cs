@@ -36,6 +36,7 @@ namespace LogAnalyzer.Services.Parsing
             entry.IsTimeOnlyTimestamp = isTimeOnly;
             entry.Type = TryParseLogType(typePart);
             entry.Text = textPart.ToString();
+            entry.RawLine = line;
             return true;
         }
 

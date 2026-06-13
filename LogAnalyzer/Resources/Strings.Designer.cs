@@ -122,6 +122,15 @@ namespace LogAnalyzer.Resources {
                 return ResourceManager.GetString("ShowLiveChart", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show pattern match panel.
+        /// </summary>
+        public static string ShowPatternMatchPanel {
+            get {
+                return ResourceManager.GetString("ShowPatternMatchPanel", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to synchronization tolerance.

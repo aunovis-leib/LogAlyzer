@@ -11,10 +11,16 @@
         <conv:InverseBoolConverter x:Key="InverseBoolConverter" />
         <conv:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
     </UserControl.Resources>
-    <StackPanel Margin="12" VerticalAlignment="Top">
-        <TextBlock Text="{x:Static res:Strings.Settings}" FontWeight="Bold" FontSize="16" />
-        <Separator Margin="0,8,0,8" />
-        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="700">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{x:Static res:Strings.Settings}" FontWeight="Bold" FontSize="16" />
+        <Separator Grid.Row="1" Margin="0,8,0,8" />
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <StackPanel>
         <GroupBox Header="{x:Static res:Strings.List}">
             <StackPanel Margin="6">
@@ -51,6 +57,12 @@
         <GroupBox Header="Live chart">
             <CheckBox Margin="6" Content="{x:Static res:Strings.ShowLiveChart}"
                   IsChecked="{Binding ShowLiveChart, Mode=TwoWay}" />
+        </GroupBox>
+
+
+        <GroupBox Header="Pattern match panel">
+            <CheckBox Margin="6" Content="{x:Static res:Strings.ShowPatternMatchPanel}"
+                  IsChecked="{Binding ShowPatternMatchPanel, Mode=TwoWay}" />
         </GroupBox>
 
 
@@ -125,5 +137,7 @@
                            FontSize="11" Foreground="#999999" TextWrapping="Wrap" Margin="0,8,0,0"/>
             </StackPanel>
         </GroupBox>
-    </StackPanel>
+        </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
