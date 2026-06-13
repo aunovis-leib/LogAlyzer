@@ -28,6 +28,9 @@ namespace LogAnalyzer.ViewModels
                     return;
                 _match = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(GroupKey));
+                OnPropertyChanged(nameof(GroupTitle));
+                OnPropertyChanged(nameof(DisplayText));
             }
         }
 
@@ -66,6 +69,10 @@ namespace LogAnalyzer.ViewModels
 
         public string DisplayText => $"[{Match?.Pattern?.Name}] {Match?.LogEntry?.Text}";
 
+        public string GroupKey => $"{Match?.Pattern?.Name}|{Match?.LogEntry?.Text}";
+
+        public string GroupTitle => $"{Match?.Pattern?.Name} - {Match?.LogEntry?.Text}";
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -103,6 +110,7 @@ namespace LogAnalyzer.ViewModels
             _patternService = patternService;
             _matchesView = CollectionViewSource.GetDefaultView(Matches);
             _matchesView.Filter = FilterMatch;
+            _matchesView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(PatternMatchViewModel.GroupKey)));
             _patternService.PatternMatched += OnPatternMatched;
             InitializeTags();
         }
