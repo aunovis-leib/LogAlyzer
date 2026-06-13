@@ -13,6 +13,7 @@ using System.Windows.Data;
 using System.Diagnostics;
 using LogAnalyzer.Views;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -21,6 +22,14 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     private readonly AppSettingsManager _appSettings;
     private CancellationTokenSource? _loadCancellation;
     private readonly LogPatternService? _patternService;
+    private string[] _currentLoadedFiles = [];
+    private FileSystemWatcher? _fileSystemWatcher;
+    private DispatcherTimer? _debounceTimer;
+    private DispatcherTimer? _filterDebounceTimer;
+    private readonly Dictionary<string, long> _filePositions = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _partialLineBuffers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, LogFileEntry> _incompleteEntryPerFile = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, List<string>> _incompleteEntryDetailsPerFile = new(StringComparer.OrdinalIgnoreCase);
 
     public FileExplorerViewModel FileExplorerVM { get; } = new();
 

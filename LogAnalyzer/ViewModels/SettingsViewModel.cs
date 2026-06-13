@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
 using LogAnalyzer.Views;
+using System.Collections.ObjectModel;
 using System.Windows;
 
 namespace LogAnalyzer.ViewModels;
