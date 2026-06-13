@@ -101,10 +101,9 @@ namespace LogAnalyzer.Services
                 ? _patterns
                 : _patterns.Where(p => string.Equals(p.Id, patternId, StringComparison.Ordinal));
 
-            // Match against all relevant text surfaces of an entry:
+            // Match against main line surfaces only:
             // - RawLine (original main log line)
             // - Text (parsed message part)
-            // - Detail lines (stack traces / continuation lines)
             var textCandidates = new List<string>();
 
             if (!string.IsNullOrWhiteSpace(logEntry.RawLine))
@@ -117,10 +116,9 @@ namespace LogAnalyzer.Services
                 textCandidates.Add(logEntry.Text);
             }
 
-            if (logEntry.Detail is { Length: > 0 })
-            {
-                textCandidates.AddRange(logEntry.Detail.Where(d => !string.IsNullOrWhiteSpace(d)));
-            }
+            textCandidates = textCandidates
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
 
             foreach (var pattern in patternsToMatch)
             {
