@@ -22,16 +22,16 @@
 
         <ContextMenu x:Key="LogEntryContextMenu">
             <MenuItem Header="Synchronisieren"
-                      Command="{Binding Path=DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                      Command="{Binding PlacementTarget.DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
             <Separator />
             <MenuItem Header="Add to Pattern"
-                      Command="{Binding Path=DataContext.AddToPatternCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                      Command="{Binding PlacementTarget.DataContext.AddToPatternCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
             <Separator />
             <MenuItem Header="Add Rule"
-                      Command="{Binding Path=DataContext.AddHighlightRuleFromEntryCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                      Command="{Binding PlacementTarget.DataContext.AddHighlightRuleFromEntryCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
         </ContextMenu>
 
         <ContextMenu x:Key="LogDetailContextMenu">
@@ -116,15 +116,17 @@
             </Button>
         </StackPanel>
         <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="2" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" Grid.ColumnSpan="2"
+                  ContextMenu="{StaticResource LogEntryContextMenu}"
+                  SelectionMode="Extended"
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling"
                   ScrollViewer.CanContentScroll="True"
                   VirtualizingPanel.IsVirtualizingWhenGrouping="True">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
-                    <Setter Property="ContextMenu" Value="{StaticResource LogEntryContextMenu}"/>
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                     <EventSetter Event="MouseLeftButtonUp" Handler="ListViewItem_MouseLeftButtonUp"/>
+                    <EventSetter Event="PreviewMouseRightButtonDown" Handler="ListViewItem_PreviewMouseRightButtonDown"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListViewItem">
