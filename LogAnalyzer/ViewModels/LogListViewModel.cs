@@ -14,6 +14,7 @@ using System.Diagnostics;
 using LogAnalyzer.Views;
 using System.Windows;
 using System.Windows.Threading;
+using System.Collections.Generic;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -206,12 +207,15 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     }
 
     [RelayCommand]
-    private void AddToPattern(LogFileEntry? entry)
+    private void AddToPattern(object? selection)
     {
-        if (entry is null)
+        var selectedEntries = GetSelectedEntries(selection);
+        if (selectedEntries.Count == 0)
         {
             return;
         }
+
+        var firstEntry = selectedEntries[0];
 
         var patternService = App.PatternService;
         if (patternService == null)
@@ -224,7 +228,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         var editorVM = new PatternEditorViewModel(patternService);
         editorVM.CurrentPattern.Id = generatedId;
         editorVM.CurrentPattern.Name = generatedId;
-        editorVM.CurrentPattern.Severity = entry.Type switch
+        editorVM.CurrentPattern.Severity = firstEntry.Type switch
         {
             LogType.Error => "error",
             LogType.Warning => "warning",
@@ -232,9 +236,15 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             LogType.Info => "info",
             _ => "info"
         };
-        editorVM.CurrentPattern.RegexPattern = !string.IsNullOrWhiteSpace(entry.RawLine)
-            ? entry.RawLine
-            : entry.Text;
+
+        var selectedMainLines = selectedEntries
+            .Select(e => !string.IsNullOrWhiteSpace(e.RawLine) ? e.RawLine : e.Text)
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        editorVM.CurrentPattern.RegexPattern = string.Join(Environment.NewLine, selectedMainLines);
+        editorVM.TestLine = editorVM.CurrentPattern.RegexPattern;
 
         var editorWindow = new Window
         {
@@ -246,6 +256,28 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         };
 
         editorWindow.ShowDialog();
+    }
+
+    private static List<LogFileEntry> GetSelectedEntries(object? selection)
+    {
+        if (selection is IEnumerable<LogFileEntry> typedSelection)
+        {
+            return typedSelection.Where(x => x is not null).ToList();
+        }
+
+        if (selection is IEnumerable enumerable)
+        {
+            return enumerable.Cast<object>()
+                .OfType<LogFileEntry>()
+                .ToList();
+        }
+
+        if (selection is LogFileEntry singleEntry)
+        {
+            return [singleEntry];
+        }
+
+        return [];
     }
 
     public void SelectEntryFromOutside(LogFileEntry? entry, TimeSpan syncTolerance)

@@ -75,7 +75,23 @@ public partial class LogListView : UserControl
                 if (child is ListView lv) return lv;
             }
         }
+
         return null;
+    }
+
+    private void ListViewItem_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not ListViewItem item)
+        {
+            return;
+        }
+
+        if (!item.IsSelected)
+        {
+            item.IsSelected = true;
+        }
+
+        item.Focus();
     }
 
     private void ListViewItem_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
