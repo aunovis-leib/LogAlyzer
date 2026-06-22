@@ -22,6 +22,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 {
     private readonly AppSettingsManager _appSettings;
     private CancellationTokenSource? _loadCancellation;
+    private readonly SemaphoreSlim _loadSemaphore = new(1, 1);
     private readonly LogPatternService? _patternService;
     private string[] _currentLoadedFiles = [];
     private FileSystemWatcher? _fileSystemWatcher;
@@ -325,10 +326,9 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task ChooseFile()
     {
-        if (IsLoading) return;
 
         var dlg = new OpenFileDialog
         {
@@ -687,7 +687,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
     private async void OnExplorerFilesSelected(object? sender, IReadOnlyList<string> filePaths)
     {
-        if (ChooseFileCommand.IsRunning || IsLoading)
+        if (filePaths is null || filePaths.Count == 0)
         {
             return;
         }
@@ -724,125 +724,131 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             return;
         }
 
-        _currentLoadedFiles = fileNames;
+        var currentLoadCancellation = new CancellationTokenSource();
+        var previousLoadCancellation = Interlocked.Exchange(ref _loadCancellation, currentLoadCancellation);
+        previousLoadCancellation?.Cancel();
+        previousLoadCancellation?.Dispose();
 
-        // Prüfe ob Auto-Reload aktiviert ist
-        var autoReloadEnabled = _appSettings.Settings.SettingsView?.AutoReloadLogFiles ?? false;
-        if (autoReloadEnabled)
-        {
-            StartAutoReload();
-        }
-
-        var dir = System.IO.Path.GetDirectoryName(fileNames[0]);
-        if (!string.IsNullOrEmpty(dir))
-            FileExplorerVM.LoadItems(dir);
-        FileExplorerVM.SetLoadedFiles(fileNames);
-
-        IsLoading = true;
-        LoadingStatus = "Lade Logdateien...";
-        var previousFilter = LogFilesView.Filter;
-
-        DateTime? minDate = null;
-        DateTime? maxDate = null;
-        var observedTypes = new HashSet<LogType>();
-
-        _loadCancellation?.Dispose();
-        _loadCancellation = new CancellationTokenSource();
-        var token = _loadCancellation.Token;
-
+        await _loadSemaphore.WaitAsync();
         try
         {
+            if (!ReferenceEquals(_loadCancellation, currentLoadCancellation))
+            {
+                return;
+            }
+
+            _currentLoadedFiles = fileNames;
+
+            var autoReloadEnabled = _appSettings.Settings.SettingsView?.AutoReloadLogFiles ?? false;
+            if (autoReloadEnabled)
+            {
+                StartAutoReload();
+            }
+
+            var dir = System.IO.Path.GetDirectoryName(fileNames[0]);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                FileExplorerVM.LoadItems(dir);
+            }
+            FileExplorerVM.SetLoadedFiles(fileNames);
+
+            IsLoading = true;
+            LoadingStatus = "Lade Logdateien...";
+            var previousFilter = LogFilesView.Filter;
+
+            DateTime? minDate = null;
+            DateTime? maxDate = null;
+            var observedTypes = new HashSet<LogType>();
+            var token = currentLoadCancellation.Token;
+
             _suppressAvailableTypesUpdate = true;
             LogFilesView.Filter = null;
             LogFilesEntries.Clear();
 
-            var parser = GetActiveParser();
-            var loader = new LogFileChunkLoader(parser);
-            var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
-            var loadedEntries = 0;
-
-            await foreach (var chunk in loader.LoadAsync(fileNames, 2000, token))
+            try
             {
-                foreach (var e in chunk.Entries)
+                var parser = GetActiveParser();
+                var loader = new LogFileChunkLoader(parser);
+                var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
+                var loadedEntries = 0;
+
+                await foreach (var chunk in loader.LoadAsync(fileNames, 2000, token))
                 {
+                    foreach (var e in chunk.Entries)
+                    {
+                        if (loadedEntries >= maxEntries)
+                        {
+                            break;
+                        }
+
+                        e.LineNumber = loadedEntries + 1;
+                        LogFilesEntries.Add(e);
+                        ApplyPatternsToEntry(e);
+
+                        loadedEntries++;
+                        observedTypes.Add(e.Type);
+
+                        var day = e.Date.Date;
+                        if (minDate is null || day < minDate.Value)
+                        {
+                            minDate = day;
+                        }
+
+                        if (maxDate is null || day > maxDate.Value)
+                        {
+                            maxDate = day;
+                        }
+                    }
+
+                    LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
+
                     if (loadedEntries >= maxEntries)
                     {
                         break;
                     }
+                }
 
-                    e.LineNumber = loadedEntries + 1;
-                    LogFilesEntries.Add(e);
-
-                    // ? PATTERNS ANWENDEN!
-                    ApplyPatternsToEntry(e);
-
-                    loadedEntries++;
-                    observedTypes.Add(e.Type);
-
-                    var day = e.Date.Date;
-                    if (minDate is null || day < minDate.Value)
+                foreach (var filePath in fileNames)
+                {
+                    if (File.Exists(filePath))
                     {
-                        minDate = day;
-                    }
-
-                    if (maxDate is null || day > maxDate.Value)
-                    {
-                        maxDate = day;
+                        _filePositions[filePath] = new FileInfo(filePath).Length;
                     }
                 }
-
-                LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
-
-                if (loadedEntries >= maxEntries)
-                {
-                    break;
-                }
             }
-
-            // Speichere die aktuellen Dateipositionen nach dem Laden
-            foreach (var filePath in fileNames)
+            catch (OperationCanceledException)
             {
-                if (File.Exists(filePath))
-                {
-                    _filePositions[filePath] = new FileInfo(filePath).Length;
-                }
+                LoadingStatus = "Ladevorgang abgebrochen.";
             }
-
-            if (loadedEntries >= maxEntries)
+            finally
             {
-                LoadingStatus = $"Maximale Eintragsanzahl erreicht ({maxEntries:N0}).";
-            }
+                _suppressAvailableTypesUpdate = false;
+                UpdateAvailableTypes(observedTypes);
+                UpdateAvailableDates(minDate, maxDate);
 
-            _suppressAvailableTypesUpdate = false;
-            UpdateAvailableTypes(observedTypes);
-            UpdateAvailableDates(minDate, maxDate);
-            LogFilesView.Filter = FilterByType;
-            RefreshView();
-            UpdateHighlights();
-            EntriesReloaded?.Invoke(this, EventArgs.Empty);
-        }
-        catch (OperationCanceledException)
-        {
-            LoadingStatus = "Ladevorgang abgebrochen.";
-            _suppressAvailableTypesUpdate = false;
-            UpdateAvailableTypes(observedTypes);
-            UpdateAvailableDates(minDate, maxDate);
-            LogFilesView.Filter = FilterByType;
-            RefreshView();
-            UpdateHighlights();
-            EntriesReloaded?.Invoke(this, EventArgs.Empty);
+                LogFilesView.Filter = FilterByType;
+                RefreshView();
+                UpdateHighlights();
+                EntriesReloaded?.Invoke(this, EventArgs.Empty);
+
+                if (LogFilesView.Filter is null)
+                {
+                    LogFilesView.Filter = previousFilter ?? FilterByType;
+                    RefreshView();
+                }
+
+                if (ReferenceEquals(_loadCancellation, currentLoadCancellation))
+                {
+                    _loadCancellation = null;
+                }
+
+                IsLoading = false;
+            }
         }
         finally
         {
-            if (LogFilesView.Filter is null)
-            {
-                LogFilesView.Filter = previousFilter ?? FilterByType;
-                RefreshView();
-            }
-
-            _loadCancellation?.Dispose();
-            _loadCancellation = null;
-            IsLoading = false;
+            currentLoadCancellation.Dispose();
+            _loadSemaphore.Release();
         }
     }
 
