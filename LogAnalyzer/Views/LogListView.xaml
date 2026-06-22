@@ -24,6 +24,9 @@
             <MenuItem Header="Synchronisieren"
                       Command="{Binding PlacementTarget.DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+            <MenuItem Header="Text kopieren"
+                      Command="{Binding PlacementTarget.DataContext.CopyEntryTextCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding PlacementTarget.SelectedItems, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
             <Separator />
             <MenuItem Header="Add to Pattern"
                       Command="{Binding PlacementTarget.DataContext.AddToPatternCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"

@@ -258,6 +258,27 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         editorWindow.ShowDialog();
     }
 
+    [RelayCommand]
+    private void CopyEntryText(object? selection)
+    {
+        var selectedEntries = GetSelectedEntries(selection);
+        if (selectedEntries.Count == 0)
+        {
+            return;
+        }
+
+        var textToCopy = string.Join(Environment.NewLine, selectedEntries
+            .Select(entry => string.IsNullOrWhiteSpace(entry.Text) ? entry.RawLine : entry.Text)
+            .Where(text => !string.IsNullOrWhiteSpace(text)));
+
+        if (string.IsNullOrWhiteSpace(textToCopy))
+        {
+            return;
+        }
+
+        Clipboard.SetText(textToCopy);
+    }
+
     private static List<LogFileEntry> GetSelectedEntries(object? selection)
     {
         if (selection is IEnumerable<LogFileEntry> typedSelection)
