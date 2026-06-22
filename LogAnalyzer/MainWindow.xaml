@@ -43,50 +43,25 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="2*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition>
                 <RowDefinition.Style>
                     <Style TargetType="RowDefinition">
                         <Setter Property="Height" Value="1.2*" />
                         <Setter Property="MaxHeight" Value="Infinity" />
                         <Style.Triggers>
-                            <DataTrigger Value="False"
-                                         Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
-                                                           RelativeSource={RelativeSource AncestorType=Window}}">
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Value="False"
+                                               Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
+                                                                 RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    <Condition Value="False"
+                                               Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
+                                                                 RelativeSource={RelativeSource AncestorType=Window}}" />
+                                </MultiDataTrigger.Conditions>
                                 <Setter Property="Height" Value="0" />
                                 <Setter Property="MaxHeight" Value="0" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </RowDefinition.Style>
-            </RowDefinition>
-            <RowDefinition Height="Auto">
-                <RowDefinition.Style>
-                    <Style TargetType="RowDefinition">
-                        <Setter Property="Height" Value="Auto" />
-                        <Setter Property="MaxHeight" Value="Infinity" />
-                        <Style.Triggers>
-                            <DataTrigger Value="False"
-                                         Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
-                                                           RelativeSource={RelativeSource AncestorType=Window}}">
-                                <Setter Property="Height" Value="0" />
-                                <Setter Property="MaxHeight" Value="0" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </RowDefinition.Style>
-            </RowDefinition>
-            <RowDefinition Height="Auto">
-                <RowDefinition.Style>
-                    <Style TargetType="RowDefinition">
-                        <Setter Property="Height" Value="Auto" />
-                        <Setter Property="MaxHeight" Value="Infinity" />
-                        <Style.Triggers>
-                            <DataTrigger Value="False"
-                                         Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
-                                                           RelativeSource={RelativeSource AncestorType=Window}}">
-                                <Setter Property="Height" Value="0" />
-                                <Setter Property="MaxHeight" Value="0" />
-                            </DataTrigger>
+                            </MultiDataTrigger>
                         </Style.Triggers>
                     </Style>
                 </RowDefinition.Style>
@@ -126,52 +101,60 @@
         </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <views:PatternMatchPanelView Grid.Row="3" DataContext="{Binding PatternMatchPanelVM}" Margin="0,8,0,0">
-            <views:PatternMatchPanelView.Style>
-                <Style TargetType="{x:Type views:PatternMatchPanelView}">
-                    <Setter Property="Visibility" Value="Visible" />
-                    <Style.Triggers>
-                        <DataTrigger Value="False"
-                                     Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
-                                                       RelativeSource={RelativeSource AncestorType=Window}}">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </views:PatternMatchPanelView.Style>
-        </views:PatternMatchPanelView>
-
-        <GridSplitter Grid.Row="4" HorizontalAlignment="Stretch" Height="6" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000">
+        <GridSplitter Grid.Row="3" HorizontalAlignment="Stretch" Height="6" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000">
             <GridSplitter.Style>
                 <Style TargetType="GridSplitter">
                     <Setter Property="Visibility" Value="Visible" />
                     <Style.Triggers>
-                        <DataTrigger Value="False"
-                                     Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
-                                                       RelativeSource={RelativeSource AncestorType=Window}}">
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Value="False"
+                                           Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
+                                <Condition Value="False"
+                                           Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
+                            </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
+                        </MultiDataTrigger>
                     </Style.Triggers>
                 </Style>
             </GridSplitter.Style>
         </GridSplitter>
-        <views:LiveChartView Grid.Row="5" DataContext="{Binding ChartVM}">
-            <views:LiveChartView.Style>
-                <Style TargetType="{x:Type views:LiveChartView}">
+
+        <TabControl Grid.Row="4" Margin="0,8,0,0">
+            <TabControl.Style>
+                <Style TargetType="TabControl">
                     <Setter Property="Visibility" Value="Visible" />
                     <Style.Triggers>
-                        <DataTrigger Value="False"
-                                     Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
-                                                       RelativeSource={RelativeSource AncestorType=Window}}">
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Value="False"
+                                           Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
+                                <Condition Value="False"
+                                           Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
+                            </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
+                        </MultiDataTrigger>
                     </Style.Triggers>
                 </Style>
-            </views:LiveChartView.Style>
-        </views:LiveChartView>
+            </TabControl.Style>
+
+            <TabItem Header="Pattern Match"
+                     Visibility="{Binding DataContext.SettingsVM.ShowPatternMatchPanel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <views:PatternMatchPanelView DataContext="{Binding PatternMatchPanelVM}" />
+            </TabItem>
+
+            <TabItem Header="Live Chart"
+                     Visibility="{Binding DataContext.SettingsVM.ShowLiveChart, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <views:LiveChartView DataContext="{Binding ChartVM}" />
+            </TabItem>
+        </TabControl>
 
         <!-- Sliding Settings Pane -->
-        <Border x:Name="SettingsPane" Grid.RowSpan="6" Width="320" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
+        <Border x:Name="SettingsPane" Grid.RowSpan="5" Width="320" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
             <Border.RenderTransform>
                 <TranslateTransform x:Name="SettingsPaneTransform" X="420" />
             </Border.RenderTransform>
