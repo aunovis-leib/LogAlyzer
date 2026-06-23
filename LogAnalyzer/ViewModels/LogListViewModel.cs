@@ -44,6 +44,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     public event EventHandler? EntriesReloaded;
     public event EventHandler<LogFileEntry?>? EntrySelected;
     public event EventHandler<LogType>? TypesChanged;
+    public event EventHandler? OpenSettingsRequested;
     private bool _suppressAvailableTypesUpdate;
     private ObservableCollection<LogFileEntry> _logFilesEntries = [];
     public ObservableCollection<LogFileEntry> LogFilesEntries
@@ -206,6 +207,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
         Settings.HighlightSearchText = entry.Text;
         Settings.AddHighlightRuleCommand.Execute(null);
+        OpenSettingsRequested?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
@@ -379,6 +381,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         _appSettings = appSettings;
         _patternService = App.PatternService;
         _selectedProfile = selectedProfile;
+        Settings = settingsViewModel;
         _patternService = App.PatternService;  // Pattern Service laden
 
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);

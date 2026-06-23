@@ -38,6 +38,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private LogFileEntry? _selectedSearchResult;
 
+    [ObservableProperty]
+    private bool _isSettingsPaneOpen;
+
     public bool ShowSearchResultsTab => !string.IsNullOrWhiteSpace(GlobalSearchText);
 
     [ObservableProperty]
@@ -68,7 +71,7 @@ public partial class MainViewModel : ObservableObject
             };
         }
 
-        var first = new LogListViewModel(_appSettings, SelectedProfile);
+        var first = new LogListViewModel(_appSettings, SelectedProfile, SettingsVM);
         ApplyExplorerRootFolder(first);
         Lists.Add(first);
         SubscribeToList(first);
@@ -234,6 +237,7 @@ public partial class MainViewModel : ObservableObject
         vm.EntriesReloaded += EntriesReloaded;
         vm.EntrySelected += OnEntrySelected;
         vm.TypesChanged += OnListTypesChanged;
+        vm.OpenSettingsRequested += OnOpenSettingsRequested;
         EventHandler<string> patternSavedHandler = (_, patternId) => vm.ReapplyPatternToLoadedEntries(patternId);
         _patternSavedHandlers[vm] = patternSavedHandler;
         PatternSaved += patternSavedHandler;
@@ -247,6 +251,7 @@ public partial class MainViewModel : ObservableObject
     {
         vm.EntriesReloaded -= EntriesReloaded;
         vm.EntrySelected -= OnEntrySelected;
+        vm.OpenSettingsRequested -= OnOpenSettingsRequested;
         if (_patternSavedHandlers.Remove(vm, out var patternSavedHandler))
         {
             PatternSaved -= patternSavedHandler;
@@ -288,6 +293,11 @@ public partial class MainViewModel : ObservableObject
     private void OnPatternMatchSelected(object? sender, LogFileEntry? entry)
     {
         SelectedEntryGlobal = entry;
+    }
+
+    private void OnOpenSettingsRequested(object? sender, EventArgs e)
+    {
+        IsSettingsPaneOpen = true;
     }
 
     private void RefreshSearchResults()

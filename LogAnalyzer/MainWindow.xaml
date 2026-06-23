@@ -98,7 +98,7 @@
                 <TextBlock Text="Suchen" />
             </Button>
 
-            <ToggleButton x:Name="SettingsToggle" Margin="12,0,0,0">
+            <ToggleButton x:Name="SettingsToggle" Margin="12,0,0,0" IsChecked="{Binding IsSettingsPaneOpen, Mode=TwoWay}">
                 <Image Source="/Resources/Icons/Settings.ico" Width="20" Height="20" />
             </ToggleButton>
         </StackPanel>
