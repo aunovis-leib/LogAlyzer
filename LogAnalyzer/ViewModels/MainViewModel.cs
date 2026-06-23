@@ -31,6 +31,16 @@ public partial class MainViewModel : ObservableObject
     private DateTime? _filterToDate = null;
 
     [ObservableProperty]
+    private string _globalSearchText = string.Empty;
+
+    public ObservableCollection<LogFileEntry> SearchResults { get; } = [];
+
+    [ObservableProperty]
+    private LogFileEntry? _selectedSearchResult;
+
+    public bool ShowSearchResultsTab => !string.IsNullOrWhiteSpace(GlobalSearchText);
+
+    [ObservableProperty]
     private LogFileEntry? _selectedEntryGlobal;
 
     public event EventHandler<LogFileEntry?>? SelectedEntryChanged;
@@ -101,6 +111,7 @@ public partial class MainViewModel : ObservableObject
         HandleNewItems(e.NewItems);
         HandleOldItems(e.OldItems);
         RefreshChart();
+        RefreshSearchResults();
     }
 
     private void HandleNewItems(System.Collections.IList? newItems)
@@ -166,6 +177,28 @@ public partial class MainViewModel : ObservableObject
         RefreshChart();
     }
 
+    partial void OnGlobalSearchTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(ShowSearchResultsTab));
+        RefreshSearchResults();
+    }
+
+    partial void OnSelectedSearchResultChanged(LogFileEntry? value)
+    {
+        if (value is null || ReferenceEquals(SelectedEntryGlobal, value))
+        {
+            return;
+        }
+
+        SelectedEntryGlobal = value;
+    }
+
+    [RelayCommand]
+    private void RunSearch()
+    {
+        RefreshSearchResults();
+    }
+
     private void RefreshChart()
     {
         var allEntries = Lists.SelectMany(l => l.LogFilesEntries).ToList();
@@ -179,6 +212,19 @@ public partial class MainViewModel : ObservableObject
             var tolerance = SettingsVM?.SyncTolerance ?? TimeSpan.Zero;
             l.SelectEntryFromOutside(value, tolerance);
         }
+
+        if (value is null)
+        {
+            if (SelectedSearchResult is not null)
+            {
+                SelectedSearchResult = null;
+            }
+        }
+        else if (SearchResults.Contains(value) && !ReferenceEquals(SelectedSearchResult, value))
+        {
+            SelectedSearchResult = value;
+        }
+
         // Event benachrichtigen
         SelectedEntryChanged?.Invoke(this, value);
     }
@@ -215,6 +261,7 @@ public partial class MainViewModel : ObservableObject
     private void EntriesReloaded(object? sender, EventArgs e)
     {
         RefreshChart();
+        RefreshSearchResults();
     }
 
     private void OnListTypesChanged(object? sender, LogType selectedType)
@@ -231,5 +278,39 @@ public partial class MainViewModel : ObservableObject
     private void OnPatternMatchSelected(object? sender, LogFileEntry? entry)
     {
         SelectedEntryGlobal = entry;
+    }
+
+    private void RefreshSearchResults()
+    {
+        SearchResults.Clear();
+
+        var searchText = GlobalSearchText?.Trim();
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            SelectedSearchResult = null;
+            return;
+        }
+
+        static bool ContainsIgnoreCase(string? source, string value) =>
+            !string.IsNullOrEmpty(source) && source.Contains(value, StringComparison.OrdinalIgnoreCase);
+
+        var results = Lists
+            .SelectMany(l => l.LogFilesEntries)
+            .Where(entry =>
+                ContainsIgnoreCase(entry.Text, searchText) ||
+                ContainsIgnoreCase(entry.RawLine, searchText) ||
+                (entry.Detail?.Any(detail => ContainsIgnoreCase(detail, searchText)) ?? false))
+            .OrderBy(entry => entry.Date)
+            .ToList();
+
+        foreach (var entry in results)
+        {
+            SearchResults.Add(entry);
+        }
+
+        if (SearchResults.Count == 0)
+        {
+            SelectedSearchResult = null;
+        }
     }
 }

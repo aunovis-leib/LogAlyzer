@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using LogAnalyzer.Behaviors;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
@@ -87,15 +88,15 @@ namespace LogAnalyzer.Tests
                 // Filter by time range
                 vm.FilterFromDate = null;
                 vm.FilterToDate = null;
-                vm.FilterFromTime = "00:00:00";
-                vm.FilterToTime = "00:00:00";
+                vm.FilterFromTime = TimeOnly.Parse("00:00:00");
+                vm.FilterToTime = TimeOnly.Parse("00:00:00");
                 vm.LogFilesView.Refresh();
                 list = vm.LogFilesView.Cast<LogFileEntry>().ToList();
                 Assert.Single(list);
                 Assert.Equal(e1, list[0]);
 
-                vm.FilterFromTime = "00:00:00";
-                vm.FilterToTime = "00:00:01";
+                vm.FilterFromTime = TimeOnly.Parse("00:00:00");
+                vm.FilterToTime = TimeOnly.Parse("00:00:01");
                 vm.LogFilesView.Refresh();
                 list = vm.LogFilesView.Cast<LogFileEntry>().ToList();
                 Assert.Equal(2, list.Count);
@@ -313,7 +314,7 @@ namespace LogAnalyzer.Tests
                 Assert.NotNull(core);
                 var text = "05:33";
                 var selectionStart = text.Length;
-                var args = new object[] { text, selectionStart, "1", null, 0 };
+                var args = new object[] { text, selectionStart, "1", string.Empty, 0 };
                 var result = (bool)core!.Invoke(null, args)!;
                 Assert.True(result);
                 Assert.Equal("05:33:1", args[3]);
@@ -333,7 +334,7 @@ namespace LogAnalyzer.Tests
                 Assert.NotNull(core);
                 var text = "05";
                 var selectionStart = text.Length;
-                var args = new object[] { text, selectionStart, "3", null, 0 };
+                var args = new object[] { text, selectionStart, "3", string.Empty, 0 };
                 var result = (bool)core!.Invoke(null, args)!;
                 Assert.True(result);
                 Assert.Equal("05:3", args[3]);
@@ -352,17 +353,24 @@ namespace LogAnalyzer.Tests
                     AppSettingsManager.Initialize(temp);
                     var vm = new LogListViewModel(AppSettingsManager.Instance, null);
 
-                    vm.FilterFromTime = string.Empty;
+                    vm.FilterFromTime = null;
                     vm.LogFilesEntries.Add(new LogFileEntry { Date = new DateTime(2024, 1, 1), Type = LogType.Info, Text = "alpha" });
                     vm.LogFilesEntries.Add(new LogFileEntry { Date = new DateTime(2024, 1, 1), Type = LogType.Error, Text = "beta" });
                     vm.LogFilesView.Refresh();
 
                     Assert.Equal(2, vm.FilteredEntryCount);
 
+                    var refreshViewMethod = typeof(LogListViewModel).GetMethod(
+                        "RefreshView",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+                    Assert.NotNull(refreshViewMethod);
+
                     vm.FilterText = "alpha";
+                    refreshViewMethod!.Invoke(vm, null);
                     Assert.Equal(1, vm.FilteredEntryCount);
 
                     vm.FilterText = "not-found";
+                    refreshViewMethod.Invoke(vm, null);
                     Assert.Equal(0, vm.FilteredEntryCount);
                 }
                 finally
@@ -624,11 +632,12 @@ namespace LogAnalyzer.Tests
                     var initialCount = mainVm.Lists[0].LogFilesEntries.Count;
                     Assert.Equal(2, initialCount);
 
+                    Assert.NotNull(mainVm.SettingsVM);
                     // Change max entries - should trigger the event handler
-                    mainVm.SettingsVM.MaxEntriesPerList = 7;
+                    mainVm.SettingsVM!.MaxEntriesPerList = 7;
 
                     // Wait a bit for async operations
-                    await System.Threading.Tasks.Task.Delay(50);
+                    await System.Threading.Tasks.Task.Delay(50, TestContext.Current.CancellationToken);
 
                     // Verify the setting was updated
                     Assert.Equal(7, mainVm.SettingsVM.MaxEntriesPerList);

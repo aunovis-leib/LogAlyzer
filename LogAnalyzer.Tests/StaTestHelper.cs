@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace LogAnalyzer.Tests
 {
@@ -48,6 +49,27 @@ namespace LogAnalyzer.Tests
             if (ex is not null)
                 throw new AggregateException(ex);
             return result!;
+        }
+
+        public static void Run(Func<Task> func)
+        {
+            Exception? ex = null;
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    func().GetAwaiter().GetResult();
+                }
+                catch (Exception e)
+                {
+                    ex = e;
+                }
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            thread.Join();
+            if (ex is not null)
+                throw new AggregateException(ex);
         }
     }
 }

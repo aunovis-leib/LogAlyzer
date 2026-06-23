@@ -58,6 +58,9 @@
                                     <Condition Value="False"
                                                Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
                                                                  RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    <Condition Value="False"
+                                               Binding="{Binding DataContext.ShowSearchResultsTab,
+                                                                 RelativeSource={RelativeSource AncestorType=Window}}" />
                                 </MultiDataTrigger.Conditions>
                                 <Setter Property="Height" Value="0" />
                                 <Setter Property="MaxHeight" Value="0" />
@@ -83,6 +86,16 @@
 
                 <ctrls:DateRangePicker FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBox Margin="12,0,0,0"
+                     MinWidth="160"
+                     Width="220"
+                     Style="{StaticResource WatermarkTextBoxStyle}"
+                     ctrls:WatermarkService.Placeholder="Suche in allen Logs"
+                     Text="{Binding GlobalSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Margin="6,0,0,0" Command="{Binding RunSearchCommand}">
+                <TextBlock Text="Suchen" />
+            </Button>
 
             <ToggleButton x:Name="SettingsToggle" Margin="12,0,0,0">
                 <Image Source="/Resources/Icons/Settings.ico" Width="20" Height="20" />
@@ -114,6 +127,9 @@
                                 <Condition Value="False"
                                            Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
                                                              RelativeSource={RelativeSource AncestorType=Window}}" />
+                                <Condition Value="False"
+                                           Binding="{Binding DataContext.ShowSearchResultsTab,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
                         </MultiDataTrigger>
@@ -122,7 +138,7 @@
             </GridSplitter.Style>
         </GridSplitter>
 
-        <TabControl Grid.Row="4" Margin="0,8,0,0">
+        <TabControl x:Name="BottomTabs" Grid.Row="4" Margin="0,8,0,0" Loaded="BottomTabs_Loaded">
             <TabControl.Style>
                 <Style TargetType="TabControl">
                     <Setter Property="Visibility" Value="Visible" />
@@ -135,6 +151,9 @@
                                 <Condition Value="False"
                                            Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
                                                              RelativeSource={RelativeSource AncestorType=Window}}" />
+                                <Condition Value="False"
+                                           Binding="{Binding DataContext.ShowSearchResultsTab,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
                         </MultiDataTrigger>
@@ -142,14 +161,40 @@
                 </Style>
             </TabControl.Style>
 
-            <TabItem Header="Pattern Match"
+            <TabItem x:Name="PatternMatchTab"
+                     Header="Pattern Match"
+                     IsVisibleChanged="BottomTab_IsVisibleChanged"
                      Visibility="{Binding DataContext.SettingsVM.ShowPatternMatchPanel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <views:PatternMatchPanelView DataContext="{Binding PatternMatchPanelVM}" />
             </TabItem>
 
-            <TabItem Header="Live Chart"
+            <TabItem x:Name="LiveChartTab"
+                     Header="Live Chart"
+                     IsVisibleChanged="BottomTab_IsVisibleChanged"
                      Visibility="{Binding DataContext.SettingsVM.ShowLiveChart, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <views:LiveChartView DataContext="{Binding ChartVM}" />
+            </TabItem>
+
+            <TabItem x:Name="SearchTab"
+                     Header="Suche"
+                     IsVisibleChanged="BottomTab_IsVisibleChanged"
+                     Visibility="{Binding ShowSearchResultsTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ListView ItemsSource="{Binding SearchResults}"
+                          SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
+                          Margin="8"
+                          SelectionMode="Single"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          ScrollViewer.CanContentScroll="True">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="#" Width="50" DisplayMemberBinding="{Binding LineNumber}" />
+                            <GridViewColumn Header="Date" Width="160" DisplayMemberBinding="{Binding DateDisplay}" />
+                            <GridViewColumn Header="Type" Width="90" DisplayMemberBinding="{Binding Type}" />
+                            <GridViewColumn Header="Text" Width="500" DisplayMemberBinding="{Binding Text}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
             </TabItem>
         </TabControl>
 

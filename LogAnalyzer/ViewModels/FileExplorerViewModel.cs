@@ -23,7 +23,7 @@ public partial class FileExplorerViewModel : ObservableObject
     [ObservableProperty]
     private FileSystemItem? _selectedItem;
 
-    private string _currentPath;
+    private string _currentPath = string.Empty;
     public string CurrentPath
     {
         get => _currentPath;

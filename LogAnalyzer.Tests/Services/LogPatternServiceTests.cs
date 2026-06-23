@@ -41,7 +41,7 @@ namespace LogAnalyzer.Tests.Services
             var filePath = Path.Combine(_testPatternDir, "test_pattern.yaml");
             Assert.True(File.Exists(filePath), "YAML file should be created");
 
-            var content = await File.ReadAllTextAsync(filePath);
+            var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             Assert.Contains("Id: test_pattern", content);
             Assert.Contains("Name: Test Pattern", content);
             Assert.Contains("Severity: error", content);

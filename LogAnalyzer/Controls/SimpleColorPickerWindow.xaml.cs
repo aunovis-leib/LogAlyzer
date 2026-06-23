@@ -28,8 +28,6 @@ public partial class SimpleColorPickerWindow : Window
         }
     }
 
-    private bool _isUpdatingColor = false;
-
     public SimpleColorPickerWindow()
     {
         InitializeComponent();
@@ -39,15 +37,11 @@ public partial class SimpleColorPickerWindow : Window
 
     private void UpdateGradientArea()
     {
-        _isUpdatingColor = true;
-
         var hue = HueSlider.Value;
         var hsv = new HSVColor(hue, 100, 100);
         var color = hsv.ToColor();
 
         ColorGradientArea.Background = new SolidColorBrush(color);
-
-        _isUpdatingColor = false;
     }
 
     private void UpdateHueFromHex(string hexColor)

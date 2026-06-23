@@ -20,12 +20,12 @@ public class LogFileChunkLoaderTests
                 "detail-2",
                 "detail-3",
                 "01.01.2025 10:02:00.000|Debug|Done"
-            ]);
+            ], TestContext.Current.CancellationToken);
 
             var loader = new LogFileChunkLoader(new LegacyLogParser());
             var chunks = new List<LogLoadChunk>();
 
-            await foreach (var chunk in loader.LoadAsync([tempFile], 2))
+            await foreach (var chunk in loader.LoadAsync([tempFile], 2, TestContext.Current.CancellationToken))
             {
                 chunks.Add(chunk);
             }
@@ -62,7 +62,7 @@ public class LogFileChunkLoaderTests
             var lines = Enumerable.Range(0, 5000)
                 .Select(i => $"01.01.2025 10:00:{i % 60:00}.000|Info|Row-{i}")
                 .ToArray();
-            await File.WriteAllLinesAsync(tempFile, lines);
+            await File.WriteAllLinesAsync(tempFile, lines, TestContext.Current.CancellationToken);
 
             var loader = new LogFileChunkLoader(new LegacyLogParser());
             using var cts = new CancellationTokenSource();
@@ -96,18 +96,18 @@ public class LogFileChunkLoaderTests
             [
                 "22.04.2026 10:00:00.000|Info|first-1",
                 "22.04.2026 10:01:00.000|Warning|first-2"
-            ]);
+            ], TestContext.Current.CancellationToken);
 
             await File.WriteAllLinesAsync(file2,
             [
                 "23.04.2026 11:00:00.000|Error|second-1",
                 "23.04.2026 11:01:00.000|Debug|second-2"
-            ]);
+            ], TestContext.Current.CancellationToken);
 
             var loader = new LogFileChunkLoader(new LegacyLogParser());
             var entries = new List<LogFileEntry>();
 
-            await foreach (var chunk in loader.LoadAsync([file1, file2], 10))
+            await foreach (var chunk in loader.LoadAsync([file1, file2], 10, TestContext.Current.CancellationToken))
             {
                 entries.AddRange(chunk.Entries);
             }

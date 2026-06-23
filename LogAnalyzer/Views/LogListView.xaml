@@ -14,6 +14,7 @@
         <conv:AddOneConverter x:Key="AddOne" />
         <conv:LogTypeStringToNullableConverter x:Key="LogTypeStringToNullableConverter" />
         <conv:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <ObjectDataProvider x:Key="LogTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="models:LogType" />
@@ -206,8 +207,8 @@
             <StatusBarItem>
                 <TextBlock Text="{Binding FilteredEntryCount, StringFormat=Gefilterte Einträge: {0:N0}}" />
             </StatusBarItem>
-            <Separator Visibility="{Binding HasNewEntries, Mode=OneWay}" />
-            <StatusBarItem Visibility="{Binding HasNewEntries, Mode=OneWay}">
+            <Separator Visibility="{Binding HasNewEntries, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <StatusBarItem Visibility="{Binding HasNewEntries, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Button Command="{Binding ClearNewEntriesNotificationCommand}"
                         Background="Transparent"
                         BorderThickness="0"
