@@ -260,6 +260,16 @@ public partial class MainViewModel : ObservableObject
 
     private void EntriesReloaded(object? sender, EventArgs e)
     {
+        PatternMatchPanelVM?.ResetMatches();
+
+        foreach (var list in Lists)
+        {
+            foreach (var entry in list.LogFilesEntries)
+            {
+                App.PatternService?.MatchLine(entry);
+            }
+        }
+
         RefreshChart();
         RefreshSearchResults();
     }

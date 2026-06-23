@@ -157,8 +157,16 @@ namespace LogAnalyzer.ViewModels
         public ICommand ClearAllCommand => _clearAllCommand ??= new RelayCommand(_ =>
         {
             Matches.Clear();
+            SelectedMatch = null;
             OnPropertyChanged(nameof(PinnedCount));
         });
+
+        public void ResetMatches()
+        {
+            Matches.Clear();
+            SelectedMatch = null;
+            OnPropertyChanged(nameof(PinnedCount));
+        }
 
         public ICommand PinSelectedCommand => _pinSelectedCommand ??= new RelayCommand(_ =>
         {

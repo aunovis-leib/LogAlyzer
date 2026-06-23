@@ -15,6 +15,7 @@ using LogAnalyzer.Views;
 using System.Windows;
 using System.Windows.Threading;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -244,8 +245,18 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             .Distinct(StringComparer.Ordinal)
             .ToList();
 
-        editorVM.CurrentPattern.RegexPattern = string.Join(Environment.NewLine, selectedMainLines);
-        editorVM.TestLine = editorVM.CurrentPattern.RegexPattern;
+        var escapedPatterns = selectedMainLines
+            .Select(Regex.Escape)
+            .ToList();
+
+        editorVM.CurrentPattern.RegexPattern = escapedPatterns.Count switch
+        {
+            0 => string.Empty,
+            1 => escapedPatterns[0],
+            _ => $"(?:{string.Join("|", escapedPatterns)})"
+        };
+
+        editorVM.TestLine = selectedMainLines.FirstOrDefault() ?? string.Empty;
 
         var editorWindow = new Window
         {
