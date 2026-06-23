@@ -120,6 +120,8 @@
             </Button>
         </StackPanel>
         <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="2" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" Grid.ColumnSpan="2"
+                  bh:ListViewBehaviors.FillRemainingColumnIndex="3"
+                  bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"
                   ContextMenu="{StaticResource LogEntryContextMenu}"
                   SelectionMode="Extended"
                   VirtualizingPanel.IsVirtualizing="True"

@@ -97,5 +97,6 @@ namespace LogAnalyzer
             BottomTabs.SelectedItem = SearchTab;
         }
     }
+
     }
 }
