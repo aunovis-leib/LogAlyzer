@@ -111,5 +111,44 @@ namespace LogAnalyzer.Tests
                 Assert.Same(result, vm.SelectedEntryGlobal);
             });
         }
+
+        [Fact]
+        public void List_Context_Action_Can_Set_GlobalSearchText()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("main_search_context_action");
+                AppSettingsManager.Initialize(temp);
+                var vm = new MainViewModel(AppSettingsManager.Instance);
+
+                vm.Lists[0].ApplyGlobalSearchTextCommand.Execute("timeout");
+
+                Assert.Equal("timeout", vm.GlobalSearchText);
+                Assert.True(vm.ShowSearchResultsTab);
+            });
+        }
+
+        [Fact]
+        public void List_Context_Action_Can_Set_GlobalSearchText_From_Entry()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("main_search_context_action_entry");
+                AppSettingsManager.Initialize(temp);
+                var vm = new MainViewModel(AppSettingsManager.Instance);
+
+                var entry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 0, 0),
+                    Type = LogType.Info,
+                    Text = "timeout from entry"
+                };
+
+                vm.Lists[0].ApplyGlobalSearchTextCommand.Execute(entry);
+
+                Assert.Equal("timeout from entry", vm.GlobalSearchText);
+                Assert.True(vm.ShowSearchResultsTab);
+            });
+        }
     }
 }

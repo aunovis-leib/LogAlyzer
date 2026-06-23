@@ -213,4 +213,22 @@
   <data name="CreateEditAndTestLogPatternTemplates" xml:space="preserve">
     <value>Log-Pattern-Vorlagen für die automatische Fehlererkennung erstellen, bearbeiten und testen</value>
   </data>
+  <data name="Synchronize" xml:space="preserve">
+    <value>Synchronisieren</value>
+  </data>
+  <data name="CopyText" xml:space="preserve">
+    <value>Text kopieren</value>
+  </data>
+  <data name="ApplyAsGlobalSearch" xml:space="preserve">
+    <value>Als globale Suche übernehmen</value>
+  </data>
+  <data name="AddToPattern" xml:space="preserve">
+    <value>Zu Pattern hinzufügen</value>
+  </data>
+  <data name="ApplySelectionAsFilter" xml:space="preserve">
+    <value>Auswahl als Filter übernehmen</value>
+  </data>
+  <data name="ApplySelectionAsGlobalSearch" xml:space="preserve">
+    <value>Auswahl als globale Suche übernehmen</value>
+  </data>
 </root>

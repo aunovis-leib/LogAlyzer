@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Collections;
 
 namespace LogAnalyzer.Views;
 
@@ -111,6 +112,31 @@ public partial class LogListView : UserControl
     private void DetailTextBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;
+    }
+
+    private void ApplyGlobalSearchFromSelection_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not LogListViewModel vm)
+        {
+            return;
+        }
+
+        var selectedEntries = LogsListView.SelectedItems
+            .Cast<object>()
+            .OfType<LogFileEntry>()
+            .ToList();
+
+        object? parameter = selectedEntries.Count switch
+        {
+            0 => LogsListView.SelectedItem as LogFileEntry,
+            1 => selectedEntries[0],
+            _ => selectedEntries
+        };
+
+        if (vm.ApplyGlobalSearchTextCommand.CanExecute(parameter))
+        {
+            vm.ApplyGlobalSearchTextCommand.Execute(parameter);
+        }
     }
 
     // Programmatically select an entry and scroll it into view

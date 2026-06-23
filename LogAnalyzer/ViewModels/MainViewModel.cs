@@ -49,6 +49,7 @@ public partial class MainViewModel : ObservableObject
     public event EventHandler<LogFileEntry?>? SelectedEntryChanged;
     private readonly Dictionary<LogListViewModel, EventHandler<LogFileEntry?>> _selectedEntryHandlers = new();
     private readonly Dictionary<LogListViewModel, EventHandler<string>> _patternSavedHandlers = new();
+    private readonly Dictionary<LogListViewModel, EventHandler<string>> _globalSearchRequestedHandlers = new();
 
     public MainViewModel(Services.AppSettingsManager appSettings)
     {
@@ -238,9 +239,13 @@ public partial class MainViewModel : ObservableObject
         vm.EntrySelected += OnEntrySelected;
         vm.TypesChanged += OnListTypesChanged;
         vm.OpenSettingsRequested += OnOpenSettingsRequested;
+        vm.SetGlobalSearchText = text => GlobalSearchText = text;
         EventHandler<string> patternSavedHandler = (_, patternId) => vm.ReapplyPatternToLoadedEntries(patternId);
         _patternSavedHandlers[vm] = patternSavedHandler;
         PatternSaved += patternSavedHandler;
+        EventHandler<string> globalSearchRequestedHandler = (_, searchText) => GlobalSearchText = searchText;
+        _globalSearchRequestedHandlers[vm] = globalSearchRequestedHandler;
+        vm.GlobalSearchRequested += globalSearchRequestedHandler;
         // Bei Ereignis die Auswahl für diese Instanz setzen
         EventHandler<LogFileEntry?> handler = (sender, entry) => { vm.SelectedEntry = entry; };
         _selectedEntryHandlers[vm] = handler;
@@ -252,9 +257,14 @@ public partial class MainViewModel : ObservableObject
         vm.EntriesReloaded -= EntriesReloaded;
         vm.EntrySelected -= OnEntrySelected;
         vm.OpenSettingsRequested -= OnOpenSettingsRequested;
+        vm.SetGlobalSearchText = null;
         if (_patternSavedHandlers.Remove(vm, out var patternSavedHandler))
         {
             PatternSaved -= patternSavedHandler;
+        }
+        if (_globalSearchRequestedHandlers.Remove(vm, out var globalSearchRequestedHandler))
+        {
+            vm.GlobalSearchRequested -= globalSearchRequestedHandler;
         }
         // Vom Ereignis abmelden nur für diese Instanz
         if (_selectedEntryHandlers.Remove(vm, out var handler))

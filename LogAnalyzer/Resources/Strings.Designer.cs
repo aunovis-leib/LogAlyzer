@@ -347,5 +347,59 @@ namespace LogAnalyzer.Resources {
                 return ResourceManager.GetString("CreateEditAndTestLogPatternTemplates", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Synchronize.
+        /// </summary>
+        public static string Synchronize {
+            get {
+                return ResourceManager.GetString("Synchronize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Copy text.
+        /// </summary>
+        public static string CopyText {
+            get {
+                return ResourceManager.GetString("CopyText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Apply as global search.
+        /// </summary>
+        public static string ApplyAsGlobalSearch {
+            get {
+                return ResourceManager.GetString("ApplyAsGlobalSearch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add to pattern.
+        /// </summary>
+        public static string AddToPattern {
+            get {
+                return ResourceManager.GetString("AddToPattern", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Apply selection as filter.
+        /// </summary>
+        public static string ApplySelectionAsFilter {
+            get {
+                return ResourceManager.GetString("ApplySelectionAsFilter", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Apply selection as global search.
+        /// </summary>
+        public static string ApplySelectionAsGlobalSearch {
+            get {
+                return ResourceManager.GetString("ApplySelectionAsGlobalSearch", resourceCulture);
+            }
+        }
     }
 }

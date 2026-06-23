@@ -43,8 +43,10 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
     public event EventHandler? EntriesReloaded;
     public event EventHandler<LogFileEntry?>? EntrySelected;
+    public event EventHandler<string>? GlobalSearchRequested;
     public event EventHandler<LogType>? TypesChanged;
     public event EventHandler? OpenSettingsRequested;
+    public Action<string>? SetGlobalSearchText { get; set; }
     private bool _suppressAvailableTypesUpdate;
     private ObservableCollection<LogFileEntry> _logFilesEntries = [];
     public ObservableCollection<LogFileEntry> LogFilesEntries
@@ -188,6 +190,38 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     {
         if (string.IsNullOrWhiteSpace(text)) return;
         FilterText = text.Trim();
+    }
+
+    [RelayCommand]
+    private void ApplyGlobalSearchText(object? value)
+    {
+        var text = value switch
+        {
+            string s => s,
+            LogFileEntry entry => string.IsNullOrWhiteSpace(entry.Text) ? entry.RawLine : entry.Text,
+            IEnumerable<LogFileEntry> entries => entries
+                .Select(e => string.IsNullOrWhiteSpace(e.Text) ? e.RawLine : e.Text)
+                .FirstOrDefault(t => !string.IsNullOrWhiteSpace(t)),
+            IEnumerable enumerable => enumerable.Cast<object>()
+                .OfType<LogFileEntry>()
+                .Select(e => string.IsNullOrWhiteSpace(e.Text) ? e.RawLine : e.Text)
+                .FirstOrDefault(t => !string.IsNullOrWhiteSpace(t)),
+            _ => null
+        };
+
+        if (string.IsNullOrWhiteSpace(text) && SelectedEntry is not null)
+        {
+            text = string.IsNullOrWhiteSpace(SelectedEntry.Text) ? SelectedEntry.RawLine : SelectedEntry.Text;
+        }
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        var trimmed = text.Trim();
+        SetGlobalSearchText?.Invoke(trimmed);
+        GlobalSearchRequested?.Invoke(this, trimmed);
     }
 
     [RelayCommand]
