@@ -147,6 +147,9 @@
   <data name="SyncSelectionAcrossLists" xml:space="preserve">
     <value>Auswahl über Listen hinweg synchronisieren</value>
   </data>
+  <data name="ShowFileExplorerInLogLists" xml:space="preserve">
+    <value>Datei-Explorer in Log-Listen anzeigen</value>
+  </data>
   <data name="Time" xml:space="preserve">
     <value>Zeit</value>
   </data>

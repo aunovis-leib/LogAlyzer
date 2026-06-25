@@ -23,6 +23,7 @@ public sealed class PatternMatchPanelSettings
 public sealed class SettingsViewSettings
 {
     public bool SyncSelectionAcrossLists { get; set; } = true;
+    public bool ShowFileExplorerInLogLists { get; set; } = true;
     public int MaxEntriesPerList { get; set; } = 10000;
     public TimeSpan SyncTolerance { get; set; } = TimeSpan.FromHours(1);
     public string ExplorerRootFolder { get; set; } = string.Empty;

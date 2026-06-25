@@ -149,6 +149,15 @@ namespace LogAnalyzer.Resources {
                 return ResourceManager.GetString("SyncSelectionAcrossLists", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show file explorer in log lists.
+        /// </summary>
+        public static string ShowFileExplorerInLogLists {
+            get {
+                return ResourceManager.GetString("ShowFileExplorerInLogLists", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Time.

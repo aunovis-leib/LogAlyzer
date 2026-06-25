@@ -18,6 +18,9 @@ public partial class SettingsViewModel : ObservableObject
     private bool _syncSelectionAcrossLists = true;
 
     [ObservableProperty]
+    private bool _showFileExplorerInLogLists = true;
+
+    [ObservableProperty]
     private bool _showLiveChart = false;
 
     [ObservableProperty]
@@ -60,6 +63,7 @@ public partial class SettingsViewModel : ObservableObject
         ShowLiveChart = liveChart.ShowLiveChart;
         ShowPatternMatchPanel = patternMatchPanel.ShowPatternMatchPanel;
         SyncSelectionAcrossLists = settingsView.SyncSelectionAcrossLists;
+        ShowFileExplorerInLogLists = settingsView.ShowFileExplorerInLogLists;
         MaxEntriesPerList = settingsView.MaxEntriesPerList;
         SyncTolerance = settingsView.SyncTolerance;
         AutoReloadLogFiles = settingsView.AutoReloadLogFiles;
@@ -128,6 +132,14 @@ public partial class SettingsViewModel : ObservableObject
         manager.Save();
     }
 
+    partial void OnShowFileExplorerInLogListsChanged(bool value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.ShowFileExplorerInLogLists = value;
+        manager.Save();
+    }
+
     partial void OnMaxEntriesPerListChanged(int value)
     {
         var manager = AppSettingsManager.Instance;
@@ -191,6 +203,7 @@ public partial class SettingsViewModel : ObservableObject
     private void ResetDefaults()
     {
         SyncSelectionAcrossLists = true;
+        ShowFileExplorerInLogLists = true;
         ShowLiveChart = false;
         ShowPatternMatchPanel = false;
         MaxEntriesPerList = 10000;
