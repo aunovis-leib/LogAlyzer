@@ -16,12 +16,6 @@
         <conv:LogTypeStringToNullableConverter x:Key="LogTypeStringToNullableConverter" />
         <conv:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-        <ObjectDataProvider x:Key="LogTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-            <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="models:LogType" />
-            </ObjectDataProvider.MethodParameters>
-        </ObjectDataProvider>
-
         <ContextMenu x:Key="LogEntryContextMenu">
             <MenuItem Header="{x:Static res:Strings.Synchronize}"
                       Command="{Binding PlacementTarget.DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"

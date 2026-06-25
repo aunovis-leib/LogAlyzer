@@ -37,7 +37,7 @@ public partial class SettingsViewModel : ObservableObject
     private string _explorerRootFolder = string.Empty;
 
     [ObservableProperty]
-    private ObservableCollection<string> _explorerRootFolderHistory = new();
+    private ObservableCollection<string> _explorerRootFolderHistory = [];
 
     [ObservableProperty]
     private bool _autoReloadLogFiles = false;
@@ -46,7 +46,7 @@ public partial class SettingsViewModel : ObservableObject
     private bool _dateSortDescending = true;
 
     [ObservableProperty]
-    private ObservableCollection<HighlightRule> _highlightRules = new();
+    private ObservableCollection<HighlightRule> _highlightRules = [];
 
     [ObservableProperty]
     private string _highlightSearchText = string.Empty;
@@ -69,7 +69,7 @@ public partial class SettingsViewModel : ObservableObject
         AutoReloadLogFiles = settingsView.AutoReloadLogFiles;
         DateSortDescending = settingsView.DateSortDescending;
 
-        var history = settingsView.ExplorerRootFolderHistory ?? new List<string>();
+        var history = settingsView.ExplorerRootFolderHistory ?? [];
         var uniqueHistory = history.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         foreach (var folder in uniqueHistory)
         {
@@ -83,7 +83,7 @@ public partial class SettingsViewModel : ObservableObject
         {
             HighlightRules.Add(rule);
             // Subscribe to property changes for auto-save and update highlights
-            rule.PropertyChanged += (s, e) => 
+            rule.PropertyChanged += (s, e) =>
             {
                 SaveHighlightRules();
                 HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
@@ -224,7 +224,7 @@ public partial class SettingsViewModel : ObservableObject
 
         var rule = new HighlightRule { SearchText = HighlightSearchText, Color = HighlightColor };
         // Subscribe to property changes for auto-save and update highlights
-        rule.PropertyChanged += (s, e) => 
+        rule.PropertyChanged += (s, e) =>
         {
             SaveHighlightRules();
             HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
@@ -247,7 +247,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         var manager = AppSettingsManager.Instance;
         var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
-        settingsView.HighlightRules = new List<HighlightRule>(HighlightRules);
+        settingsView.HighlightRules = [.. HighlightRules];
         manager.Save();
     }
 

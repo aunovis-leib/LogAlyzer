@@ -6,7 +6,7 @@ public sealed class AppSettings
 {
     public LiveChartSettings LivChart { get; set; } = new();
     public PatternMatchPanelSettings PatternMatchPanel { get; set; } = new();
-    public List<ParserProfile> ParserProfiles { get; set; } = new();
+    public List<ParserProfile> ParserProfiles { get; set; } = [];
     public SettingsViewSettings SettingsView { get; set; } = new();
 }
 
@@ -27,10 +27,10 @@ public sealed class SettingsViewSettings
     public int MaxEntriesPerList { get; set; } = 10000;
     public TimeSpan SyncTolerance { get; set; } = TimeSpan.FromHours(1);
     public string ExplorerRootFolder { get; set; } = string.Empty;
-    public List<string> ExplorerRootFolderHistory { get; set; } = new();
+    public List<string> ExplorerRootFolderHistory { get; set; } = [];
     public bool AutoReloadLogFiles { get; set; } = false;
     public bool DateSortDescending { get; set; } = true;
-    public List<HighlightRule> HighlightRules { get; set; } = new();
+    public List<HighlightRule> HighlightRules { get; set; } = [];
 }
 
 public sealed class HighlightRule : ObservableObject

@@ -14,7 +14,7 @@ public partial class MainViewModel : ObservableObject
     private ParserProfile? _selectedProfile;
     public ObservableCollection<LogListViewModel> Lists { get; } = [];
     public LiveChartViewModel ChartVM { get; } = new();
-    public SettingsViewModel? SettingsVM { get; private set; } = new();
+    public SettingsViewModel? SettingsVM { get; private set; }
     public PatternMatchPanelViewModel? PatternMatchPanelVM { get; private set; }
     public event EventHandler<string>? PatternSaved;
 
@@ -47,15 +47,15 @@ public partial class MainViewModel : ObservableObject
     private LogFileEntry? _selectedEntryGlobal;
 
     public event EventHandler<LogFileEntry?>? SelectedEntryChanged;
-    private readonly Dictionary<LogListViewModel, EventHandler<LogFileEntry?>> _selectedEntryHandlers = new();
-    private readonly Dictionary<LogListViewModel, EventHandler<string>> _patternSavedHandlers = new();
-    private readonly Dictionary<LogListViewModel, EventHandler<string>> _globalSearchRequestedHandlers = new();
+    private readonly Dictionary<LogListViewModel, EventHandler<LogFileEntry?>> _selectedEntryHandlers = [];
+    private readonly Dictionary<LogListViewModel, EventHandler<string>> _patternSavedHandlers = [];
+    private readonly Dictionary<LogListViewModel, EventHandler<string>> _globalSearchRequestedHandlers = [];
 
     public MainViewModel(Services.AppSettingsManager appSettings)
     {
         _appSettings = appSettings;
         Profiles = _appSettings.ParserProfiles;
-        SelectedProfile = Profiles.FirstOrDefault();
+        SelectedProfile = Profiles.Count > 0 ? Profiles[0] : null;
         SettingsVM = new SettingsViewModel();
         SettingsVM.PropertyChanged += SettingsVM_PropertyChanged;
 
@@ -114,7 +114,7 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    private async void SettingsVM_MaxEntriesPerListChanged(object? sender, int maxEntries)
+    private async Task SettingsVM_MaxEntriesPerListChanged(object? sender, int maxEntries)
     {
         foreach (var list in Lists)
         {
