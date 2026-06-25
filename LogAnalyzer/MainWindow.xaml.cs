@@ -84,8 +84,20 @@ namespace LogAnalyzer
                     Content = lists[i],
                     ContentTemplate = logListTemplate
                 };
-                Grid.SetColumn(presenter, contentColumnIndex);
-                LogListsHost.Children.Add(presenter);
+
+                var container = new Border
+                {
+                    BorderBrush = new SolidColorBrush(Color.FromArgb(0x22, 0x00, 0x00, 0x00)),
+                    BorderThickness = new Thickness(1),
+                    Background = new SolidColorBrush(Color.FromArgb(0x08, 0xFF, 0xFF, 0xFF)),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(2),
+                    Margin = new Thickness(2, 0, 2, 0),
+                    Child = presenter
+                };
+
+                Grid.SetColumn(container, contentColumnIndex);
+                LogListsHost.Children.Add(container);
 
                 if (i >= lists.Count - 1)
                 {
