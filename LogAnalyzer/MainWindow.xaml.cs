@@ -9,6 +9,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.ComponentModel;
+using System.Collections.Specialized;
+using LogAnalyzer.ViewModels;
 
 namespace LogAnalyzer
 {
@@ -17,11 +19,94 @@ namespace LogAnalyzer
     /// </summary>
     public partial class MainWindow : Window
     {
+        private MainViewModel? _mainViewModel;
+
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new ViewModels.MainViewModel(Services.AppServices.AppSettings);
-            // Ensure FileExplorerViewModel is initialized in MainViewModel
+            DataContextChanged += MainWindow_DataContextChanged;
+            DataContext = new MainViewModel(Services.AppServices.AppSettings);
+            AttachMainViewModel(DataContext as MainViewModel);
+            RebuildLogListsHost();
+        }
+
+        private void MainWindow_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            AttachMainViewModel(e.NewValue as MainViewModel);
+            RebuildLogListsHost();
+        }
+
+        private void AttachMainViewModel(MainViewModel? vm)
+        {
+            if (_mainViewModel is not null)
+            {
+                _mainViewModel.Lists.CollectionChanged -= Lists_CollectionChanged;
+            }
+
+            _mainViewModel = vm;
+
+            if (_mainViewModel is not null)
+            {
+                _mainViewModel.Lists.CollectionChanged += Lists_CollectionChanged;
+            }
+        }
+
+        private void Lists_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            RebuildLogListsHost();
+        }
+
+        private void RebuildLogListsHost()
+        {
+            if (LogListsHost is null)
+            {
+                return;
+            }
+
+            LogListsHost.Children.Clear();
+            LogListsHost.ColumnDefinitions.Clear();
+
+            var lists = _mainViewModel?.Lists;
+            if (lists is null || lists.Count == 0)
+            {
+                return;
+            }
+
+            var logListTemplate = TryFindResource("LogListTemplate") as DataTemplate;
+
+            for (var i = 0; i < lists.Count; i++)
+            {
+                var contentColumnIndex = i * 2;
+                LogListsHost.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+                var presenter = new ContentPresenter
+                {
+                    Content = lists[i],
+                    ContentTemplate = logListTemplate
+                };
+                Grid.SetColumn(presenter, contentColumnIndex);
+                LogListsHost.Children.Add(presenter);
+
+                if (i >= lists.Count - 1)
+                {
+                    continue;
+                }
+
+                var splitterColumnIndex = contentColumnIndex + 1;
+                LogListsHost.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var splitter = new GridSplitter
+                {
+                    Width = 6,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                    ResizeDirection = GridResizeDirection.Columns,
+                    ResizeBehavior = GridResizeBehavior.PreviousAndNext,
+                    Background = new SolidColorBrush(Color.FromArgb(0x33, 0x00, 0x00, 0x00))
+                };
+                Grid.SetColumn(splitter, splitterColumnIndex);
+                LogListsHost.Children.Add(splitter);
+            }
         }
 
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e)

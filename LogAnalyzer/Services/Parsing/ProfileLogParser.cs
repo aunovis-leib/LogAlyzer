@@ -8,6 +8,7 @@ namespace LogAnalyzer.Services.Parsing
     {
         private readonly ParserProfile _profile;
         private static readonly CultureInfo GermanCulture = CultureInfo.GetCultureInfo("de-DE");
+        private DateTime? _contextDate;
 
         public ProfileLogParser(ParserProfile profile)
         {
@@ -18,6 +19,11 @@ namespace LogAnalyzer.Services.Parsing
         {
             entry = new LogFileEntry();
             if (string.IsNullOrWhiteSpace(line)) return false;
+
+            if (TryCaptureContextDate(line))
+            {
+                return false;
+            }
 
             var firstSep = line.IndexOf(_profile.Splitter, StringComparison.Ordinal);
             if (firstSep < 0) return false;
@@ -34,10 +40,47 @@ namespace LogAnalyzer.Services.Parsing
 
             entry.Date = dt;
             entry.IsTimeOnlyTimestamp = isTimeOnly;
+            if (isTimeOnly && _contextDate.HasValue)
+            {
+                entry.Date = _contextDate.Value.Date.Add(dt.TimeOfDay);
+                entry.IsTimeOnlyTimestamp = false;
+            }
             entry.Type = TryParseLogType(typePart);
             entry.Text = textPart.ToString();
             entry.RawLine = line;
             return true;
+        }
+
+        private bool TryCaptureContextDate(string line)
+        {
+            if (string.IsNullOrWhiteSpace(_profile.ContextDatePrefix)
+                || string.IsNullOrWhiteSpace(_profile.ContextDateFormat))
+            {
+                return false;
+            }
+
+            var prefix = _profile.ContextDatePrefix;
+            var index = line.IndexOf(prefix, StringComparison.Ordinal);
+            if (index < 0)
+            {
+                return false;
+            }
+
+            var valueStart = index + prefix.Length;
+            if (valueStart > line.Length)
+            {
+                return false;
+            }
+
+            var dateText = line.AsSpan(valueStart).Trim();
+            if (DateTime.TryParseExact(dateText, _profile.ContextDateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate)
+                || DateTime.TryParseExact(dateText, _profile.ContextDateFormat, GermanCulture, DateTimeStyles.None, out parsedDate))
+            {
+                _contextDate = parsedDate.Date;
+                return true;
+            }
+
+            return false;
         }
 
         private static bool TryParseDate(ReadOnlySpan<char> datePart, string dateFormat, out DateTime dt, out bool isTimeOnly)

@@ -17,6 +17,9 @@
         PreviewMouseDown="Window_PreviewMouseDown">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <DataTemplate x:Key="LogListTemplate">
+            <views:LogListView />
+        </DataTemplate>
     </Window.Resources>
     <Window.Triggers>
         <EventTrigger RoutedEvent="ToggleButton.Checked" SourceName="SettingsToggle">
@@ -102,18 +105,7 @@
                 <Image Source="/Resources/Icons/Settings.ico" Width="20" Height="20" />
             </ToggleButton>
         </StackPanel>
-        <ItemsControl Grid.Row="2" ItemsSource="{Binding Lists}">
-        <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-                <UniformGrid Columns="{Binding Lists.Count}" />
-            </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="{x:Type vm:LogListViewModel}">
-                <views:LogListView />
-            </DataTemplate>
-        </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <Grid x:Name="LogListsHost" Grid.Row="2" />
 
         <GridSplitter Grid.Row="3" HorizontalAlignment="Stretch" Height="6" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000">
             <GridSplitter.Style>

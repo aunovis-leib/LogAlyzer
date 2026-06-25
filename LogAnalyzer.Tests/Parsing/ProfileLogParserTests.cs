@@ -57,4 +57,25 @@ public class ProfileLogParserTests
         Assert.Equal((LogType)4, entry.Type);
         Assert.Equal("0FAC* ==> UaCoreServerApplication::start", entry.Text);
     }
+
+    [Fact]
+    public void TryParse_AppliesContextDate_ToTimeOnlyTimestamp()
+    {
+        var parser = new ProfileLogParser(new ParserProfile
+        {
+            Name = "TrumpfUaServer",
+            DateFormat = "yyyy-MM-dd HH:mm:ss.fff",
+            Splitter = "|",
+            ContextDatePrefix = "** Date:",
+            ContextDateFormat = "yyyy-MM-dd"
+        });
+
+        var headerParsed = parser.TryParse("** Date: 2026-06-18", out _);
+        var lineParsed = parser.TryParse("09:01:17.732Z|4|0F78* ==> UaCoreServerApplication::start", out var entry);
+
+        Assert.False(headerParsed);
+        Assert.True(lineParsed);
+        Assert.False(entry.IsTimeOnlyTimestamp);
+        Assert.Equal(new DateTime(2026, 6, 18, 9, 1, 17, 732), entry.Date);
+    }
 }

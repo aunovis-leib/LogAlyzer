@@ -5,5 +5,7 @@ namespace LogAnalyzer.Models
         public string Name { get; set; } = string.Empty;
         public string DateFormat { get; set; } = "dd.MM.yyyy HH:mm:ss.fff";
         public string Splitter { get; set; } = "|"; // can be multi-character
+        public string? ContextDatePrefix { get; set; }
+        public string? ContextDateFormat { get; set; }
     }
 }

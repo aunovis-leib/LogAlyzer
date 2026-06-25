@@ -75,56 +75,72 @@
                       ResizeBehavior="PreviousAndNext"
                       ShowsPreview="True" />
 
-        <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Grid.ColumnSpan="2">
-            <Button HorizontalAlignment="Left" Command="{Binding ChooseFileCommand}" BorderThickness="0" Background="{x:Null}">
-                <Image Width="20" Height="20" Source="/Resources/Icons/Add-files.ico" />
-            </Button>
-            <ctrls:DateRangePicker Margin="8,0,0,0"
-                                   FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                   ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-            <TextBox Margin="8,0,0,0"
-                     Width="70"
-                     Style="{StaticResource WatermarkTextBoxStyle}"
-                     ctrls:WatermarkService.Placeholder="HH:mm:ss"
-                     Text="{Binding FilterFromTimeText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
-                     bh:TimeInputBehavior.IsEnabled="True"
-                     ToolTip="Von Uhrzeit (HH:mm:ss)" />
-            <TextBlock Margin="4,0,0,0" Text="bis" VerticalAlignment="Center" />
-            <TextBox Margin="4,0,0,0"
-                     Width="70"
-                     Style="{StaticResource WatermarkTextBoxStyle}"
-                     ctrls:WatermarkService.Placeholder="HH:mm:ss"
-                     Text="{Binding FilterToTimeText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
-                     bh:TimeInputBehavior.IsEnabled="True"
-                     ToolTip="Bis Uhrzeit (HH:mm:ss)" />
-            <TextBox Margin="8,0,0,0"
-                     MinWidth="90"
-                     Width="90"
-                     Style="{StaticResource WatermarkTextBoxStyle}"
-                     ctrls:WatermarkService.Placeholder="Filtertext"
-                     Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <Grid Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Button HorizontalAlignment="Left" Command="{Binding ChooseFileCommand}" BorderThickness="0" Background="{x:Null}">
+                    <Image Width="20" Height="20" Source="/Resources/Icons/Add-files.ico" />
+                </Button>
+                <ctrls:DateRangePicker Margin="8,0,0,0"
+                                       FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Margin="8,0,0,0"
+                         Width="70"
+                         Style="{StaticResource WatermarkTextBoxStyle}"
+                         ctrls:WatermarkService.Placeholder="HH:mm:ss"
+                         Text="{Binding FilterFromTimeText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                         bh:TimeInputBehavior.IsEnabled="True"
+                         ToolTip="Von Uhrzeit (HH:mm:ss)" />
+                <TextBlock Margin="4,0,0,0" Text="bis" VerticalAlignment="Center" />
+                <TextBox Margin="4,0,0,0"
+                         Width="70"
+                         Style="{StaticResource WatermarkTextBoxStyle}"
+                         ctrls:WatermarkService.Placeholder="HH:mm:ss"
+                         Text="{Binding FilterToTimeText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True}"
+                         bh:TimeInputBehavior.IsEnabled="True"
+                         ToolTip="Bis Uhrzeit (HH:mm:ss)" />
+                <TextBox Margin="8,0,0,0"
+                         MinWidth="90"
+                         Width="90"
+                         Style="{StaticResource WatermarkTextBoxStyle}"
+                         ctrls:WatermarkService.Placeholder="Filtertext"
+                         Text="{Binding FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <ComboBox Margin="8,0,0,0"
-                      Width="80"
-                      IsEditable="True"
-                      Text="{Binding SelectedType, Mode=OneWay, Converter={StaticResource LogTypeStringToNullableConverter}}"
-                      ItemsSource="{Binding AvailableTypes}"
-                      SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                <ComboBox.ItemContainerStyle>
-                    <Style TargetType="ComboBoxItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    </Style>
-                </ComboBox.ItemContainerStyle>
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Converter={StaticResource LogTypeStringToNullableConverter}}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-            <Button Margin="8,0,0,0" Command="{Binding CancelLoadingCommand}" IsEnabled="{Binding IsLoading}">
-                <TextBlock Text="Abbrechen" />
+                <ComboBox Margin="8,0,0,0"
+                          Width="80"
+                          IsEditable="True"
+                          Text="{Binding SelectedType, Mode=OneWay, Converter={StaticResource LogTypeStringToNullableConverter}}"
+                          ItemsSource="{Binding AvailableTypes}"
+                          SelectedItem="{Binding SelectedType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource LogTypeStringToNullableConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Margin="8,0,0,0" Command="{Binding CancelLoadingCommand}" IsEnabled="{Binding IsLoading}">
+                    <TextBlock Text="Abbrechen" />
+                </Button>
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    Command="{Binding DataContext.RemoveListCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                    CommandParameter="{Binding}"
+                    BorderThickness="0"
+                    Background="{x:Null}"
+                    ToolTip="LogView entfernen">
+                <TextBlock Text="✕" FontSize="14" FontWeight="Bold" />
             </Button>
-        </StackPanel>
+        </Grid>
         <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="2" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" Grid.ColumnSpan="2"
                   bh:ListViewBehaviors.FillRemainingColumnIndex="3"
                   bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"

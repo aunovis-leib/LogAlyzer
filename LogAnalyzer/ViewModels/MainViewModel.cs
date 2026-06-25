@@ -80,6 +80,27 @@ public partial class MainViewModel : ObservableObject
         RefreshChart();
     }
 
+    [RelayCommand]
+    private void RemoveList(LogListViewModel? listToRemove)
+    {
+        if (listToRemove is null)
+        {
+            return;
+        }
+
+        if (Lists.Count <= 1)
+        {
+            return;
+        }
+
+        if (!Lists.Contains(listToRemove))
+        {
+            return;
+        }
+
+        Lists.Remove(listToRemove);
+    }
+
     private void SettingsVM_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(SettingsViewModel.ExplorerRootFolder))
