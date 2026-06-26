@@ -78,4 +78,60 @@ public class ProfileLogParserTests
         Assert.False(entry.IsTimeOnlyTimestamp);
         Assert.Equal(new DateTime(2026, 6, 18, 9, 1, 17, 732), entry.Date);
     }
+
+    [Fact]
+    public void TryParse_AppliesConfiguredTimeOffset()
+    {
+        var parser = new ProfileLogParser(new ParserProfile
+        {
+            Name = "offset-profile",
+            DateFormat = "dd.MM.yyyy HH:mm:ss.fff",
+            Splitter = "|",
+            TimeOffsetHours = 1,
+            TimeOffsetMinutes = 30
+        });
+
+        var ok = parser.TryParse("01.01.2025 10:00:00.000|Info|Hello", out var entry);
+
+        Assert.True(ok);
+        Assert.Equal(new DateTime(2025, 1, 1, 11, 30, 0, 0), entry.Date);
+    }
+
+    [Fact]
+    public void TryParse_AppliesConfiguredTimeOffset_ToContextDateTimeOnly()
+    {
+        var parser = new ProfileLogParser(new ParserProfile
+        {
+            Name = "offset-context-profile",
+            DateFormat = "yyyy-MM-dd HH:mm:ss.fff",
+            Splitter = "|",
+            ContextDatePrefix = "** Date:",
+            ContextDateFormat = "yyyy-MM-dd",
+            TimeOffsetHours = -2,
+            TimeOffsetMinutes = -15
+        });
+
+        var headerParsed = parser.TryParse("** Date: 2026-06-18", out _);
+        var lineParsed = parser.TryParse("09:01:17.732Z|4|0F78* ==> UaCoreServerApplication::start", out var entry);
+
+        Assert.False(headerParsed);
+        Assert.True(lineParsed);
+        Assert.Equal(new DateTime(2026, 6, 18, 6, 46, 17, 732), entry.Date);
+    }
+
+    [Fact]
+    public void TryParse_UsesPerLineTimestampOffset()
+    {
+        var parser = new ProfileLogParser(new ParserProfile
+        {
+            Name = "offset-in-line-profile",
+            DateFormat = "yyyy-MM-dd HH:mm:ss.fff zzz",
+            Splitter = "|"
+        });
+
+        var ok = parser.TryParse("2025-01-01 10:00:00.000 +02:00|Info|Hello", out var entry);
+
+        Assert.True(ok);
+        Assert.Equal(new DateTime(2025, 1, 1, 9, 0, 0, 0), entry.Date);
+    }
 }

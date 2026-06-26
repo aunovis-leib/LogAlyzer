@@ -8,7 +8,7 @@ namespace LogAnalyzer.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly Services.AppSettingsManager _appSettings;
-    public IReadOnlyList<ParserProfile> Profiles { get; }
+    public ObservableCollection<ParserProfile> Profiles { get; }
 
     [ObservableProperty]
     private ParserProfile? _selectedProfile;
@@ -54,10 +54,16 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel(Services.AppSettingsManager appSettings)
     {
         _appSettings = appSettings;
-        Profiles = _appSettings.ParserProfiles;
+        Profiles = [.. _appSettings.ParserProfiles];
         SelectedProfile = Profiles.Count > 0 ? Profiles[0] : null;
         SettingsVM = new SettingsViewModel();
         SettingsVM.PropertyChanged += SettingsVM_PropertyChanged;
+        SettingsVM.MaxEntriesPerListChanged += SettingsVM_MaxEntriesPerListChanged;
+        SettingsVM.ParserProfiles.CollectionChanged += (_, __) =>
+        {
+            SyncProfilesFromSettings();
+        };
+        SyncProfilesFromSettings();
 
         if (App.PatternService is not null)
         {
@@ -78,6 +84,25 @@ public partial class MainViewModel : ObservableObject
         SubscribeToList(first);
         Lists.CollectionChanged += Lists_CollectionChanged;
         RefreshChart();
+    }
+
+    private void SyncProfilesFromSettings()
+    {
+        if (SettingsVM is null)
+        {
+            return;
+        }
+
+        var currentSelectedName = SelectedProfile?.Name;
+
+        Profiles.Clear();
+        foreach (var profile in SettingsVM.ParserProfiles)
+        {
+            Profiles.Add(profile);
+        }
+
+        SelectedProfile = Profiles.FirstOrDefault(p => p.Name == currentSelectedName)
+            ?? Profiles.FirstOrDefault();
     }
 
     [RelayCommand]
@@ -114,7 +139,7 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    private async Task SettingsVM_MaxEntriesPerListChanged(object? sender, int maxEntries)
+    private async void SettingsVM_MaxEntriesPerListChanged(object? sender, int maxEntries)
     {
         foreach (var list in Lists)
         {

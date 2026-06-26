@@ -9,10 +9,12 @@ namespace LogAnalyzer.Services.Parsing
         private readonly ParserProfile _profile;
         private static readonly CultureInfo GermanCulture = CultureInfo.GetCultureInfo("de-DE");
         private DateTime? _contextDate;
+        private readonly TimeSpan _timeOffset;
 
         public ProfileLogParser(ParserProfile profile)
         {
             _profile = profile ?? throw new ArgumentNullException(nameof(profile));
+            _timeOffset = TimeSpan.FromHours(_profile.TimeOffsetHours) + TimeSpan.FromMinutes(_profile.TimeOffsetMinutes);
         }
 
         public bool TryParse(string line, out LogFileEntry entry)
@@ -45,6 +47,12 @@ namespace LogAnalyzer.Services.Parsing
                 entry.Date = _contextDate.Value.Date.Add(dt.TimeOfDay);
                 entry.IsTimeOnlyTimestamp = false;
             }
+
+            if (_timeOffset != TimeSpan.Zero)
+            {
+                entry.Date = entry.Date.Add(_timeOffset);
+            }
+
             entry.Type = TryParseLogType(typePart);
             entry.Text = textPart.ToString();
             entry.RawLine = line;
@@ -85,6 +93,14 @@ namespace LogAnalyzer.Services.Parsing
 
         private static bool TryParseDate(ReadOnlySpan<char> datePart, string dateFormat, out DateTime dt, out bool isTimeOnly)
         {
+            if (DateTimeOffset.TryParseExact(datePart, dateFormat, GermanCulture, DateTimeStyles.None, out var dtoFromFormatGerman)
+                || DateTimeOffset.TryParseExact(datePart, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dtoFromFormatGerman))
+            {
+                dt = dtoFromFormatGerman.LocalDateTime;
+                isTimeOnly = false;
+                return true;
+            }
+
             if (DateTime.TryParseExact(datePart, dateFormat, GermanCulture, DateTimeStyles.None, out dt))
             {
                 isTimeOnly = false;
@@ -102,6 +118,17 @@ namespace LogAnalyzer.Services.Parsing
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.None,
                 out var dto))
+            {
+                dt = dto.LocalDateTime;
+                isTimeOnly = false;
+                return true;
+            }
+
+            if (System.DateTimeOffset.TryParse(
+                datePart,
+                GermanCulture,
+                DateTimeStyles.None,
+                out dto))
             {
                 dt = dto.LocalDateTime;
                 isTimeOnly = false;

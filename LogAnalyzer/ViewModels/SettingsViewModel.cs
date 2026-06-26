@@ -54,6 +54,15 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _highlightColor = "#FFFF00";
 
+    public ObservableCollection<ParserProfile> ParserProfiles { get; } = [];
+
+    private ParserProfile? _selectedParserProfile;
+    public ParserProfile? SelectedParserProfile
+    {
+        get => _selectedParserProfile;
+        set => SetProperty(ref _selectedParserProfile, value);
+    }
+
     public SettingsViewModel()
     {
         var settings = AppSettingsManager.Instance.Settings;
@@ -79,6 +88,14 @@ public partial class SettingsViewModel : ObservableObject
 
         ExplorerRootFolder = settingsView.ExplorerRootFolder;
 
+        foreach (var profile in settings.ParserProfiles)
+        {
+            AttachParserProfile(profile);
+            ParserProfiles.Add(profile);
+        }
+
+        SelectedParserProfile = ParserProfiles.FirstOrDefault();
+
         foreach (var rule in settingsView.HighlightRules)
         {
             HighlightRules.Add(rule);
@@ -89,6 +106,57 @@ public partial class SettingsViewModel : ObservableObject
                 HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
             };
         }
+    }
+
+    private void AttachParserProfile(ParserProfile profile)
+    {
+        profile.PropertyChanged += (_, __) =>
+        {
+            SaveParserProfiles();
+        };
+    }
+
+    private void SaveParserProfiles()
+    {
+        var manager = AppSettingsManager.Instance;
+        manager.Settings.ParserProfiles = [.. ParserProfiles];
+        manager.Save();
+    }
+
+    [RelayCommand]
+    private void AddParserProfile()
+    {
+        var profile = new ParserProfile
+        {
+            Name = $"Profile {ParserProfiles.Count + 1}"
+        };
+
+        AttachParserProfile(profile);
+        ParserProfiles.Add(profile);
+        SelectedParserProfile = profile;
+        SaveParserProfiles();
+    }
+
+    [RelayCommand]
+    private void RemoveParserProfile(ParserProfile? profile)
+    {
+        if (profile is null)
+        {
+            return;
+        }
+
+        if (!ParserProfiles.Contains(profile))
+        {
+            return;
+        }
+
+        ParserProfiles.Remove(profile);
+        if (ReferenceEquals(SelectedParserProfile, profile))
+        {
+            SelectedParserProfile = ParserProfiles.FirstOrDefault();
+        }
+
+        SaveParserProfiles();
     }
 
     // Allow external callers (e.g. view tests or view code) to set the
