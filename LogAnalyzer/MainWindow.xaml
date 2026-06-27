@@ -102,7 +102,7 @@
             </Button>
 
             <ToggleButton Margin="12,0,0,0"
-                          MinWidth="150"
+                          Width="50"
                           Padding="10,2"
                           VerticalAlignment="Center"
                           IsChecked="{Binding SettingsVM.SyncSelectionAcrossLists, Mode=TwoWay}"
@@ -115,7 +115,7 @@
                         <Setter Property="BorderThickness" Value="1" />
                         <Style.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Foreground" Value="White" />
+                                <Setter Property="Foreground" Value="#FF9B0000" />
                                 <Setter Property="Background" Value="#FFD62828" />
                                 <Setter Property="BorderBrush" Value="#FF9B0000" />
                                 <Setter Property="Effect">
