@@ -257,10 +257,15 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedEntryGlobalChanged(LogFileEntry? value)
     {
-        foreach (var l in Lists)
+        var syncEnabled = SettingsVM?.SyncSelectionAcrossLists ?? true;
+
+        if (syncEnabled)
         {
-            var tolerance = SettingsVM?.SyncTolerance ?? TimeSpan.Zero;
-            l.SelectEntryFromOutside(value, tolerance);
+            foreach (var l in Lists)
+            {
+                var tolerance = SettingsVM?.SyncTolerance ?? TimeSpan.Zero;
+                l.SelectEntryFromOutside(value, tolerance);
+            }
         }
 
         if (value is null)
@@ -275,8 +280,11 @@ public partial class MainViewModel : ObservableObject
             SelectedSearchResult = value;
         }
 
-        // Event benachrichtigen
-        SelectedEntryChanged?.Invoke(this, value);
+        if (syncEnabled)
+        {
+            // Event benachrichtigen
+            SelectedEntryChanged?.Invoke(this, value);
+        }
     }
 
     private void SubscribeToList(LogListViewModel vm)

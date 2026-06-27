@@ -101,6 +101,34 @@
                 <TextBlock Text="Suchen" />
             </Button>
 
+            <ToggleButton Margin="12,0,0,0"
+                          MinWidth="150"
+                          Padding="10,2"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding SettingsVM.SyncSelectionAcrossLists, Mode=TwoWay}"
+                          Content="Sync">
+                <ToggleButton.Style>
+                    <Style TargetType="ToggleButton">
+                        <Setter Property="Foreground" Value="Black" />
+                        <Setter Property="Background" Value="#FFE6E6E6" />
+                        <Setter Property="BorderBrush" Value="#FFBFBFBF" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Style.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter Property="Background" Value="#FFD62828" />
+                                <Setter Property="BorderBrush" Value="#FF9B0000" />
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#FFD62828" BlurRadius="14" ShadowDepth="0" Opacity="0.9" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ToggleButton.Style>
+            </ToggleButton>
+
             <ToggleButton x:Name="SettingsToggle" Margin="12,0,0,0" IsChecked="{Binding IsSettingsPaneOpen, Mode=TwoWay}">
                 <Image Source="/Resources/Icons/Settings.ico" Width="20" Height="20" />
             </ToggleButton>
