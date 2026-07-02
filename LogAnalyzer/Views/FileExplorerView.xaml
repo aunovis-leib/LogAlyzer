@@ -16,7 +16,7 @@
                 </StackPanel>
                 <ComboBox Margin="0,4,0,0"
                           ItemsSource="{Binding ExplorerRootFolderHistory}"
-                          SelectedItem="{Binding SelectedHistoryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          Text="{Binding SelectedHistoryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                           IsEditable="True" />
             </StackPanel>
             <ListView x:Name="ExplorerListView"
