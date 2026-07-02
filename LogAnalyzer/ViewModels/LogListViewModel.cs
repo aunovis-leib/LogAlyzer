@@ -431,10 +431,13 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             {
                 if (enabled && _currentLoadedFiles.Length > 0)
                 {
+                    ApplyNewestFirstSort();
                     StartAutoReload();
                 }
                 else
                 {
+                    ApplyDefaultDateSort(settingsViewModel);
+                    RefreshView();
                     StopAutoReload();
                 }
             };
@@ -526,6 +529,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
     private HashSet<string> _pendingFileChanges = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _changeSync = new();
+    private int _isProcessingAutoReload;
 
     private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
     {
@@ -538,7 +542,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         }
 
         // Sicherstellen, dass die Timer-Erstellung auf dem UI-Thread erfolgt
-        App.Current.Dispatcher.Invoke(() =>
+        _ = App.Current.Dispatcher.InvokeAsync(() =>
         {
             if (_debounceTimer == null)
             {
@@ -551,66 +555,93 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
             _debounceTimer.Stop();
             _debounceTimer.Start();
-        });
+        }, DispatcherPriority.Background);
     }
 
     private async void DebounceTimer_Tick(object? sender, EventArgs e)
     {
-        _debounceTimer?.Stop();
-
-        string[] filesToProcess;
-        lock (_changeSync)
+        if (Interlocked.Exchange(ref _isProcessingAutoReload, 1) == 1)
         {
-            filesToProcess = _pendingFileChanges.ToArray();
-            _pendingFileChanges.Clear();
+            return;
         }
 
-        if (filesToProcess.Length == 0)
-            return;
+        _debounceTimer?.Stop();
 
-        var token = _loadCancellation?.Token ?? CancellationToken.None;
-        int totalNewEntries = 0;
-
-        foreach (var filePath in filesToProcess)
+        try
         {
-            if (!_currentLoadedFiles.Contains(filePath, StringComparer.OrdinalIgnoreCase))
-                continue;
-
-            try
+            string[] filesToProcess;
+            lock (_changeSync)
             {
-                if (!File.Exists(filePath))
+                filesToProcess = _pendingFileChanges.ToArray();
+                _pendingFileChanges.Clear();
+            }
+
+            if (filesToProcess.Length == 0)
+                return;
+
+            var token = _loadCancellation?.Token ?? CancellationToken.None;
+            int totalNewEntries = 0;
+
+            foreach (var filePath in filesToProcess)
+            {
+                if (!_currentLoadedFiles.Contains(filePath, StringComparer.OrdinalIgnoreCase))
                     continue;
 
-                var newEntries = await ReadAndParseAppendedEntriesAsync(filePath, token).ConfigureAwait(false);
-                if (newEntries is { Count: > 0 })
+                try
                 {
-                    totalNewEntries += newEntries.Count;
-                    await App.Current.Dispatcher.InvokeAsync(() =>
+                    if (!File.Exists(filePath))
+                        continue;
+
+                    var newEntries = await ReadAndParseAppendedEntriesAsync(filePath, token).ConfigureAwait(false);
+                    if (newEntries is { Count: > 0 })
                     {
-                        var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
-                        var remaining = Math.Max(0, maxEntries - LogFilesEntries.Count);
-                        foreach (var entry in newEntries.Take(remaining))
+                        totalNewEntries += newEntries.Count;
+                        await App.Current.Dispatcher.InvokeAsync(() =>
                         {
-                            entry.LineNumber = LogFilesEntries.Count + 1;
-                            LogFilesEntries.Add(entry);
-                        }
-                        if (newEntries.Count > 0)
-                        {
-                            NewEntriesCount = totalNewEntries;
-                            HasNewEntries = true;
-                            UpdateAvailableTypes();
-                            UpdateAvailableDates();
-                            UpdateHighlights();
-                            RefreshView();
-                            EntriesReloaded?.Invoke(this, EventArgs.Empty);
-                        }
-                    });
+                            var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
+                            var remaining = Math.Max(0, maxEntries - LogFilesEntries.Count);
+                            foreach (var entry in newEntries.Take(remaining))
+                            {
+                                entry.LineNumber = LogFilesEntries.Count + 1;
+                                LogFilesEntries.Add(entry);
+                            }
+                            if (newEntries.Count > 0)
+                            {
+                                NewEntriesCount = totalNewEntries;
+                                HasNewEntries = true;
+                                UpdateAvailableTypes();
+                                UpdateAvailableDates();
+                                UpdateHighlights();
+                                RefreshView();
+                                EntriesReloaded?.Invoke(this, EventArgs.Empty);
+                            }
+                        }, DispatcherPriority.Background);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error processing file {filePath}: {ex}");
                 }
             }
-            catch (Exception ex)
+
+            var hasPendingChanges = false;
+            lock (_changeSync)
             {
-                System.Diagnostics.Debug.WriteLine($"Error processing file {filePath}: {ex}");
+                hasPendingChanges = _pendingFileChanges.Count > 0;
             }
+
+            if (hasPendingChanges)
+            {
+                _ = App.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    _debounceTimer?.Stop();
+                    _debounceTimer?.Start();
+                }, DispatcherPriority.Background);
+            }
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _isProcessingAutoReload, 0);
         }
     }
 
@@ -1156,6 +1187,19 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         var sortDirection = settingsViewModel.DateSortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending;
         LogFilesView.SortDescriptions.Clear();
         LogFilesView.SortDescriptions.Add(new SortDescription(nameof(LogFileEntry.Date), sortDirection));
+    }
+
+    private void ApplyNewestFirstSort()
+    {
+        if (LogFilesView == null)
+        {
+            return;
+        }
+
+        LogFilesView.SortDescriptions.Clear();
+        LogFilesView.SortDescriptions.Add(new SortDescription(nameof(LogFileEntry.Date), ListSortDirection.Descending));
+        LogFilesView.SortDescriptions.Add(new SortDescription(nameof(LogFileEntry.LineNumber), ListSortDirection.Descending));
+        RefreshView();
     }
 
     private static bool TryParseTimeInput(string? value, out TimeOnly? parsed, out string normalized)
