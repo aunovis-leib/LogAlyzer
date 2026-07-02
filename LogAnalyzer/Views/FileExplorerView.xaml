@@ -9,9 +9,15 @@
              d:DesignHeight="400" d:DesignWidth="200">
     <Border Background="#F8F8F8" BorderBrush="#CCC" BorderThickness="0,0,1,0">
         <DockPanel>
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="2">
-                <Button Content="↑" Command="{Binding GoUpCommand}" Width="24" Height="24" Margin="0,0,4,0" />
-                <TextBlock Text="{Binding CurrentPath}" VerticalAlignment="Center" FontSize="10" Foreground="#888" TextTrimming="CharacterEllipsis" Width="Auto" ToolTip="{Binding CurrentPath}"/>
+            <StackPanel DockPanel.Dock="Top" Margin="2">
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="↑" Command="{Binding GoUpCommand}" Width="24" Height="24" Margin="0,0,4,0" />
+                    <TextBlock Text="{Binding CurrentPath}" VerticalAlignment="Center" FontSize="10" Foreground="#888" TextTrimming="CharacterEllipsis" Width="Auto" ToolTip="{Binding CurrentPath}"/>
+                </StackPanel>
+                <ComboBox Margin="0,4,0,0"
+                          ItemsSource="{Binding ExplorerRootFolderHistory}"
+                          SelectedItem="{Binding SelectedHistoryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          IsEditable="True" />
             </StackPanel>
             <ListView x:Name="ExplorerListView"
                       ItemsSource="{Binding Items}"

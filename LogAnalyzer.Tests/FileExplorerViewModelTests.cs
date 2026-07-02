@@ -98,6 +98,28 @@ public class FileExplorerViewModelTests
     }
 
     [Fact]
+    public void SelectedHistoryPath_NavigatesToExistingFolder()
+    {
+        var root = CreateTempDir("explorer_history_select");
+        var child = Path.Combine(root, "child");
+        Directory.CreateDirectory(child);
+
+        try
+        {
+            var vm = new FileExplorerViewModel();
+            vm.SetExplorerRootFolderHistory(new System.Collections.ObjectModel.ObservableCollection<string> { root, child });
+
+            vm.SelectedHistoryPath = child;
+
+            Assert.Equal(child, vm.CurrentPath);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
     public void OpenSelection_WithMultipleFiles_RaisesFilesSelectedDistinct()
     {
         var dir = CreateTempDir("explorer_multi_select");

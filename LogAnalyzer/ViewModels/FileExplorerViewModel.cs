@@ -21,6 +21,9 @@ public partial class FileExplorerViewModel : ObservableObject
     private ObservableCollection<string> _explorerRootFolderHistory = new();
 
     [ObservableProperty]
+    private string? _selectedHistoryPath;
+
+    [ObservableProperty]
     private FileSystemItem? _selectedItem;
 
     private string _currentPath = string.Empty;
@@ -66,6 +69,17 @@ public partial class FileExplorerViewModel : ObservableObject
     public void SetExplorerRootFolderHistory(ObservableCollection<string> history)
     {
         ExplorerRootFolderHistory = history;
+    }
+
+    partial void OnSelectedHistoryPathChanged(string? value)
+    {
+        var path = value?.Trim();
+        if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+        {
+            return;
+        }
+
+        LoadItems(path);
     }
 
     public void SetRootFolder(string? rootFolder)
