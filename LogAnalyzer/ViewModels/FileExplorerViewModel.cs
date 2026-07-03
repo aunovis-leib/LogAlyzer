@@ -14,6 +14,7 @@ public partial class FileExplorerViewModel : ObservableObject
 
     private HashSet<string> _loadedFiles = new(StringComparer.OrdinalIgnoreCase);
     private string _rootPath = string.Empty;
+    private bool _syncingSelectedHistoryPath;
 
     public ObservableCollection<FileSystemItem> Items { get; } = new();
 
@@ -35,15 +36,30 @@ public partial class FileExplorerViewModel : ObservableObject
             if (SetProperty(ref _currentPath, value))
             {
                 AddToHistory(value);
+                _syncingSelectedHistoryPath = true;
+                try
+                {
+                    SelectedHistoryPath = value;
+                }
+                finally
+                {
+                    _syncingSelectedHistoryPath = false;
+                }
             }
         }
     }
 
     private void AddToHistory(string path)
     {
-        if (!string.IsNullOrWhiteSpace(path) && !ExplorerRootFolderHistory.Contains(path, StringComparer.OrdinalIgnoreCase))
+        var normalizedPath = NormalizePath(path);
+        if (string.IsNullOrWhiteSpace(normalizedPath))
         {
-            ExplorerRootFolderHistory.Add(path);
+            return;
+        }
+
+        if (!ExplorerRootFolderHistory.Any(existing => string.Equals(NormalizePath(existing), normalizedPath, StringComparison.OrdinalIgnoreCase)))
+        {
+            ExplorerRootFolderHistory.Add(normalizedPath);
             SaveHistoryToSettings();
         }
     }
@@ -68,11 +84,52 @@ public partial class FileExplorerViewModel : ObservableObject
 
     public void SetExplorerRootFolderHistory(ObservableCollection<string> history)
     {
+        DeduplicateHistory(history);
         ExplorerRootFolderHistory = history;
+    }
+
+    private static void DeduplicateHistory(ObservableCollection<string> history)
+    {
+        var unique = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        for (var i = history.Count - 1; i >= 0; i--)
+        {
+            var normalized = NormalizePath(history[i]);
+            if (string.IsNullOrWhiteSpace(normalized) || !unique.Add(normalized))
+            {
+                history.RemoveAt(i);
+                continue;
+            }
+
+            history[i] = normalized;
+        }
+    }
+
+    private static string NormalizePath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            var fullPath = Path.GetFullPath(path.Trim());
+            return fullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+        catch
+        {
+            return path.Trim();
+        }
     }
 
     partial void OnSelectedHistoryPathChanged(string? value)
     {
+        if (_syncingSelectedHistoryPath)
+        {
+            return;
+        }
+
         var path = value?.Trim();
         if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
         {
@@ -108,10 +165,25 @@ public partial class FileExplorerViewModel : ObservableObject
         CurrentPath = path;
         try
         {
+            var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var dir in Directory.GetDirectories(path))
-                Items.Add(new FileSystemItem(dir, true, false));
+            {
+                var fullDirPath = Path.GetFullPath(dir);
+                if (seenPaths.Add(fullDirPath))
+                {
+                    Items.Add(new FileSystemItem(fullDirPath, true, false));
+                }
+            }
+
             foreach (var file in Directory.GetFiles(path, "*.log"))
-                Items.Add(new FileSystemItem(file, false, _loadedFiles.Contains(file)));
+            {
+                var fullFilePath = Path.GetFullPath(file);
+                if (seenPaths.Add(fullFilePath))
+                {
+                    Items.Add(new FileSystemItem(fullFilePath, false, _loadedFiles.Contains(fullFilePath)));
+                }
+            }
         }
         catch { /* Fehler ignorieren, z.B. Zugriffsprobleme */ }
     }

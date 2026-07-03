@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using LogAnalyzer.ViewModels;
+using System.Collections.ObjectModel;
 using Xunit;
 
 namespace LogAnalyzer.Tests;
@@ -319,5 +320,72 @@ public class FileExplorerViewModelTests
 
         // The command should not throw when given null
         vm.OpenInExplorerCommand.Execute(null);
+    }
+
+    [Fact]
+    public void SetExplorerRootFolderHistory_RemovesEquivalentDuplicatePaths()
+    {
+        var root = CreateTempDir("explorer_history_duplicates");
+        try
+        {
+            var withSeparator = root + Path.DirectorySeparatorChar;
+            var vm = new FileExplorerViewModel();
+
+            vm.SetExplorerRootFolderHistory(new ObservableCollection<string> { root, withSeparator });
+
+            Assert.Single(vm.ExplorerRootFolderHistory);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
+    public void LoadItems_DoesNotShowDuplicatesWhenSameFileDiffersOnlyByCase()
+    {
+        var dir = CreateTempDir("explorer_items_no_duplicates");
+        try
+        {
+            var vm = new FileExplorerViewModel();
+            var fullPath = Path.Combine(dir, "a.log");
+
+            vm.SetLoadedFiles([fullPath.ToUpperInvariant(), fullPath.ToLowerInvariant()]);
+            File.WriteAllText(fullPath, "log");
+
+            vm.LoadItems(dir);
+
+            Assert.Equal(1, vm.Items.Count(i => !i.IsDirectory && i.Path.Equals(fullPath, StringComparison.OrdinalIgnoreCase)));
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void LoadItems_DoesNotDuplicateEntriesAfterSelectedHistorySync()
+    {
+        var dir = CreateTempDir("explorer_no_reentrant_duplicates");
+        try
+        {
+            var childDir = Path.Combine(dir, "child");
+            var logFile = Path.Combine(dir, "a.log");
+            Directory.CreateDirectory(childDir);
+            File.WriteAllText(logFile, "log");
+
+            var vm = new FileExplorerViewModel();
+            vm.SetExplorerRootFolderHistory(new ObservableCollection<string> { dir });
+
+            vm.LoadItems(dir);
+
+            Assert.Equal(1, vm.Items.Count(i => i.IsDirectory && i.Path.Equals(childDir, StringComparison.OrdinalIgnoreCase)));
+            Assert.Equal(1, vm.Items.Count(i => !i.IsDirectory && i.Path.Equals(logFile, StringComparison.OrdinalIgnoreCase)));
+            Assert.Equal(2, vm.Items.Count);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
     }
 }
