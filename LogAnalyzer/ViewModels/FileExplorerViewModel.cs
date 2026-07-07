@@ -155,7 +155,7 @@ public partial class FileExplorerViewModel : ObservableObject
             return;
         }
 
-        _rootPath = Path.GetFullPath(candidate);
+        _rootPath = NormalizePath(candidate);
         LoadItems(_rootPath);
     }
 
@@ -242,9 +242,44 @@ public partial class FileExplorerViewModel : ObservableObject
     [RelayCommand]
     private void GoUp()
     {
-        var parent = Directory.GetParent(CurrentPath);
-        if (parent != null && (string.IsNullOrEmpty(_rootPath) || parent.FullName.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase)))
-            LoadItems(parent.FullName);
+        if (string.IsNullOrWhiteSpace(CurrentPath))
+        {
+            return;
+        }
+
+        DirectoryInfo? parent;
+        try
+        {
+            parent = Directory.GetParent(CurrentPath);
+        }
+        catch
+        {
+            return;
+        }
+
+        if (parent is null || !IsWithinRoot(parent.FullName))
+        {
+            return;
+        }
+
+        LoadItems(parent.FullName);
+    }
+
+    private bool IsWithinRoot(string path)
+    {
+        if (string.IsNullOrWhiteSpace(_rootPath))
+        {
+            return true;
+        }
+
+        var normalizedPath = NormalizePath(path);
+        if (string.Equals(normalizedPath, _rootPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var rootPrefix = _rootPath + Path.DirectorySeparatorChar;
+        return normalizedPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase);
     }
 
     [RelayCommand]
