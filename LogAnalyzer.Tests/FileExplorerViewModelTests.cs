@@ -178,6 +178,29 @@ public class FileExplorerViewModelTests
     }
 
     [Fact]
+    public void SetRootFolder_WithTrailingSeparator_GoUpNavigatesToRoot()
+    {
+        var root = CreateTempDir("explorer_root_trailing_separator");
+        var child = Path.Combine(root, "child");
+        Directory.CreateDirectory(child);
+
+        try
+        {
+            var vm = new FileExplorerViewModel();
+            vm.SetRootFolder(root + Path.DirectorySeparatorChar);
+            vm.LoadItems(child);
+
+            vm.GoUpCommand.Execute(null);
+
+            Assert.Equal(root, vm.CurrentPath);
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
     public void ClearFileCommand_ClearsFileContent()
     {
         var dir = CreateTempDir("explorer_clear_file");
