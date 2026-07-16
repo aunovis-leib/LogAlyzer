@@ -167,7 +167,10 @@
                       SelectionMode="Extended"
                       VirtualizingPanel.IsVirtualizing="True"
                       VirtualizingPanel.VirtualizationMode="Recycling"
+                      VirtualizingPanel.CacheLength="1"
+                      VirtualizingPanel.CacheLengthUnit="Page"
                       ScrollViewer.CanContentScroll="True"
+                      ScrollViewer.IsDeferredScrollingEnabled="True"
                       VirtualizingPanel.IsVirtualizingWhenGrouping="True">
                 <ListView.Resources>
                     <Style x:Key="MiniMapTrackRepeatButton" TargetType="RepeatButton">

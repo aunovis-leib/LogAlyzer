@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Models;
 using System.Collections.ObjectModel;
+using System.Threading;
 
 namespace LogAnalyzer.ViewModels;
 
@@ -50,6 +51,9 @@ public partial class MainViewModel : ObservableObject
     private readonly Dictionary<LogListViewModel, EventHandler<LogFileEntry?>> _selectedEntryHandlers = [];
     private readonly Dictionary<LogListViewModel, EventHandler<string>> _patternSavedHandlers = [];
     private readonly Dictionary<LogListViewModel, EventHandler<string>> _globalSearchRequestedHandlers = [];
+    private CancellationTokenSource? _searchRefreshCancellation;
+    private CancellationTokenSource? _entriesReloadCancellation;
+    private const int SearchRefreshDebounceMs = 250;
 
     public MainViewModel(Services.AppSettingsManager appSettings)
     {
@@ -182,7 +186,7 @@ public partial class MainViewModel : ObservableObject
         HandleNewItems(e.NewItems);
         HandleOldItems(e.OldItems);
         RefreshChart();
-        RefreshSearchResults();
+        ScheduleSearchResultsRefresh(immediate: true);
     }
 
     private void HandleNewItems(System.Collections.IList? newItems)
@@ -251,7 +255,7 @@ public partial class MainViewModel : ObservableObject
     partial void OnGlobalSearchTextChanged(string value)
     {
         OnPropertyChanged(nameof(ShowSearchResultsTab));
-        RefreshSearchResults();
+        ScheduleSearchResultsRefresh(immediate: false);
     }
 
     partial void OnSelectedSearchResultChanged(LogFileEntry? value)
@@ -267,7 +271,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void RunSearch()
     {
-        RefreshSearchResults();
+        ScheduleSearchResultsRefresh(immediate: true);
     }
 
     private void RefreshChart()
@@ -353,20 +357,43 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    private void EntriesReloaded(object? sender, EventArgs e)
+    private async void EntriesReloaded(object? sender, EventArgs e)
     {
+        var currentReloadCancellation = ReplaceCancellationTokenSource(ref _entriesReloadCancellation);
+
         PatternMatchPanelVM?.ResetMatches();
 
-        foreach (var list in Lists)
+        try
         {
-            foreach (var entry in list.LogFilesEntries)
+            var entries = Lists
+                .SelectMany(list => list.LogFilesEntries)
+                .ToList();
+
+            await Task.Run(() =>
             {
-                App.PatternService?.MatchLine(entry);
+                foreach (var entry in entries)
+                {
+                    currentReloadCancellation.Token.ThrowIfCancellationRequested();
+                    App.PatternService?.MatchLine(entry);
+                }
+            }, currentReloadCancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        finally
+        {
+            if (ReferenceEquals(_entriesReloadCancellation, currentReloadCancellation))
+            {
+                _entriesReloadCancellation = null;
             }
+
+            currentReloadCancellation.Dispose();
         }
 
         RefreshChart();
-        RefreshSearchResults();
+        ScheduleSearchResultsRefresh(immediate: true);
     }
 
     private void OnListTypesChanged(object? sender, LogType selectedType)
@@ -390,37 +417,80 @@ public partial class MainViewModel : ObservableObject
         IsSettingsPaneOpen = true;
     }
 
-    private void RefreshSearchResults()
+    private void ScheduleSearchResultsRefresh(bool immediate)
     {
-        SearchResults.Clear();
+        _ = RefreshSearchResultsAsync(immediate);
+    }
 
-        var searchText = GlobalSearchText?.Trim();
-        if (string.IsNullOrWhiteSpace(searchText))
+    private async Task RefreshSearchResultsAsync(bool immediate)
+    {
+        var currentSearchCancellation = ReplaceCancellationTokenSource(ref _searchRefreshCancellation);
+
+        try
         {
-            SelectedSearchResult = null;
+            if (!immediate)
+            {
+                await Task.Delay(SearchRefreshDebounceMs, currentSearchCancellation.Token);
+            }
+
+            var searchText = GlobalSearchText?.Trim();
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                SearchResults.Clear();
+                SelectedSearchResult = null;
+                return;
+            }
+
+            var entries = Lists
+                .SelectMany(l => l.LogFilesEntries)
+                .ToList();
+
+            var results = await Task.Run(() =>
+            {
+                static bool ContainsIgnoreCase(string? source, string value) =>
+                    !string.IsNullOrEmpty(source) && source.Contains(value, StringComparison.OrdinalIgnoreCase);
+
+                return entries
+                    .Where(entry =>
+                        ContainsIgnoreCase(entry.Text, searchText) ||
+                        ContainsIgnoreCase(entry.RawLine, searchText) ||
+                        (entry.Detail?.Any(detail => ContainsIgnoreCase(detail, searchText)) ?? false))
+                    .OrderBy(entry => entry.Date)
+                    .ToList();
+            }, currentSearchCancellation.Token);
+
+            SearchResults.Clear();
+            foreach (var entry in results)
+            {
+                SearchResults.Add(entry);
+            }
+
+            if (SearchResults.Count == 0)
+            {
+                SelectedSearchResult = null;
+            }
+        }
+        catch (OperationCanceledException)
+        {
             return;
         }
-
-        static bool ContainsIgnoreCase(string? source, string value) =>
-            !string.IsNullOrEmpty(source) && source.Contains(value, StringComparison.OrdinalIgnoreCase);
-
-        var results = Lists
-            .SelectMany(l => l.LogFilesEntries)
-            .Where(entry =>
-                ContainsIgnoreCase(entry.Text, searchText) ||
-                ContainsIgnoreCase(entry.RawLine, searchText) ||
-                (entry.Detail?.Any(detail => ContainsIgnoreCase(detail, searchText)) ?? false))
-            .OrderBy(entry => entry.Date)
-            .ToList();
-
-        foreach (var entry in results)
+        finally
         {
-            SearchResults.Add(entry);
-        }
+            if (ReferenceEquals(_searchRefreshCancellation, currentSearchCancellation))
+            {
+                _searchRefreshCancellation = null;
+            }
 
-        if (SearchResults.Count == 0)
-        {
-            SelectedSearchResult = null;
+            currentSearchCancellation.Dispose();
         }
+    }
+
+    private static CancellationTokenSource ReplaceCancellationTokenSource(ref CancellationTokenSource? current)
+    {
+        var replacement = new CancellationTokenSource();
+        var previous = Interlocked.Exchange(ref current, replacement);
+        previous?.Cancel();
+        previous?.Dispose();
+        return replacement;
     }
 }

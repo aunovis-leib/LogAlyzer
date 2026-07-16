@@ -67,7 +67,19 @@
                      ItemsSource="{Binding MatchesView}"
                      SelectedItem="{Binding SelectedMatch}"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.CanContentScroll="True"
+                     ScrollViewer.IsDeferredScrollingEnabled="True"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                     VirtualizingPanel.CacheLength="1"
+                     VirtualizingPanel.CacheLengthUnit="Page"
                      Background="White">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
                 <ListBox.GroupStyle>
                     <GroupStyle>
                         <GroupStyle.ContainerStyle>

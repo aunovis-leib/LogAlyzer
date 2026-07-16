@@ -229,6 +229,9 @@
                           SelectionMode="Single"
                           VirtualizingPanel.IsVirtualizing="True"
                           VirtualizingPanel.VirtualizationMode="Recycling"
+                          VirtualizingPanel.CacheLength="1"
+                          VirtualizingPanel.CacheLengthUnit="Page"
+                          VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                           ScrollViewer.CanContentScroll="True">
                     <ListView.View>
                         <GridView>
