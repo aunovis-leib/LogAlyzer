@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LogAnalyzer.Collections;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
 using LogAnalyzer.Services.Parsing;
@@ -33,6 +34,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     private readonly Dictionary<string, string> _partialLineBuffers = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, LogFileEntry> _incompleteEntryPerFile = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<string>> _incompleteEntryDetailsPerFile = new(StringComparer.OrdinalIgnoreCase);
+    private bool _hasHighlightsApplied;
 
     public FileExplorerViewModel FileExplorerVM { get; } = new();
 
@@ -48,8 +50,8 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     public event EventHandler? OpenSettingsRequested;
     public Action<string>? SetGlobalSearchText { get; set; }
     private bool _suppressAvailableTypesUpdate;
-    private ObservableCollection<LogFileEntry> _logFilesEntries = [];
-    public ObservableCollection<LogFileEntry> LogFilesEntries
+    private RangeObservableCollection<LogFileEntry> _logFilesEntries = [];
+    public RangeObservableCollection<LogFileEntry> LogFilesEntries
     {
         get => _logFilesEntries;
         set
@@ -853,6 +855,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
                 await foreach (var chunk in loader.LoadAsync(fileNames, 2000, token))
                 {
+                    var batch = new List<LogFileEntry>(chunk.Entries.Count);
                     foreach (var e in chunk.Entries)
                     {
                         if (loadedEntries >= maxEntries)
@@ -861,8 +864,8 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
                         }
 
                         e.LineNumber = loadedEntries + 1;
-                        LogFilesEntries.Add(e);
                         ApplyPatternsToEntry(e);
+                        batch.Add(e);
 
                         loadedEntries++;
                         observedTypes.Add(e.Type);
@@ -877,6 +880,11 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
                         {
                             maxDate = day;
                         }
+                    }
+
+                    if (batch.Count > 0)
+                    {
+                        LogFilesEntries.AddRange(batch);
                     }
 
                     LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
@@ -1056,15 +1064,41 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     {
         if (Settings?.HighlightRules == null) return;
 
+        var activeRules = Settings.HighlightRules
+            .Where(rule => rule.IsEnabled && !string.IsNullOrWhiteSpace(rule.SearchText))
+            .ToArray();
+
+        if (activeRules.Length == 0)
+        {
+            if (!_hasHighlightsApplied)
+            {
+                return;
+            }
+
+            foreach (var entry in LogFilesEntries)
+            {
+                entry.HighlightColor = null;
+            }
+
+            _hasHighlightsApplied = false;
+            return;
+        }
+
+        var hasHighlights = false;
+
         foreach (var entry in LogFilesEntries)
         {
-            var matchedRule = Settings.HighlightRules.FirstOrDefault(rule =>
-                rule.IsEnabled &&
-                !string.IsNullOrWhiteSpace(rule.SearchText) &&
+            var matchedRule = activeRules.FirstOrDefault(rule =>
                 entry.Text.Contains(rule.SearchText, StringComparison.OrdinalIgnoreCase));
 
             entry.HighlightColor = matchedRule?.Color;
+            if (entry.HighlightColor is not null)
+            {
+                hasHighlights = true;
+            }
         }
+
+        _hasHighlightsApplied = hasHighlights;
     }
 
     private void RefreshView()
@@ -1107,6 +1141,13 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     private void ApplyPatternsToEntry(LogFileEntry entry)
     {
         if (_patternService == null)
+        {
+            return;
+        }
+
+        // Pattern-Matching wird ausschließlich zur Speisung des Pattern-Match-Panels
+        // benötigt. Ist das Panel deaktiviert, entfällt die (teure) Auswertung pro Eintrag.
+        if (Settings?.ShowPatternMatchPanel != true)
         {
             return;
         }

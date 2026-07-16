@@ -111,8 +111,39 @@ namespace LogAnalyzer.ViewModels
             _matchesView = CollectionViewSource.GetDefaultView(Matches);
             _matchesView.Filter = FilterMatch;
             _matchesView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(PatternMatchViewModel.GroupKey)));
-            _patternService.PatternMatched += OnPatternMatched;
             InitializeTags();
+        }
+
+        private bool _isActive;
+
+        /// <summary>
+        /// Controls whether the panel collects matches. When inactive the
+        /// <see cref="LogPatternService.PatternMatched"/> event is not subscribed,
+        /// so no per-match UI work happens (e.g. while the panel is hidden).
+        /// </summary>
+        public bool IsActive
+        {
+            get => _isActive;
+            set
+            {
+                if (_isActive == value)
+                {
+                    return;
+                }
+
+                _isActive = value;
+
+                if (_isActive)
+                {
+                    _patternService.PatternMatched += OnPatternMatched;
+                }
+                else
+                {
+                    _patternService.PatternMatched -= OnPatternMatched;
+                }
+
+                OnPropertyChanged();
+            }
         }
 
         public PatternMatchViewModel? SelectedMatch

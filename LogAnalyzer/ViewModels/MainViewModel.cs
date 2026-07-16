@@ -69,6 +69,7 @@ public partial class MainViewModel : ObservableObject
         {
             PatternMatchPanelVM = new PatternMatchPanelViewModel(App.PatternService);
             PatternMatchPanelVM.MatchSelected += OnPatternMatchSelected;
+            PatternMatchPanelVM.IsActive = SettingsVM.ShowPatternMatchPanel;
             App.PatternService.PatternSaved += (_, pattern) =>
             {
                 if (!string.IsNullOrWhiteSpace(pattern?.Id))
@@ -128,6 +129,26 @@ public partial class MainViewModel : ObservableObject
 
     private void SettingsVM_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(SettingsViewModel.ShowLiveChart))
+        {
+            if (SettingsVM?.ShowLiveChart == true)
+            {
+                RefreshChart();
+            }
+
+            return;
+        }
+
+        if (e.PropertyName == nameof(SettingsViewModel.ShowPatternMatchPanel))
+        {
+            if (PatternMatchPanelVM is not null && SettingsVM is not null)
+            {
+                PatternMatchPanelVM.IsActive = SettingsVM.ShowPatternMatchPanel;
+            }
+
+            return;
+        }
+
         if (e.PropertyName != nameof(SettingsViewModel.ExplorerRootFolder))
         {
             return;
@@ -251,6 +272,11 @@ public partial class MainViewModel : ObservableObject
 
     private void RefreshChart()
     {
+        if (SettingsVM?.ShowLiveChart != true)
+        {
+            return;
+        }
+
         var allEntries = Lists.SelectMany(l => l.LogFilesEntries).ToList();
         ChartVM.UpdateFromEntries(allEntries, FilterFromDate, FilterToDate);
     }

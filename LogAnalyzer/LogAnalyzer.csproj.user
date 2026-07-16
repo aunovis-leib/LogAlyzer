@@ -7,6 +7,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.de.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Update="Resources\Strings.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
