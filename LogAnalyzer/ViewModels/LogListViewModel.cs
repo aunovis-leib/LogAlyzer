@@ -851,7 +851,9 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
                 var parser = GetActiveParser();
                 var loader = new LogFileChunkLoader(parser);
                 var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
+                var fastLoadMode = _appSettings.Settings.SettingsView?.FastLoadMode ?? false;
                 var loadedEntries = 0;
+                var deferredEntries = fastLoadMode ? new List<LogFileEntry>() : null;
 
                 await foreach (var chunk in loader.LoadAsync(fileNames, 2000, token))
                 {
@@ -884,7 +886,14 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
                     if (batch.Count > 0)
                     {
-                        LogFilesEntries.AddRange(batch);
+                        if (fastLoadMode)
+                        {
+                            deferredEntries!.AddRange(batch);
+                        }
+                        else
+                        {
+                            LogFilesEntries.AddRange(batch);
+                        }
                     }
 
                     LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
@@ -893,6 +902,11 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
                     {
                         break;
                     }
+                }
+
+                if (fastLoadMode && deferredEntries is { Count: > 0 })
+                {
+                    LogFilesEntries.AddRange(deferredEntries);
                 }
 
                 foreach (var filePath in fileNames)

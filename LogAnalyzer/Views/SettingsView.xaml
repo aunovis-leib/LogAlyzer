@@ -36,6 +36,8 @@
                                     <TextBlock VerticalAlignment="Center" Text="{x:Static res:Strings.MaxEntriesPerList}" />
                                     <TextBox Width="80" Margin="6,0,0,0" Text="{Binding MaxEntriesPerList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 </StackPanel>
+                                <CheckBox Content="{x:Static res:Strings.FastLoadMode}" Margin="0,8,0,0"
+                                          IsChecked="{Binding FastLoadMode, Mode=TwoWay}" />
                                 <StackPanel Orientation="Vertical" Margin="0,8,0,0">
                                     <TextBlock VerticalAlignment="Center" Text="{x:Static res:Strings.ExplorerRootFolder}" />
                                     <DockPanel Margin="0,4,0,0">

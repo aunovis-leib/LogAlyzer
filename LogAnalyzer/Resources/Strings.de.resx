@@ -165,6 +165,9 @@
   <data name="AutoReloadLogFiles" xml:space="preserve">
     <value>Logdateien automatisch neu laden</value>
   </data>
+  <data name="FastLoadMode" xml:space="preserve">
+    <value>Schnellladen-Modus (Liste erst nach dem Laden aktualisieren)</value>
+  </data>
   <data name="DateColumnSorting" xml:space="preserve">
     <value>Sortierung der Datumsspalte</value>
   </data>

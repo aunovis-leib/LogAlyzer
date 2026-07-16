@@ -29,6 +29,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int _maxEntriesPerList = 10000;
 
+    [ObservableProperty]
+    private bool _fastLoadMode = false;
+
     // Tolerance for date/time synchronization
     [ObservableProperty]
     private TimeSpan _syncTolerance = TimeSpan.FromHours(1);
@@ -77,6 +80,7 @@ public partial class SettingsViewModel : ObservableObject
         SyncSelectionAcrossLists = settingsView.SyncSelectionAcrossLists;
         ShowFileExplorerInLogLists = settingsView.ShowFileExplorerInLogLists;
         MaxEntriesPerList = settingsView.MaxEntriesPerList;
+        FastLoadMode = settingsView.FastLoadMode;
         SyncTolerance = settingsView.SyncTolerance;
         AutoReloadLogFiles = settingsView.AutoReloadLogFiles;
         DateSortDescending = settingsView.DateSortDescending;
@@ -221,6 +225,14 @@ public partial class SettingsViewModel : ObservableObject
         MaxEntriesPerListChanged?.Invoke(this, value);
     }
 
+    partial void OnFastLoadModeChanged(bool value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.FastLoadMode = value;
+        manager.Save();
+    }
+
     partial void OnSyncToleranceChanged(TimeSpan value)
     {
         var manager = AppSettingsManager.Instance;
@@ -287,6 +299,7 @@ public partial class SettingsViewModel : ObservableObject
         ShowLiveChart = false;
         ShowPatternMatchPanel = false;
         MaxEntriesPerList = 10000;
+        FastLoadMode = false;
         SyncTolerance = TimeSpan.FromHours(1);
         ExplorerRootFolder = string.Empty;
         AutoReloadLogFiles = false;

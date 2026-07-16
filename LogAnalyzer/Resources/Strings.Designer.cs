@@ -205,6 +205,15 @@ namespace LogAnalyzer.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Fast load mode (update list after loading).
+        /// </summary>
+        public static string FastLoadMode {
+            get {
+                return ResourceManager.GetString("FastLoadMode", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Date column sorting.
         /// </summary>
         public static string DateColumnSorting {
