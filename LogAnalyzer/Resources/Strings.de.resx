@@ -195,6 +195,9 @@
   <data name="ActiveRules" xml:space="preserve">
     <value>Aktive Regeln:</value>
   </data>
+  <data name="OpenActiveRulesInWindow" xml:space="preserve">
+    <value>Aktive Regeln in separatem Fenster öffnen</value>
+  </data>
   <data name="Enabled" xml:space="preserve">
     <value>Aktiv</value>
   </data>
