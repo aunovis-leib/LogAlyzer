@@ -1,4 +1,6 @@
 ﻿using System.Windows.Controls;
+using LogAnalyzer.Controls;
+using LogAnalyzer.Resources;
 using LogAnalyzer.ViewModels;
 using Microsoft.Win32;
 using System.Windows;
@@ -59,5 +61,35 @@ public partial class SettingsView : UserControl
         {
             settingsVm.ExplorerRootFolder = currentPath;
         }
+    }
+
+    private Window? _activeRulesWindow;
+
+    private void OpenActiveRulesWindow_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not SettingsViewModel vm)
+        {
+            return;
+        }
+
+        if (_activeRulesWindow != null)
+        {
+            _activeRulesWindow.Activate();
+            return;
+        }
+
+        var window = new Window
+        {
+            Title = Strings.ActiveRules.TrimEnd(':', ' '),
+            Width = 700,
+            Height = 400,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = Window.GetWindow(this),
+            Content = new HighlightRulesGrid { DataContext = vm, Margin = new Thickness(12) }
+        };
+
+        window.Closed += (_, _) => _activeRulesWindow = null;
+        _activeRulesWindow = window;
+        window.Show();
     }
 }

@@ -295,6 +295,15 @@ namespace LogAnalyzer.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Open active rules in a separate window.
+        /// </summary>
+        public static string OpenActiveRulesInWindow {
+            get {
+                return ResourceManager.GetString("OpenActiveRulesInWindow", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Enabled.
         /// </summary>
         public static string Enabled {
