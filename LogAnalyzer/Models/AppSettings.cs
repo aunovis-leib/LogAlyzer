@@ -30,6 +30,7 @@ public sealed class SettingsViewSettings
     public List<string> ExplorerRootFolderHistory { get; set; } = [];
     public bool AutoReloadLogFiles { get; set; } = false;
     public bool DateSortDescending { get; set; } = true;
+    public bool ShowMiniMap { get; set; } = true;
     public List<HighlightRule> HighlightRules { get; set; } = [];
 }
 

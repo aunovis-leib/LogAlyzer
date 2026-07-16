@@ -150,6 +150,9 @@
   <data name="ShowFileExplorerInLogLists" xml:space="preserve">
     <value>Datei-Explorer in Log-Listen anzeigen</value>
   </data>
+  <data name="ShowMiniMap" xml:space="preserve">
+    <value>Mini-Map im Scrollbalken anzeigen</value>
+  </data>
   <data name="Time" xml:space="preserve">
     <value>Zeit</value>
   </data>

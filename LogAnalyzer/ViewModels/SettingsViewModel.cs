@@ -46,6 +46,9 @@ public partial class SettingsViewModel : ObservableObject
     private bool _dateSortDescending = true;
 
     [ObservableProperty]
+    private bool _showMiniMap = true;
+
+    [ObservableProperty]
     private ObservableCollection<HighlightRule> _highlightRules = [];
 
     [ObservableProperty]
@@ -77,6 +80,7 @@ public partial class SettingsViewModel : ObservableObject
         SyncTolerance = settingsView.SyncTolerance;
         AutoReloadLogFiles = settingsView.AutoReloadLogFiles;
         DateSortDescending = settingsView.DateSortDescending;
+        ShowMiniMap = settingsView.ShowMiniMap;
 
         var history = settingsView.ExplorerRootFolderHistory ?? [];
         var uniqueHistory = history.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -267,6 +271,14 @@ public partial class SettingsViewModel : ObservableObject
         manager.Save();
     }
 
+    partial void OnShowMiniMapChanged(bool value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.ShowMiniMap = value;
+        manager.Save();
+    }
+
     [RelayCommand]
     private void ResetDefaults()
     {
@@ -279,6 +291,7 @@ public partial class SettingsViewModel : ObservableObject
         ExplorerRootFolder = string.Empty;
         AutoReloadLogFiles = false;
         DateSortDescending = true;
+        ShowMiniMap = true;
         HighlightRules.Clear();
         HighlightSearchText = string.Empty;
         HighlightColor = "#FFFF00";

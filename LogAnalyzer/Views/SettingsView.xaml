@@ -30,6 +30,8 @@
                                           IsChecked="{Binding SyncSelectionAcrossLists, Mode=TwoWay}" />
                                 <CheckBox Content="{x:Static res:Strings.ShowFileExplorerInLogLists}" Margin="0,8,0,0"
                                           IsChecked="{Binding ShowFileExplorerInLogLists, Mode=TwoWay}" />
+                                <CheckBox Content="{x:Static res:Strings.ShowMiniMap}" Margin="0,8,0,0"
+                                          IsChecked="{Binding ShowMiniMap, Mode=TwoWay}" />
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                     <TextBlock VerticalAlignment="Center" Text="{x:Static res:Strings.MaxEntriesPerList}" />
                                     <TextBox Width="80" Margin="6,0,0,0" Text="{Binding MaxEntriesPerList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />

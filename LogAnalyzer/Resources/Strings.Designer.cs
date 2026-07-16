@@ -158,6 +158,15 @@ namespace LogAnalyzer.Resources {
                 return ResourceManager.GetString("ShowFileExplorerInLogLists", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show mini map in scrollbar.
+        /// </summary>
+        public static string ShowMiniMap {
+            get {
+                return ResourceManager.GetString("ShowMiniMap", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Time.

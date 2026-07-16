@@ -159,87 +159,199 @@
                 <TextBlock Text="✕" FontSize="14" FontWeight="Bold" />
             </Button>
         </Grid>
-        <ListView x:Name="LogsListView" Grid.Row="1" Grid.Column="2" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}" Margin="0,8,0,0" Grid.ColumnSpan="2"
-                  bh:ListViewBehaviors.FillRemainingColumnIndex="3"
-                  bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"
-                  ContextMenu="{StaticResource LogEntryContextMenu}"
-                  SelectionMode="Extended"
-                  VirtualizingPanel.IsVirtualizing="True"
-                  VirtualizingPanel.VirtualizationMode="Recycling"
-                  ScrollViewer.CanContentScroll="True"
-                  VirtualizingPanel.IsVirtualizingWhenGrouping="True">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                    <EventSetter Event="MouseLeftButtonUp" Handler="ListViewItem_MouseLeftButtonUp"/>
-                    <EventSetter Event="PreviewMouseRightButtonDown" Handler="ListViewItem_PreviewMouseRightButtonDown"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="ListViewItem">
-                                <StackPanel>
-                                    <Border x:Name="RowBorder" Padding="2,1" Background="{Binding HighlightColor, Converter={StaticResource HexColorToBrushConverter}}">
-                                        <GridViewRowPresenter Content="{TemplateBinding Content}"
-                                                              Columns="{Binding View.Columns, RelativeSource={RelativeSource AncestorType=ListView}}" />
+        <Grid Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Margin="0,8,0,0">
+            <ListView x:Name="LogsListView" ItemsSource="{Binding LogFilesView}" SelectedItem="{Binding SelectedEntry, Mode=TwoWay}" bh:ListViewBehaviors.ScrollToItem="{Binding SelectedEntry}"
+                      bh:ListViewBehaviors.FillRemainingColumnIndex="3"
+                      bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"
+                      ContextMenu="{StaticResource LogEntryContextMenu}"
+                      SelectionMode="Extended"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      ScrollViewer.CanContentScroll="True"
+                      VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+                <ListView.Resources>
+                    <Style x:Key="MiniMapTrackRepeatButton" TargetType="RepeatButton">
+                        <Setter Property="Focusable" Value="False" />
+                        <Setter Property="IsTabStop" Value="False" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="RepeatButton">
+                                    <Border Background="Transparent" />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style x:Key="MiniMapLineButton" TargetType="RepeatButton">
+                        <Setter Property="Focusable" Value="False" />
+                        <Setter Property="IsTabStop" Value="False" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="RepeatButton">
+                                    <Border Background="#11000000">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Border>
-                                    <ItemsControl x:Name="DetailRows"
-                                                  Visibility="Collapsed"
-                                                  Margin="36,2,8,6"
-                                                  ItemsSource="{Binding Detail}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border BorderBrush="#22000000" BorderThickness="2,0,0,0" Padding="8,1,0,1">
-                                                    <TextBox Text="{Binding Mode=OneWay}"
-                                                             Foreground="#6B6B6B"
-                                                             FontSize="12"
-                                                             TextWrapping="Wrap"
-                                                             IsReadOnly="True"
-                                                             BorderThickness="0"
-                                                             Background="Transparent"
-                                                             Padding="0"
-                                                             Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                                             ContextMenu="{StaticResource LogDetailContextMenu}"
-                                                             PreviewMouseLeftButtonUp="DetailTextBox_PreviewMouseLeftButtonUp" />
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                                <ControlTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding IsDetailVisible}" Value="True">
-                                        <Setter TargetName="DetailRows" Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="RowBorder" Property="Background" Value="#14007ACC"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ListView.ItemContainerStyle>
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn
-                        Header="#" Width="30"
-                        DisplayMemberBinding="{Binding LineNumber}" />
-                    <GridViewColumn DisplayMemberBinding="{Binding DateDisplay}">
-                        <GridViewColumn.Header>
-                            <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />
-                        </GridViewColumn.Header>
-                    </GridViewColumn>
-                    <GridViewColumn DisplayMemberBinding="{Binding Type}">
-                        <GridViewColumn.Header>
-                            <GridViewColumnHeader Content="Type" Click="GridViewColumnHeader_Click" Tag="Type" />
-                        </GridViewColumn.Header>
-                    </GridViewColumn>
-                    <GridViewColumn DisplayMemberBinding="{Binding Text}">
-                        <GridViewColumn.Header>
-                            <GridViewColumnHeader Content="Text" Click="GridViewColumnHeader_Click" Tag="Text" />
-                        </GridViewColumn.Header>
-                    </GridViewColumn>
-                </GridView>
-            </ListView.View>
-        </ListView>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style x:Key="MiniMapThumb" TargetType="Thumb">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Border Background="#59808080"
+                                            BorderBrush="#80606060"
+                                            BorderThickness="1"
+                                            CornerRadius="2"
+                                            MinHeight="16"
+                                            MinWidth="16" />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <ControlTemplate x:Key="VerticalMiniMapScrollBar" TargetType="ScrollBar">
+                        <Grid Background="#12000000">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <RepeatButton Grid.Row="0" Height="14" Content="▲" FontSize="8"
+                                          Command="ScrollBar.LineUpCommand" Style="{StaticResource MiniMapLineButton}" />
+                            <Grid Grid.Row="1">
+                                <ctrls:LogMiniMap Entries="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                  MinimumMarkerHeight="1.2"
+                                                  Visibility="{Binding DataContext.SettingsVM.ShowMiniMap, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource MiniMapTrackRepeatButton}" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource MiniMapTrackRepeatButton}" />
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource MiniMapThumb}" />
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                            <RepeatButton Grid.Row="2" Height="14" Content="▼" FontSize="8"
+                                          Command="ScrollBar.LineDownCommand" Style="{StaticResource MiniMapLineButton}" />
+                        </Grid>
+                    </ControlTemplate>
+
+                    <ControlTemplate x:Key="HorizontalScrollBar" TargetType="ScrollBar">
+                        <Grid Background="#08000000">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <RepeatButton Grid.Column="0" Width="14" Content="◄" FontSize="8"
+                                          Command="ScrollBar.LineLeftCommand" Style="{StaticResource MiniMapLineButton}" />
+                            <Track Grid.Column="1" x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource MiniMapTrackRepeatButton}" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource MiniMapTrackRepeatButton}" />
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource MiniMapThumb}" />
+                                </Track.Thumb>
+                            </Track>
+                            <RepeatButton Grid.Column="2" Width="14" Content="►" FontSize="8"
+                                          Command="ScrollBar.LineRightCommand" Style="{StaticResource MiniMapLineButton}" />
+                        </Grid>
+                    </ControlTemplate>
+
+                    <Style TargetType="ScrollBar">
+                        <Setter Property="Template" Value="{StaticResource VerticalMiniMapScrollBar}" />
+                        <Style.Triggers>
+                            <Trigger Property="Orientation" Value="Vertical">
+                                <Setter Property="Width" Value="16" />
+                            </Trigger>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter Property="Height" Value="14" />
+                                <Setter Property="Template" Value="{StaticResource HorizontalScrollBar}" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.Resources>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <EventSetter Event="MouseLeftButtonUp" Handler="ListViewItem_MouseLeftButtonUp"/>
+                        <EventSetter Event="PreviewMouseRightButtonDown" Handler="ListViewItem_PreviewMouseRightButtonDown"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListViewItem">
+                                    <StackPanel>
+                                        <Border x:Name="RowBorder" Padding="2,1" Background="{Binding HighlightColor, Converter={StaticResource HexColorToBrushConverter}}">
+                                            <GridViewRowPresenter Content="{TemplateBinding Content}"
+                                                                  Columns="{Binding View.Columns, RelativeSource={RelativeSource AncestorType=ListView}}" />
+                                        </Border>
+                                        <ItemsControl x:Name="DetailRows"
+                                                      Visibility="Collapsed"
+                                                      Margin="36,2,8,6"
+                                                      ItemsSource="{Binding Detail}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="#22000000" BorderThickness="2,0,0,0" Padding="8,1,0,1">
+                                                        <TextBox Text="{Binding Mode=OneWay}"
+                                                                 Foreground="#6B6B6B"
+                                                                 FontSize="12"
+                                                                 TextWrapping="Wrap"
+                                                                 IsReadOnly="True"
+                                                                 BorderThickness="0"
+                                                                 Background="Transparent"
+                                                                 Padding="0"
+                                                                 Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                                 ContextMenu="{StaticResource LogDetailContextMenu}"
+                                                                 PreviewMouseLeftButtonUp="DetailTextBox_PreviewMouseLeftButtonUp" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsDetailVisible}" Value="True">
+                                            <Setter TargetName="DetailRows" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="RowBorder" Property="Background" Value="#14007ACC"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn
+                            Header="#" Width="30"
+                            DisplayMemberBinding="{Binding LineNumber}" />
+                        <GridViewColumn DisplayMemberBinding="{Binding DateDisplay}">
+                            <GridViewColumn.Header>
+                                <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn DisplayMemberBinding="{Binding Type}">
+                            <GridViewColumn.Header>
+                                <GridViewColumnHeader Content="Type" Click="GridViewColumnHeader_Click" Tag="Type" />
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                        <GridViewColumn DisplayMemberBinding="{Binding Text}">
+                            <GridViewColumn.Header>
+                                <GridViewColumnHeader Content="Text" Click="GridViewColumnHeader_Click" Tag="Text" />
+                            </GridViewColumn.Header>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
 
         <StatusBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Margin="0,0,0,0">
             <StatusBarItem>
