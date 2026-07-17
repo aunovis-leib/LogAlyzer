@@ -225,9 +225,11 @@
                                           Command="ScrollBar.LineUpCommand" Style="{StaticResource MiniMapLineButton}" />
                             <Grid Grid.Row="1">
                                 <ctrls:LogMiniMap Entries="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                  SourceListView="{Binding RelativeSource={RelativeSource AncestorType=ListView}}"
                                                   MinimumMarkerHeight="1.2"
+                                                  Panel.ZIndex="1"
                                                   Visibility="{Binding DataContext.SettingsVM.ShowMiniMap, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track x:Name="PART_Track" IsDirectionReversed="True" Panel.ZIndex="0">
                                     <Track.DecreaseRepeatButton>
                                         <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource MiniMapTrackRepeatButton}" />
                                     </Track.DecreaseRepeatButton>

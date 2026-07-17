@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -38,6 +39,11 @@ public sealed class LogMiniMap : FrameworkElement
     private ListView? _attachedListView;
     private readonly Dictionary<string, SolidColorBrush?> _brushCache = new(StringComparer.OrdinalIgnoreCase);
     private bool _renderRequested;
+    private readonly ToolTip _hoverToolTip = new()
+    {
+        Placement = PlacementMode.Mouse,
+        StaysOpen = true
+    };
 
     public IEnumerable? Entries
     {
@@ -133,6 +139,117 @@ public sealed class LogMiniMap : FrameworkElement
 
             drawingContext.DrawRectangle(brush, null, new Rect(0, y, width, marker));
         }
+    }
+
+    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonDown(e);
+
+        if (!TryGetEntryFromPosition(e.GetPosition(this), out var entry))
+        {
+            return;
+        }
+
+        var listView = SourceListView ?? _attachedListView;
+        if (listView is null)
+        {
+            return;
+        }
+
+        listView.SelectedItem = entry;
+        listView.ScrollIntoView(entry);
+
+        if (listView.ItemContainerGenerator.ContainerFromItem(entry) is ListViewItem container)
+        {
+            container.BringIntoView();
+        }
+
+        Focus();
+        e.Handled = true;
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        if (!TryGetEntryFromPosition(e.GetPosition(this), out var entry) || entry is null)
+        {
+            _hoverToolTip.IsOpen = false;
+            return;
+        }
+
+        var textPreview = entry.Text;
+        if (textPreview.Length > 120)
+        {
+            textPreview = textPreview[..120] + "…";
+        }
+
+        _hoverToolTip.Content = $"Line {entry.LineNumber}\n{entry.DateDisplay}\n{textPreview}";
+        _hoverToolTip.PlacementTarget = this;
+        _hoverToolTip.IsOpen = true;
+    }
+
+    protected override void OnMouseLeave(MouseEventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _hoverToolTip.IsOpen = false;
+    }
+
+    private bool TryGetEntryFromPosition(Point position, out LogFileEntry? entry)
+    {
+        entry = null;
+
+        var entries = Entries?.OfType<LogFileEntry>().ToList();
+        if (entries is null || entries.Count == 0)
+        {
+            return false;
+        }
+
+        var topOffset = GetTopOffset();
+        var bottomOffset = GetBottomOffset();
+        var drawableHeight = Math.Max(0, ActualHeight - topOffset - bottomOffset);
+        if (drawableHeight <= 0)
+        {
+            return false;
+        }
+
+        if (position.Y < topOffset || position.Y > topOffset + drawableHeight)
+        {
+            return false;
+        }
+
+        var slotHeight = drawableHeight / entries.Count;
+        if (slotHeight <= 0)
+        {
+            return false;
+        }
+
+        var markerHeight = Math.Max(MinimumMarkerHeight, slotHeight);
+        var relativeY = position.Y - topOffset;
+        var estimatedIndex = (int)(relativeY / slotHeight);
+        estimatedIndex = Math.Clamp(estimatedIndex, 0, entries.Count - 1);
+
+        var searchStart = Math.Max(0, estimatedIndex - 2);
+        var searchEnd = Math.Min(entries.Count - 1, estimatedIndex + 2);
+
+        for (var i = searchStart; i <= searchEnd; i++)
+        {
+            var candidate = entries[i];
+            if (string.IsNullOrWhiteSpace(candidate.HighlightColor) || GetBrush(candidate.HighlightColor) is null)
+            {
+                continue;
+            }
+
+            var markerY = i * slotHeight;
+            var markerBottom = Math.Min(markerY + markerHeight, drawableHeight);
+            if (relativeY >= markerY && relativeY <= markerBottom)
+            {
+                entry = candidate;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private SolidColorBrush? GetBrush(string colorHex)
@@ -339,6 +456,8 @@ public sealed class LogMiniMap : FrameworkElement
 
     private void DetachAll()
     {
+        _hoverToolTip.IsOpen = false;
+
         if (_attachedListView is not null)
         {
             _attachedListView.Loaded -= SourceListViewOnLayoutChanged;
