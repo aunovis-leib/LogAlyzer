@@ -140,6 +140,17 @@ namespace LogAnalyzer
             SelectFirstVisibleBottomTab();
         }
 
+    private void SearchResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm || SearchResultsListView.SelectedItem is not Models.LogFileEntry entry)
+        {
+            return;
+        }
+
+        vm.NavigateToSearchResult(entry);
+        e.Handled = true;
+    }
+
         private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(ViewModels.MainViewModel.ShowSearchResultsTab))

@@ -223,6 +223,7 @@
                 <ListView x:Name="SearchResultsListView"
                           ItemsSource="{Binding SearchResults}"
                           SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
+                          MouseDoubleClick="SearchResultsListView_MouseDoubleClick"
                           Margin="8"
                           bh:ListViewBehaviors.FillRemainingColumnIndex="3"
                           bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"

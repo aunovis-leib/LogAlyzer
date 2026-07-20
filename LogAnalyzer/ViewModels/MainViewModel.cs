@@ -268,6 +268,26 @@ public partial class MainViewModel : ObservableObject
         SelectedEntryGlobal = value;
     }
 
+    public bool NavigateToSearchResult(LogFileEntry? entry)
+    {
+        if (entry is null)
+        {
+            return false;
+        }
+
+        SelectedEntryGlobal = entry;
+
+        var targetList = Lists.FirstOrDefault(list => list.LogFilesEntries.Contains(entry));
+        if (targetList is null)
+        {
+            return false;
+        }
+
+        entry.IsDetailVisible = true;
+        targetList.SelectedEntry = entry;
+        return true;
+    }
+
     [RelayCommand]
     private void RunSearch()
     {

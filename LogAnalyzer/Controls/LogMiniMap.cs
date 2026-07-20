@@ -39,6 +39,7 @@ public sealed class LogMiniMap : FrameworkElement
     private ListView? _attachedListView;
     private readonly Dictionary<string, SolidColorBrush?> _brushCache = new(StringComparer.OrdinalIgnoreCase);
     private bool _renderRequested;
+    private bool _isScrubbing;
     private readonly ToolTip _hoverToolTip = new()
     {
         Placement = PlacementMode.Mouse,
@@ -99,15 +100,18 @@ public sealed class LogMiniMap : FrameworkElement
             return;
         }
 
+        // Ensure the whole minimap area participates in hit testing,
+        // even where no colored marker is drawn.
+        drawingContext.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, width, height));
+
         var entries = Entries.OfType<LogFileEntry>().ToList();
         if (entries.Count == 0)
         {
             return;
         }
 
-        var topOffset = GetTopOffset();
-        var bottomOffset = GetBottomOffset();
-        var drawableHeight = Math.Max(0, height - topOffset - bottomOffset);
+        var topOffset = 0d;
+        var drawableHeight = height;
         if (drawableHeight <= 0)
         {
             return;
@@ -130,8 +134,8 @@ public sealed class LogMiniMap : FrameworkElement
                 continue;
             }
 
-            var y = topOffset + (i * slotHeight);
-            var marker = Math.Min(markerHeight, (topOffset + drawableHeight) - y);
+            var y = i * slotHeight;
+            var marker = Math.Min(markerHeight, drawableHeight - y);
             if (marker <= 0)
             {
                 continue;
@@ -145,34 +149,89 @@ public sealed class LogMiniMap : FrameworkElement
     {
         base.OnMouseLeftButtonDown(e);
 
-        if (!TryGetEntryFromPosition(e.GetPosition(this), out var entry))
+        _isScrubbing = true;
+        CaptureMouse();
+        _hoverToolTip.IsOpen = false;
+
+        NavigateToPosition(e.GetPosition(this), selectEntry: true);
+        e.Handled = true;
+    }
+
+    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonUp(e);
+
+        if (!_isScrubbing)
         {
             return;
         }
 
+        _isScrubbing = false;
+        if (IsMouseCaptured)
+        {
+            ReleaseMouseCapture();
+        }
+
+        NavigateToPosition(e.GetPosition(this), selectEntry: true);
+        e.Handled = true;
+    }
+
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        _isScrubbing = false;
+    }
+
+    private void NavigateToPosition(Point position, bool selectEntry)
+    {
         var listView = SourceListView ?? _attachedListView;
         if (listView is null)
         {
             return;
         }
 
-        listView.SelectedItem = entry;
-        listView.ScrollIntoView(entry);
-
-        if (listView.ItemContainerGenerator.ContainerFromItem(entry) is ListViewItem container)
+        var entries = Entries?.OfType<LogFileEntry>().ToList();
+        if (entries is null || entries.Count == 0 || ActualHeight <= 0)
         {
-            container.BringIntoView();
+            return;
         }
 
-        Focus();
-        e.Handled = true;
+        var ratio = Math.Clamp(position.Y / ActualHeight, 0d, 1d);
+        var targetIndex = (int)Math.Floor(ratio * entries.Count);
+        targetIndex = Math.Clamp(targetIndex, 0, entries.Count - 1);
+        var targetEntry = entries[targetIndex];
+
+        var scrollViewer = FindVisualChild<ScrollViewer>(listView);
+        if (scrollViewer is not null && scrollViewer.ScrollableHeight > 0)
+        {
+            var offset = ratio * scrollViewer.ScrollableHeight;
+            scrollViewer.ScrollToVerticalOffset(offset);
+        }
+        else
+        {
+            listView.ScrollIntoView(targetEntry);
+        }
+
+        if (selectEntry)
+        {
+            listView.SelectedItem = targetEntry;
+            listView.ScrollIntoView(targetEntry);
+        }
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
 
-        if (!TryGetEntryFromPosition(e.GetPosition(this), out var entry) || entry is null)
+        if (_isScrubbing && IsMouseCaptured)
+        {
+            _hoverToolTip.IsOpen = false;
+            NavigateToPosition(e.GetPosition(this), selectEntry: false);
+            e.Handled = true;
+            return;
+        }
+
+        if (!TryGetEntryFromPosition(e.GetPosition(this), out var entry, requireHighlighted: true) || entry is null)
         {
             _hoverToolTip.IsOpen = false;
             return;
@@ -195,7 +254,7 @@ public sealed class LogMiniMap : FrameworkElement
         _hoverToolTip.IsOpen = false;
     }
 
-    private bool TryGetEntryFromPosition(Point position, out LogFileEntry? entry)
+    private bool TryGetEntryFromPosition(Point position, out LogFileEntry? entry, bool requireHighlighted)
     {
         entry = null;
 
@@ -205,15 +264,9 @@ public sealed class LogMiniMap : FrameworkElement
             return false;
         }
 
-        var topOffset = GetTopOffset();
-        var bottomOffset = GetBottomOffset();
-        var drawableHeight = Math.Max(0, ActualHeight - topOffset - bottomOffset);
+        var topOffset = 0d;
+        var drawableHeight = ActualHeight;
         if (drawableHeight <= 0)
-        {
-            return false;
-        }
-
-        if (position.Y < topOffset || position.Y > topOffset + drawableHeight)
         {
             return false;
         }
@@ -224,8 +277,17 @@ public sealed class LogMiniMap : FrameworkElement
             return false;
         }
 
+        var relativeY = Math.Clamp(position.Y - topOffset, 0, Math.Max(0, drawableHeight - 0.0001d));
+
+        if (!requireHighlighted)
+        {
+            var index = (int)(relativeY / slotHeight);
+            index = Math.Clamp(index, 0, entries.Count - 1);
+            entry = entries[index];
+            return true;
+        }
+
         var markerHeight = Math.Max(MinimumMarkerHeight, slotHeight);
-        var relativeY = position.Y - topOffset;
         var estimatedIndex = (int)(relativeY / slotHeight);
         estimatedIndex = Math.Clamp(estimatedIndex, 0, entries.Count - 1);
 

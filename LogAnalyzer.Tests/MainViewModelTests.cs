@@ -150,5 +150,47 @@ namespace LogAnalyzer.Tests
                 Assert.True(vm.ShowSearchResultsTab);
             });
         }
+
+        [Fact]
+        public void NavigateToSearchResult_Selects_Entry_In_Owning_List()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("main_search_navigate_to_result");
+                AppSettingsManager.Initialize(temp);
+                var vm = new MainViewModel(AppSettingsManager.Instance);
+
+                vm.SettingsVM!.SyncSelectionAcrossLists = false;
+
+                vm.AddListCommand.Execute(null);
+                var firstList = vm.Lists[0];
+                var secondList = vm.Lists[1];
+
+                var firstEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 0, 0),
+                    Type = LogType.Info,
+                    Text = "first"
+                };
+
+                var secondEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 1, 0),
+                    Type = LogType.Warning,
+                    Text = "second"
+                };
+
+                firstList.LogFilesEntries.Add(firstEntry);
+                secondList.LogFilesEntries.Add(secondEntry);
+
+                var navigated = vm.NavigateToSearchResult(secondEntry);
+
+                Assert.True(navigated);
+                Assert.Same(secondEntry, vm.SelectedEntryGlobal);
+                Assert.Same(secondEntry, secondList.SelectedEntry);
+                Assert.NotSame(secondEntry, firstList.SelectedEntry);
+                Assert.True(secondEntry.IsDetailVisible);
+            });
+        }
     }
 }
