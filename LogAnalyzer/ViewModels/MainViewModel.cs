@@ -369,6 +369,7 @@ public partial class MainViewModel : ObservableObject
 
     private void SubscribeToList(LogListViewModel vm)
     {
+        vm.EntriesReloading += OnEntriesReloading;
         vm.EntriesReloaded += EntriesReloaded;
         vm.HighlightsUpdated += OnHighlightsUpdated;
         vm.EntrySelected += OnEntrySelected;
@@ -389,6 +390,7 @@ public partial class MainViewModel : ObservableObject
 
     private void UnsubscribeFromList(LogListViewModel vm)
     {
+        vm.EntriesReloading -= OnEntriesReloading;
         vm.EntriesReloaded -= EntriesReloaded;
         vm.HighlightsUpdated -= OnHighlightsUpdated;
         vm.EntrySelected -= OnEntrySelected;
@@ -447,6 +449,12 @@ public partial class MainViewModel : ObservableObject
         RefreshChart();
         ScheduleSearchResultsRefresh(immediate: true);
         RefreshRuleMatchResults();
+    }
+
+    private void OnEntriesReloading(object? sender, EventArgs e)
+    {
+        RuleMatchResults.Clear();
+        SelectedRuleMatchResult = null;
     }
 
     private void OnHighlightsUpdated(object? sender, EventArgs e)

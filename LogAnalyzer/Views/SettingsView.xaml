@@ -80,6 +80,8 @@
 
                         <GroupBox Header="{x:Static res:Strings.HighlightRules}" Margin="0,8,0,0">
                             <StackPanel Margin="6">
+                                <CheckBox Content="Regeln anwenden"
+                                          IsChecked="{Binding ApplyHighlightRules, Mode=TwoWay}" />
                                 <StackPanel Orientation="Vertical" Margin="0,0,0,8">
                                     <StackPanel Orientation="Vertical">
                                         <TextBlock Text="{x:Static res:Strings.SearchText}" Margin="0,0,0,2" FontSize="11" />

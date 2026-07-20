@@ -60,6 +60,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _highlightColor = "#FFFF00";
 
+    [ObservableProperty]
+    private bool _applyHighlightRules = true;
+
     public ObservableCollection<ParserProfile> ParserProfiles { get; } = [];
 
     private ParserProfile? _selectedParserProfile;
@@ -85,6 +88,7 @@ public partial class SettingsViewModel : ObservableObject
         AutoReloadLogFiles = settingsView.AutoReloadLogFiles;
         DateSortDescending = settingsView.DateSortDescending;
         ShowMiniMap = settingsView.ShowMiniMap;
+        ApplyHighlightRules = settingsView.ApplyHighlightRules;
 
         var history = settingsView.ExplorerRootFolderHistory ?? [];
         var uniqueHistory = history.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -291,6 +295,15 @@ public partial class SettingsViewModel : ObservableObject
         manager.Save();
     }
 
+    partial void OnApplyHighlightRulesChanged(bool value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.ApplyHighlightRules = value;
+        manager.Save();
+        HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     [RelayCommand]
     private void ResetDefaults()
     {
@@ -305,6 +318,7 @@ public partial class SettingsViewModel : ObservableObject
         AutoReloadLogFiles = false;
         DateSortDescending = true;
         ShowMiniMap = true;
+        ApplyHighlightRules = true;
         HighlightRules.Clear();
         HighlightSearchText = string.Empty;
         HighlightColor = "#FFFF00";

@@ -44,6 +44,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     private ParserProfile? _selectedProfile;
 
     public event EventHandler? EntriesReloaded;
+    public event EventHandler? EntriesReloading;
     public event EventHandler? HighlightsUpdated;
     public event EventHandler<LogFileEntry?>? EntrySelected;
     public event EventHandler<string>? GlobalSearchRequested;
@@ -845,6 +846,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
             _suppressAvailableTypesUpdate = true;
             LogFilesView.Filter = null;
+            EntriesReloading?.Invoke(this, EventArgs.Empty);
             LogFilesEntries.Clear();
 
             try
@@ -1077,7 +1079,28 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
     public void UpdateHighlights()
     {
-        if (Settings?.HighlightRules == null) return;
+        if (Settings?.HighlightRules == null)
+        {
+            return;
+        }
+
+        if (!Settings.ApplyHighlightRules)
+        {
+            if (!_hasHighlightsApplied)
+            {
+                return;
+            }
+
+            foreach (var entry in LogFilesEntries)
+            {
+                entry.HighlightColor = null;
+                entry.MatchedHighlightRule = null;
+            }
+
+            _hasHighlightsApplied = false;
+            HighlightsUpdated?.Invoke(this, EventArgs.Empty);
+            return;
+        }
 
         var activeRules = Settings.HighlightRules
             .Where(rule => rule.IsEnabled && !string.IsNullOrWhiteSpace(rule.SearchText))
