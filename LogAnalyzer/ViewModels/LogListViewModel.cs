@@ -44,6 +44,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     private ParserProfile? _selectedProfile;
 
     public event EventHandler? EntriesReloaded;
+    public event EventHandler? HighlightsUpdated;
     public event EventHandler<LogFileEntry?>? EntrySelected;
     public event EventHandler<string>? GlobalSearchRequested;
     public event EventHandler<LogType>? TypesChanged;
@@ -1095,6 +1096,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             }
 
             _hasHighlightsApplied = false;
+            HighlightsUpdated?.Invoke(this, EventArgs.Empty);
             return;
         }
 
@@ -1113,6 +1115,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         }
 
         _hasHighlightsApplied = hasHighlights;
+        HighlightsUpdated?.Invoke(this, EventArgs.Empty);
     }
 
     private void RefreshView()

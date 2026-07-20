@@ -151,9 +151,21 @@ namespace LogAnalyzer
         e.Handled = true;
     }
 
+    private void RuleMatchResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel vm || RuleMatchResultsListView.SelectedItem is not Models.LogFileEntry entry)
+        {
+            return;
+        }
+
+        vm.NavigateToSearchResult(entry);
+        e.Handled = true;
+    }
+
         private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ViewModels.MainViewModel.ShowSearchResultsTab))
+            if (e.PropertyName == nameof(ViewModels.MainViewModel.ShowSearchResultsTab)
+                || e.PropertyName == nameof(ViewModels.MainViewModel.ShowRuleMatchesTab))
             {
                 SelectFirstVisibleBottomTab();
             }
@@ -191,6 +203,12 @@ namespace LogAnalyzer
             if (SearchTab is not null && SearchTab.Visibility == Visibility.Visible)
             {
                 BottomTabs.SelectedItem = SearchTab;
+                return;
+            }
+
+            if (RuleMatchesTab is not null && RuleMatchesTab.Visibility == Visibility.Visible)
+            {
+                BottomTabs.SelectedItem = RuleMatchesTab;
             }
         }
 

@@ -65,6 +65,9 @@
                                     <Condition Value="False"
                                                Binding="{Binding DataContext.ShowSearchResultsTab,
                                                                  RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    <Condition Value="False"
+                                               Binding="{Binding DataContext.ShowRuleMatchesTab,
+                                                                 RelativeSource={RelativeSource AncestorType=Window}}" />
                                 </MultiDataTrigger.Conditions>
                                 <Setter Property="Height" Value="0" />
                                 <Setter Property="MaxHeight" Value="0" />
@@ -171,6 +174,9 @@
                                 <Condition Value="False"
                                            Binding="{Binding DataContext.ShowSearchResultsTab,
                                                              RelativeSource={RelativeSource AncestorType=Window}}" />
+                                <Condition Value="False"
+                                           Binding="{Binding DataContext.ShowRuleMatchesTab,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
                         </MultiDataTrigger>
@@ -194,6 +200,9 @@
                                                              RelativeSource={RelativeSource AncestorType=Window}}" />
                                 <Condition Value="False"
                                            Binding="{Binding DataContext.ShowSearchResultsTab,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
+                                <Condition Value="False"
+                                           Binding="{Binding DataContext.ShowRuleMatchesTab,
                                                              RelativeSource={RelativeSource AncestorType=Window}}" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -224,6 +233,35 @@
                           ItemsSource="{Binding SearchResults}"
                           SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
                           MouseDoubleClick="SearchResultsListView_MouseDoubleClick"
+                          Margin="8"
+                          bh:ListViewBehaviors.FillRemainingColumnIndex="3"
+                          bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"
+                          SelectionMode="Single"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          VirtualizingPanel.CacheLength="1"
+                          VirtualizingPanel.CacheLengthUnit="Page"
+                          VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                          ScrollViewer.CanContentScroll="True">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="#" Width="50" DisplayMemberBinding="{Binding LineNumber}" />
+                            <GridViewColumn Header="Date" Width="160" DisplayMemberBinding="{Binding DateDisplay}" />
+                            <GridViewColumn Header="Type" Width="90" DisplayMemberBinding="{Binding Type}" />
+                            <GridViewColumn Header="Text" Width="500" DisplayMemberBinding="{Binding Text}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </TabItem>
+
+            <TabItem x:Name="RuleMatchesTab"
+                     Header="Regel-Treffer"
+                     IsVisibleChanged="BottomTab_IsVisibleChanged"
+                     Visibility="{Binding ShowRuleMatchesTab, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ListView x:Name="RuleMatchResultsListView"
+                          ItemsSource="{Binding RuleMatchResults}"
+                          SelectedItem="{Binding SelectedRuleMatchResult, Mode=TwoWay}"
+                          MouseDoubleClick="RuleMatchResultsListView_MouseDoubleClick"
                           Margin="8"
                           bh:ListViewBehaviors.FillRemainingColumnIndex="3"
                           bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"

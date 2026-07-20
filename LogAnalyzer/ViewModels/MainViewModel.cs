@@ -35,14 +35,19 @@ public partial class MainViewModel : ObservableObject
     private string _globalSearchText = string.Empty;
 
     public ObservableCollection<LogFileEntry> SearchResults { get; } = [];
+    public ObservableCollection<LogFileEntry> RuleMatchResults { get; } = [];
 
     [ObservableProperty]
     private LogFileEntry? _selectedSearchResult;
 
     [ObservableProperty]
+    private LogFileEntry? _selectedRuleMatchResult;
+
+    [ObservableProperty]
     private bool _isSettingsPaneOpen;
 
     public bool ShowSearchResultsTab => !string.IsNullOrWhiteSpace(GlobalSearchText);
+    public bool ShowRuleMatchesTab => RuleMatchResults.Count > 0;
 
     [ObservableProperty]
     private LogFileEntry? _selectedEntryGlobal;
@@ -61,6 +66,7 @@ public partial class MainViewModel : ObservableObject
         Profiles = [.. _appSettings.ParserProfiles];
         SelectedProfile = Profiles.Count > 0 ? Profiles[0] : null;
         SettingsVM = new SettingsViewModel();
+        RuleMatchResults.CollectionChanged += (_, __) => OnPropertyChanged(nameof(ShowRuleMatchesTab));
         SettingsVM.PropertyChanged += SettingsVM_PropertyChanged;
         SettingsVM.MaxEntriesPerListChanged += SettingsVM_MaxEntriesPerListChanged;
         SettingsVM.ParserProfiles.CollectionChanged += (_, __) =>
@@ -89,6 +95,7 @@ public partial class MainViewModel : ObservableObject
         SubscribeToList(first);
         Lists.CollectionChanged += Lists_CollectionChanged;
         RefreshChart();
+        RefreshRuleMatchResults();
     }
 
     private void SyncProfilesFromSettings()
@@ -187,6 +194,7 @@ public partial class MainViewModel : ObservableObject
         HandleOldItems(e.OldItems);
         RefreshChart();
         ScheduleSearchResultsRefresh(immediate: true);
+        RefreshRuleMatchResults();
     }
 
     private void HandleNewItems(System.Collections.IList? newItems)
@@ -268,6 +276,16 @@ public partial class MainViewModel : ObservableObject
         SelectedEntryGlobal = value;
     }
 
+    partial void OnSelectedRuleMatchResultChanged(LogFileEntry? value)
+    {
+        if (value is null || ReferenceEquals(SelectedEntryGlobal, value))
+        {
+            return;
+        }
+
+        SelectedEntryGlobal = value;
+    }
+
     public bool NavigateToSearchResult(LogFileEntry? entry)
     {
         if (entry is null)
@@ -324,10 +342,22 @@ public partial class MainViewModel : ObservableObject
             {
                 SelectedSearchResult = null;
             }
+
+            if (SelectedRuleMatchResult is not null)
+            {
+                SelectedRuleMatchResult = null;
+            }
         }
         else if (SearchResults.Contains(value) && !ReferenceEquals(SelectedSearchResult, value))
         {
             SelectedSearchResult = value;
+        }
+
+        if (value is not null
+            && RuleMatchResults.Contains(value)
+            && !ReferenceEquals(SelectedRuleMatchResult, value))
+        {
+            SelectedRuleMatchResult = value;
         }
 
         if (syncEnabled)
@@ -340,6 +370,7 @@ public partial class MainViewModel : ObservableObject
     private void SubscribeToList(LogListViewModel vm)
     {
         vm.EntriesReloaded += EntriesReloaded;
+        vm.HighlightsUpdated += OnHighlightsUpdated;
         vm.EntrySelected += OnEntrySelected;
         vm.TypesChanged += OnListTypesChanged;
         vm.OpenSettingsRequested += OnOpenSettingsRequested;
@@ -359,6 +390,7 @@ public partial class MainViewModel : ObservableObject
     private void UnsubscribeFromList(LogListViewModel vm)
     {
         vm.EntriesReloaded -= EntriesReloaded;
+        vm.HighlightsUpdated -= OnHighlightsUpdated;
         vm.EntrySelected -= OnEntrySelected;
         vm.OpenSettingsRequested -= OnOpenSettingsRequested;
         vm.SetGlobalSearchText = null;
@@ -414,12 +446,39 @@ public partial class MainViewModel : ObservableObject
 
         RefreshChart();
         ScheduleSearchResultsRefresh(immediate: true);
+        RefreshRuleMatchResults();
+    }
+
+    private void OnHighlightsUpdated(object? sender, EventArgs e)
+    {
+        RefreshRuleMatchResults();
     }
 
     private void OnListTypesChanged(object? sender, LogType selectedType)
     {
         ChartVM.TypeToShow = selectedType;
         RefreshChart();
+    }
+
+    private void RefreshRuleMatchResults()
+    {
+        var ruleMatches = Lists
+            .SelectMany(list => list.LogFilesEntries)
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.HighlightColor))
+            .OrderBy(entry => entry.Date)
+            .ThenBy(entry => entry.LineNumber)
+            .ToList();
+
+        RuleMatchResults.Clear();
+        foreach (var entry in ruleMatches)
+        {
+            RuleMatchResults.Add(entry);
+        }
+
+        if (RuleMatchResults.Count == 0)
+        {
+            SelectedRuleMatchResult = null;
+        }
     }
 
     private void OnEntrySelected(object? sender, LogFileEntry? entry)
