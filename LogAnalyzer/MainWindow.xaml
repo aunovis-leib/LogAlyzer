@@ -6,7 +6,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         xmlns:local="clr-namespace:LogAnalyzer"
+        xmlns:conv="clr-namespace:LogAnalyzer.Converters"
         xmlns:vm="clr-namespace:LogAnalyzer.ViewModels"
         xmlns:ctrls="clr-namespace:LogAnalyzer.Controls"
         xmlns:bh="clr-namespace:LogAnalyzer.Behaviors"
@@ -17,6 +19,12 @@
         PreviewMouseDown="Window_PreviewMouseDown">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <conv:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
+        <CollectionViewSource x:Key="RuleMatchResultsGroupedView" Source="{Binding RuleMatchResults}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="MatchedHighlightRuleDisplay" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
         <DataTemplate x:Key="LogListTemplate">
             <views:LogListView />
         </DataTemplate>
@@ -259,7 +267,7 @@
                      IsVisibleChanged="BottomTab_IsVisibleChanged"
                      Visibility="{Binding ShowRuleMatchesTab, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ListView x:Name="RuleMatchResultsListView"
-                          ItemsSource="{Binding RuleMatchResults}"
+                          ItemsSource="{Binding Source={StaticResource RuleMatchResultsGroupedView}}"
                           SelectedItem="{Binding SelectedRuleMatchResult, Mode=TwoWay}"
                           MouseDoubleClick="RuleMatchResultsListView_MouseDoubleClick"
                           Margin="8"
@@ -272,6 +280,36 @@
                           VirtualizingPanel.CacheLengthUnit="Page"
                           VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                           ScrollViewer.CanContentScroll="True">
+                    <ListView.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.ContainerStyle>
+                                <Style TargetType="{x:Type GroupItem}">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                <Expander IsExpanded="True" Margin="0,0,0,6">
+                                                    <Expander.Header>
+                                                        <Border Padding="6,3"
+                                                                CornerRadius="3"
+                                                                Opacity="0.85"
+                                                                Background="{Binding Items[0].HighlightColor, Converter={StaticResource HexColorToBrushConverter}}">
+                                                            <DockPanel>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                                                <TextBlock Text=" (" Margin="6,0,0,0"/>
+                                                                <TextBlock Text="{Binding ItemCount}"/>
+                                                                <TextBlock Text="x)"/>
+                                                            </DockPanel>
+                                                        </Border>
+                                                    </Expander.Header>
+                                                    <ItemsPresenter/>
+                                                </Expander>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </GroupStyle.ContainerStyle>
+                        </GroupStyle>
+                    </ListView.GroupStyle>
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="#" Width="50" DisplayMemberBinding="{Binding LineNumber}" />

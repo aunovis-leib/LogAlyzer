@@ -41,6 +41,27 @@ namespace LogAnalyzer.Models
             }
         }
 
+        private string? _matchedHighlightRule;
+        public string? MatchedHighlightRule
+        {
+            get => _matchedHighlightRule;
+            set
+            {
+                if (_matchedHighlightRule == value)
+                {
+                    return;
+                }
+
+                _matchedHighlightRule = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(MatchedHighlightRuleDisplay));
+            }
+        }
+
+        public string MatchedHighlightRuleDisplay => string.IsNullOrWhiteSpace(MatchedHighlightRule)
+            ? "Ohne Regel"
+            : MatchedHighlightRule;
+
         private bool _isDetailVisible;
         public bool IsDetailVisible
         {

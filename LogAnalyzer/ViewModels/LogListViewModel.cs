@@ -1093,6 +1093,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             foreach (var entry in LogFilesEntries)
             {
                 entry.HighlightColor = null;
+                entry.MatchedHighlightRule = null;
             }
 
             _hasHighlightsApplied = false;
@@ -1108,6 +1109,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
                 entry.Text.Contains(rule.SearchText, StringComparison.OrdinalIgnoreCase));
 
             entry.HighlightColor = matchedRule?.Color;
+            entry.MatchedHighlightRule = matchedRule?.SearchText;
             if (entry.HighlightColor is not null)
             {
                 hasHighlights = true;
