@@ -102,6 +102,13 @@
                 <Button HorizontalAlignment="Left" Command="{Binding ChooseFileCommand}" BorderThickness="0" Background="{x:Null}">
                     <Image Width="20" Height="20" Source="/Resources/Icons/Add-files.ico" />
                 </Button>
+                <ComboBox Margin="8,0,0,0"
+                          MinWidth="90"
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding Profiles}"
+                          SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                          DisplayMemberPath="Name"
+                          ToolTip="Parser-Profil für diese Ansicht" />
                 <ctrls:DateRangePicker Margin="8,0,0,0"
                                        FromDate="{Binding FilterFromDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                        ToDate="{Binding FilterToDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -334,7 +341,7 @@
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.View>
-                    <GridView>
+                    <GridView x:Name="LogGridView">
                         <GridViewColumn
                             Header="#" Width="30"
                             DisplayMemberBinding="{Binding LineNumber}" />
@@ -343,12 +350,12 @@
                                 <GridViewColumnHeader Content="Date" Click="GridViewColumnHeader_Click" Tag="Date" />
                             </GridViewColumn.Header>
                         </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding Type}">
+                        <GridViewColumn x:Name="TypeColumn" DisplayMemberBinding="{Binding Type}">
                             <GridViewColumn.Header>
                                 <GridViewColumnHeader Content="Type" Click="GridViewColumnHeader_Click" Tag="Type" />
                             </GridViewColumn.Header>
                         </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding Text}">
+                        <GridViewColumn x:Name="TextColumn" DisplayMemberBinding="{Binding Text}">
                             <GridViewColumn.Header>
                                 <GridViewColumnHeader Content="Text" Click="GridViewColumnHeader_Click" Tag="Text" />
                             </GridViewColumn.Header>

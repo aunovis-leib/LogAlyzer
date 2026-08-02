@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace LogAnalyzer.Models
@@ -24,6 +25,13 @@ namespace LogAnalyzer.Models
         public string Text { get; set; } = string.Empty;
         public string RawLine { get; set; } = string.Empty;
         public string[] Detail { get; set; } = [];
+
+        /// <summary>Dynamic column values (used for CSV parsing). Key = header/column name.</summary>
+        public Dictionary<string, string> Fields { get; set; } = new();
+
+        /// <summary>Indexer for XAML binding to dynamic CSV columns, e.g. {Binding [ColumnName]}.</summary>
+        public string this[string key] =>
+            Fields.TryGetValue(key, out var value) ? value : string.Empty;
 
         private string? _highlightColor;
         public string? HighlightColor

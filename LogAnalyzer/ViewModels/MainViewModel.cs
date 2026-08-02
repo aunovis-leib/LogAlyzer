@@ -231,10 +231,8 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedProfileChanged(ParserProfile? value)
     {
-        foreach (var l in Lists)
-        {
-            l.SelectedProfile = value;
-        }
+        // The global selection only seeds newly created lists. Each LogListViewModel keeps
+        // its own parser profile so different views can display different profiles.
     }
 
     partial void OnFilterFromDateChanged(DateTime? value)

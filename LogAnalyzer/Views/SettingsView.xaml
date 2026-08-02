@@ -170,6 +170,21 @@
 
                             <TextBlock Text="Time Offset (min)" Margin="0,8,0,0" />
                             <TextBox Width="80" Text="{Binding TimeOffsetMinutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <Separator Margin="0,12,0,4" />
+                            <CheckBox Content="CSV parsen" IsChecked="{Binding IsCsv, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="CSV Trennzeichen" Margin="0,8,0,0" />
+                            <TextBox Width="80" HorizontalAlignment="Left"
+                                     Text="{Binding CsvDelimiter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="CSV Datum-Spalte (Header-Name)" Margin="0,8,0,0" />
+                            <TextBox Text="{Binding CsvDateColumn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Text="CSV Spalten (eine pro Zeile; leer = alle)" Margin="0,8,0,0" />
+                            <TextBox Text="{Binding CsvColumnsText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60"
+                                     VerticalScrollBarVisibility="Auto" />
                         </StackPanel>
                     </GroupBox>
 

@@ -7,16 +7,103 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Collections;
+using System.Globalization;
 
 namespace LogAnalyzer.Views;
 
 public partial class LogListView : UserControl
 {
     private SettingsViewModel? _settingsViewModel;
+    private LogListViewModel? _viewModel;
+    private string? _currentCsvSortColumn;
+    private ListSortDirection _currentCsvSortDirection = ListSortDirection.Ascending;
 
     public LogListView()
     {
         InitializeComponent();
+        DataContextChanged += LogListView_DataContextChanged;
+    }
+
+    private void LogListView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (_viewModel is not null)
+        {
+            _viewModel.CsvColumnsChanged -= OnCsvColumnsChanged;
+        }
+
+        _viewModel = DataContext as LogListViewModel;
+
+        if (_viewModel is not null)
+        {
+            _viewModel.CsvColumnsChanged += OnCsvColumnsChanged;
+            RebuildColumns(_viewModel);
+        }
+    }
+
+    private void OnCsvColumnsChanged(object? sender, System.EventArgs e)
+    {
+        if (_viewModel is not null)
+        {
+            RebuildColumns(_viewModel);
+        }
+    }
+
+    /// <summary>
+    /// Rebuilds the GridView columns. The fixed "#" (LineNumber) and "Date" columns are always kept.
+    /// In CSV mode the remaining columns are generated dynamically from the profile configuration;
+    /// otherwise the default Type/Text columns are restored.
+    /// </summary>
+    private void RebuildColumns(LogListViewModel vm)
+    {
+        var gridView = LogGridView;
+        if (gridView is null)
+        {
+            return;
+        }
+
+        // Keep the first two fixed columns (# and Date), drop the rest.
+        while (gridView.Columns.Count > 2)
+        {
+            gridView.Columns.RemoveAt(gridView.Columns.Count - 1);
+        }
+
+        // Reset any active custom (CSV) sort; the fixed columns use SortDescriptions.
+        _currentCsvSortColumn = null;
+        if (LogsListView?.ItemsSource is not null
+            && CollectionViewSource.GetDefaultView(LogsListView.ItemsSource) is ListCollectionView lcv
+            && lcv.CustomSort != null)
+        {
+            lcv.CustomSort = null;
+        }
+
+        if (vm.IsCsvMode)
+        {
+            foreach (var columnName in vm.CsvDisplayColumns)
+            {
+                gridView.Columns.Add(CreateDynamicColumn(columnName));
+            }
+        }
+        else
+        {
+            gridView.Columns.Add(TypeColumn);
+            gridView.Columns.Add(TextColumn);
+        }
+    }
+
+    private GridViewColumn CreateDynamicColumn(string columnName)
+    {
+        var header = new GridViewColumnHeader
+        {
+            Content = columnName,
+            Tag = columnName
+        };
+        header.Click += GridViewColumnHeader_Click;
+
+        return new GridViewColumn
+        {
+            Header = header,
+            DisplayMemberBinding = new Binding($"[{columnName}]")
+        };
     }
 
     private void GridViewColumnHeader_Click(object sender, System.Windows.RoutedEventArgs e)
@@ -37,6 +124,35 @@ public partial class LogListView : UserControl
         if (_settingsViewModel == null && DataContext is LogListViewModel vm)
         {
             _settingsViewModel = vm.Settings;
+        }
+
+        // Dynamic CSV columns cannot be sorted via SortDescriptions (indexer path),
+        // so use a custom comparer on the underlying ListCollectionView.
+        if (_viewModel?.IsCsvMode == true
+            && _viewModel.CsvDisplayColumns.Contains(sortBy)
+            && view is ListCollectionView csvView)
+        {
+            var direction = ListSortDirection.Ascending;
+            if (string.Equals(_currentCsvSortColumn, sortBy, System.StringComparison.Ordinal))
+            {
+                direction = _currentCsvSortDirection == ListSortDirection.Ascending
+                    ? ListSortDirection.Descending
+                    : ListSortDirection.Ascending;
+            }
+
+            _currentCsvSortColumn = sortBy;
+            _currentCsvSortDirection = direction;
+
+            csvView.SortDescriptions.Clear();
+            csvView.CustomSort = new CsvFieldComparer(sortBy, direction);
+            return;
+        }
+
+        // Fixed columns: clear any active custom sort before using SortDescriptions.
+        if (view is ListCollectionView lcv && lcv.CustomSort != null)
+        {
+            lcv.CustomSort = null;
+            _currentCsvSortColumn = null;
         }
 
         UpdateSortDescriptions(view, sortBy, _settingsViewModel);
@@ -161,6 +277,36 @@ public partial class LogListView : UserControl
         else
         {
             Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new System.Action(Scroll));
+        }
+    }
+
+    /// <summary>
+    /// Sorts <see cref="LogFileEntry"/> instances by a dynamic CSV field value.
+    /// Values that parse as numbers are compared numerically, otherwise case-insensitively.
+    /// </summary>
+    private sealed class CsvFieldComparer : IComparer
+    {
+        private readonly string _column;
+        private readonly int _sign;
+
+        public CsvFieldComparer(string column, ListSortDirection direction)
+        {
+            _column = column;
+            _sign = direction == ListSortDirection.Ascending ? 1 : -1;
+        }
+
+        public int Compare(object? x, object? y)
+        {
+            var a = (x as LogFileEntry)?[_column] ?? string.Empty;
+            var b = (y as LogFileEntry)?[_column] ?? string.Empty;
+
+            if (double.TryParse(a, NumberStyles.Any, CultureInfo.InvariantCulture, out var da)
+                && double.TryParse(b, NumberStyles.Any, CultureInfo.InvariantCulture, out var db))
+            {
+                return _sign * da.CompareTo(db);
+            }
+
+            return _sign * string.Compare(a, b, System.StringComparison.OrdinalIgnoreCase);
         }
     }
 }

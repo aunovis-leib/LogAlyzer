@@ -35,10 +35,23 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     private readonly Dictionary<string, LogFileEntry> _incompleteEntryPerFile = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<string>> _incompleteEntryDetailsPerFile = new(StringComparer.OrdinalIgnoreCase);
     private bool _hasHighlightsApplied;
+    private ILogParser? _activeParser;
+
+    /// <summary>Raised after loading when the CSV display columns may have changed.</summary>
+    public event EventHandler? CsvColumnsChanged;
+
+    /// <summary>True when the currently loaded files are displayed as CSV.</summary>
+    public bool IsCsvMode { get; private set; }
+
+    /// <summary>Column names to display when in CSV mode (excluding the fixed # and Date columns).</summary>
+    public IReadOnlyList<string> CsvDisplayColumns { get; private set; } = [];
 
     public FileExplorerViewModel FileExplorerVM { get; } = new();
 
     public SettingsViewModel? Settings { get; private set; }
+
+    /// <summary>Parser profiles available for selection in this view.</summary>
+    public ObservableCollection<ParserProfile> Profiles { get; } = [];
 
     [ObservableProperty]
     private ParserProfile? _selectedProfile;
@@ -384,7 +397,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         var dlg = new OpenFileDialog
         {
             Title = "Logdatei wählen",
-            Filter = "Log Files (*.log)|*.log",
+            Filter = "Log & CSV Files (*.log;*.csv)|*.log;*.csv|Log Files (*.log)|*.log|CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
             Multiselect = true
         };
 
@@ -407,11 +420,55 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
     private ILogParser GetActiveParser()
     {
-        if (SelectedProfile is not null)
+        if (_activeParser is not null)
         {
-            return new ProfileLogParser(SelectedProfile);
+            return _activeParser;
         }
-        return new LegacyLogParser();
+
+        if (ShouldUseCsv())
+        {
+            _activeParser = new CsvLogParser(SelectedProfile);
+        }
+        else if (SelectedProfile is not null)
+        {
+            _activeParser = new ProfileLogParser(SelectedProfile);
+        }
+        else
+        {
+            _activeParser = new LegacyLogParser();
+        }
+
+        return _activeParser;
+    }
+
+    private bool ShouldUseCsv()
+    {
+        if (SelectedProfile?.IsCsv == true)
+        {
+            return true;
+        }
+
+        return _currentLoadedFiles.Any(f => f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Updates <see cref="IsCsvMode"/> and <see cref="CsvDisplayColumns"/> from the active parser
+    /// and notifies the view so it can rebuild the dynamic columns.
+    /// </summary>
+    private void UpdateCsvColumns()
+    {
+        if (_activeParser is CsvLogParser csv && csv.HeaderParsed)
+        {
+            IsCsvMode = true;
+            CsvDisplayColumns = csv.DisplayColumns.ToList();
+        }
+        else
+        {
+            IsCsvMode = false;
+            CsvDisplayColumns = [];
+        }
+
+        CsvColumnsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public LogListViewModel(AppSettingsManager appSettings, ParserProfile? selectedProfile, SettingsViewModel? settingsViewModel = null)
@@ -421,6 +478,12 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         _selectedProfile = selectedProfile;
         Settings = settingsViewModel;
         _patternService = App.PatternService;  // Pattern Service laden
+
+        RefreshProfiles();
+        if (settingsViewModel != null)
+        {
+            settingsViewModel.ParserProfiles.CollectionChanged += (_, __) => RefreshProfiles();
+        }
 
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
@@ -821,6 +884,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             }
 
             _currentLoadedFiles = fileNames;
+            _activeParser = null;
 
             var autoReloadEnabled = _appSettings.Settings.SettingsView?.AutoReloadLogFiles ?? false;
             if (autoReloadEnabled)
@@ -930,6 +994,8 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
                 UpdateAvailableTypes(observedTypes);
                 UpdateAvailableDates(minDate, maxDate);
 
+                UpdateCsvColumns();
+
                 LogFilesView.Filter = FilterByType;
                 RefreshView();
                 UpdateHighlights();
@@ -968,6 +1034,45 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         }
 
         await LoadFilesAsync(_currentLoadedFiles);
+    }
+
+    /// <summary>
+    /// Reparses the currently loaded files when the parser profile for this view changes.
+    /// Each log list keeps its own parser selection independently of the other lists.
+    /// </summary>
+    async partial void OnSelectedProfileChanged(ParserProfile? value)
+    {
+        _activeParser = null;
+
+        if (_currentLoadedFiles.Length == 0)
+        {
+            return;
+        }
+
+        await LoadFilesAsync(_currentLoadedFiles);
+    }
+
+    /// <summary>
+    /// Rebuilds the list of selectable parser profiles from the shared settings while
+    /// preserving this view's current selection (matched by name).
+    /// </summary>
+    private void RefreshProfiles()
+    {
+        var source = Settings?.ParserProfiles is { Count: > 0 }
+            ? (IEnumerable<ParserProfile>)Settings.ParserProfiles
+            : _appSettings.ParserProfiles;
+
+        var currentName = SelectedProfile?.Name;
+
+        Profiles.Clear();
+        foreach (var profile in source)
+        {
+            Profiles.Add(profile);
+        }
+
+        SelectedProfile = Profiles.FirstOrDefault(p => p.Name == currentName)
+            ?? Profiles.FirstOrDefault(p => p == SelectedProfile)
+            ?? SelectedProfile;
     }
 
     partial void OnSelectedTypeChanged(LogType value)

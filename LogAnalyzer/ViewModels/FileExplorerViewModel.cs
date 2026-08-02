@@ -68,11 +68,39 @@ public partial class FileExplorerViewModel : ObservableObject
     {
         var manager = AppSettingsManager.Instance;
         var settingsView = manager.Settings.SettingsView;
-        if (settingsView != null)
+        if (settingsView == null)
         {
-            settingsView.ExplorerRootFolderHistory = new List<string>(ExplorerRootFolderHistory);
-            manager.Save();
+            return;
         }
+
+        // Merge with the already persisted history instead of overwriting it. Multiple
+        // FileExplorerViewModel instances (one per log list) and the constructor's initial
+        // navigation would otherwise clobber each other and collapse the history to a single entry.
+        var merged = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void AddUnique(IEnumerable<string>? paths)
+        {
+            if (paths == null)
+            {
+                return;
+            }
+
+            foreach (var path in paths)
+            {
+                var normalized = NormalizePath(path);
+                if (!string.IsNullOrWhiteSpace(normalized) && seen.Add(normalized))
+                {
+                    merged.Add(normalized);
+                }
+            }
+        }
+
+        AddUnique(settingsView.ExplorerRootFolderHistory);
+        AddUnique(ExplorerRootFolderHistory);
+
+        settingsView.ExplorerRootFolderHistory = merged;
+        manager.Save();
     }
 
     public FileExplorerViewModel()
@@ -176,7 +204,10 @@ public partial class FileExplorerViewModel : ObservableObject
                 }
             }
 
-            foreach (var file in Directory.GetFiles(path, "*.log"))
+            foreach (var file in Directory.GetFiles(path)
+                         .Where(f => f.EndsWith(".log", StringComparison.OrdinalIgnoreCase)
+                                     || f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                         .OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
             {
                 var fullFilePath = Path.GetFullPath(file);
                 if (seenPaths.Add(fullFilePath))
