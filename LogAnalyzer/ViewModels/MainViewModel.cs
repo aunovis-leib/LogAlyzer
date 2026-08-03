@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Models;
+using System.IO;
 using System.Collections.ObjectModel;
 using System.Threading;
 
@@ -380,7 +381,7 @@ public partial class MainViewModel : ObservableObject
         EventHandler<string> globalSearchRequestedHandler = (_, searchText) => GlobalSearchText = searchText;
         _globalSearchRequestedHandlers[vm] = globalSearchRequestedHandler;
         vm.GlobalSearchRequested += globalSearchRequestedHandler;
-        // Bei Ereignis die Auswahl für diese Instanz setzen
+        // Bei Ereignis die Auswahl fï¿½r diese Instanz setzen
         EventHandler<LogFileEntry?> handler = (sender, entry) => { vm.SelectedEntry = entry; };
         _selectedEntryHandlers[vm] = handler;
         SelectedEntryChanged += handler;
@@ -402,7 +403,7 @@ public partial class MainViewModel : ObservableObject
         {
             vm.GlobalSearchRequested -= globalSearchRequestedHandler;
         }
-        // Vom Ereignis abmelden nur für diese Instanz
+        // Vom Ereignis abmelden nur fï¿½r diese Instanz
         if (_selectedEntryHandlers.Remove(vm, out var handler))
         {
             SelectedEntryChanged -= handler;
@@ -578,4 +579,239 @@ public partial class MainViewModel : ObservableObject
         previous?.Dispose();
         return replacement;
     }
+
+    public LiveLoadedEntriesSnapshot GetLoadedEntriesSnapshot(int maxEntriesPerList = 500, int maxTotalEntries = 5000)
+    {
+        maxEntriesPerList = Math.Clamp(maxEntriesPerList, 1, 5000);
+        maxTotalEntries = Math.Clamp(maxTotalEntries, 1, 50000);
+
+        var listSnapshots = new List<LiveLogListSnapshot>(Lists.Count);
+        var total = 0;
+        var truncated = false;
+
+        for (var listIndex = 0; listIndex < Lists.Count; listIndex++)
+        {
+            var list = Lists[listIndex];
+            var entries = new List<LiveLogEntrySnapshot>();
+
+            foreach (var item in list.LogFilesView)
+            {
+                if (item is not LogFileEntry entry)
+                {
+                    continue;
+                }
+
+                if (entries.Count >= maxEntriesPerList || total >= maxTotalEntries)
+                {
+                    truncated = true;
+                    break;
+                }
+
+                entries.Add(new LiveLogEntrySnapshot(
+                    entry.LineNumber,
+                    entry.Date,
+                    entry.IsTimeOnlyTimestamp,
+                    entry.Type,
+                    entry.Text,
+                    entry.RawLine,
+                    entry.Detail));
+
+                total++;
+            }
+
+            listSnapshots.Add(new LiveLogListSnapshot(listIndex, entries.Count, entries));
+
+            if (total >= maxTotalEntries)
+            {
+                truncated = true;
+                break;
+            }
+        }
+
+        return new LiveLoadedEntriesSnapshot(DateTime.UtcNow, Lists.Count, total, truncated, listSnapshots);
+    }
+
+    public LiveOpenFilesSnapshot GetOpenFilesSnapshot()
+    {
+        var lists = new List<LiveOpenFileListSnapshot>(Lists.Count);
+
+        for (var listIndex = 0; listIndex < Lists.Count; listIndex++)
+        {
+            var list = Lists[listIndex];
+            var files = list.GetLoadedFilesSnapshot();
+            lists.Add(new LiveOpenFileListSnapshot(listIndex, files));
+        }
+
+        var distinctFiles = lists
+            .SelectMany(x => x.Files)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return new LiveOpenFilesSnapshot(DateTime.UtcNow, lists, distinctFiles);
+    }
+
+    public LiveSelectedEntrySnapshot GetSelectedEntrySnapshot()
+    {
+        for (var listIndex = 0; listIndex < Lists.Count; listIndex++)
+        {
+            var selected = Lists[listIndex].SelectedEntry;
+            if (selected is null)
+            {
+                continue;
+            }
+
+            return new LiveSelectedEntrySnapshot(
+                true,
+                listIndex,
+                selected.LineNumber,
+                selected.Date,
+                selected.IsTimeOnlyTimestamp,
+                selected.Type,
+                selected.Text,
+                selected.RawLine,
+                selected.Detail);
+        }
+
+        return new LiveSelectedEntrySnapshot(false, null, null, null, null, null, null, null, null);
+    }
+
+    public bool TrySelectEntry(int listIndex, int lineNumber)
+    {
+        if (listIndex < 0 || listIndex >= Lists.Count)
+        {
+            return false;
+        }
+
+        var list = Lists[listIndex];
+        var selected = list.TrySelectEntryByLineNumber(lineNumber);
+        if (!selected)
+        {
+            return false;
+        }
+
+        SelectedEntryGlobal = list.SelectedEntry;
+        return true;
+    }
+
+    public LiveSetFilterTextActionResult SetFilterText(int listIndex, string? filterText)
+    {
+        if (listIndex < 0 || listIndex >= Lists.Count)
+        {
+            return new LiveSetFilterTextActionResult(false, listIndex, null, "Invalid listIndex.");
+        }
+
+        var normalized = filterText?.Trim() ?? string.Empty;
+        Lists[listIndex].FilterText = normalized;
+        return new LiveSetFilterTextActionResult(true, listIndex, normalized, null);
+    }
+
+    public LiveSetTimeFilterActionResult SetTimeFilter(
+        int listIndex,
+        DateTime? fromDate,
+        DateTime? toDate,
+        TimeOnly? fromTime,
+        TimeOnly? toTime)
+    {
+        if (listIndex < 0 || listIndex >= Lists.Count)
+        {
+            return new LiveSetTimeFilterActionResult(false, listIndex, null, null, null, null, "Invalid listIndex.");
+        }
+
+        var list = Lists[listIndex];
+        list.FilterFromDate = fromDate;
+        list.FilterToDate = toDate;
+        list.FilterFromTime = fromTime;
+        list.FilterToTime = toTime;
+
+        return new LiveSetTimeFilterActionResult(true, listIndex, fromDate, toDate, fromTime, toTime, null);
+    }
+
+    public async Task<LiveLoadFilesActionResult> LoadFilesIntoListAsync(int listIndex, IReadOnlyList<string>? filePaths)
+    {
+        if (listIndex < 0 || listIndex >= Lists.Count)
+        {
+            return new LiveLoadFilesActionResult(false, listIndex, 0, "Invalid listIndex.");
+        }
+
+        var paths = filePaths?
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? [];
+
+        if (paths.Length == 0)
+        {
+            return new LiveLoadFilesActionResult(false, listIndex, 0, "No file paths were provided.");
+        }
+
+        var missingPath = paths.FirstOrDefault(path => !File.Exists(path));
+        if (!string.IsNullOrWhiteSpace(missingPath))
+        {
+            return new LiveLoadFilesActionResult(false, listIndex, 0, $"File not found: {missingPath}");
+        }
+
+        await Lists[listIndex].LoadFilesFromExternalAsync(paths);
+        return new LiveLoadFilesActionResult(true, listIndex, paths.Length, null);
+    }
 }
+
+public sealed record LiveLoadedEntriesSnapshot(
+    DateTime GeneratedAtUtc,
+    int ListCount,
+    int ReturnedEntryCount,
+    bool Truncated,
+    IReadOnlyList<LiveLogListSnapshot> Lists);
+
+public sealed record LiveLogListSnapshot(
+    int ListIndex,
+    int EntryCount,
+    IReadOnlyList<LiveLogEntrySnapshot> Entries);
+
+public sealed record LiveLogEntrySnapshot(
+    int LineNumber,
+    DateTime Date,
+    bool IsTimeOnlyTimestamp,
+    LogType Type,
+    string Text,
+    string RawLine,
+    string[] Detail);
+
+public sealed record LiveOpenFilesSnapshot(
+    DateTime GeneratedAtUtc,
+    IReadOnlyList<LiveOpenFileListSnapshot> Lists,
+    IReadOnlyList<string> DistinctFiles);
+
+public sealed record LiveOpenFileListSnapshot(
+    int ListIndex,
+    IReadOnlyList<string> Files);
+
+public sealed record LiveSelectedEntrySnapshot(
+    bool HasSelection,
+    int? ListIndex,
+    int? LineNumber,
+    DateTime? Date,
+    bool? IsTimeOnlyTimestamp,
+    LogType? Type,
+    string? Text,
+    string? RawLine,
+    string[]? Detail);
+
+public sealed record LiveSetFilterTextActionResult(
+    bool Success,
+    int ListIndex,
+    string? FilterText,
+    string? Error);
+
+public sealed record LiveSetTimeFilterActionResult(
+    bool Success,
+    int ListIndex,
+    DateTime? FromDate,
+    DateTime? ToDate,
+    TimeOnly? FromTime,
+    TimeOnly? ToTime,
+    string? Error);
+
+public sealed record LiveLoadFilesActionResult(
+    bool Success,
+    int ListIndex,
+    int RequestedFileCount,
+    string? Error);
