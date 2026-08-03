@@ -1,4 +1,5 @@
 ﻿using LogAnalyzer.ViewModels;
+using LogAnalyzer.Services.LiveIpc;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
@@ -14,14 +15,114 @@ namespace LogAnalyzer
     public partial class MainWindow : Window
     {
         private MainViewModel? _mainViewModel;
+        private readonly LiveToolPipeServer _liveToolPipeServer;
 
         public MainWindow()
         {
             InitializeComponent();
             DataContextChanged += MainWindow_DataContextChanged;
+            Closed += MainWindow_Closed;
             DataContext = new MainViewModel(Services.AppServices.AppSettings);
             AttachMainViewModel(DataContext as MainViewModel);
+            _liveToolPipeServer = new LiveToolPipeServer(HandleLiveToolRequestAsync);
+            _liveToolPipeServer.Start();
             RebuildLogListsHost();
+        }
+
+        private async void MainWindow_Closed(object? sender, EventArgs e)
+        {
+            await _liveToolPipeServer.StopAsync();
+        }
+
+        private async Task<object> HandleLiveToolRequestAsync(LivePipeRequest request)
+        {
+            if (string.Equals(request.Command, "load_files", StringComparison.Ordinal))
+            {
+                var actionResult = await Dispatcher.InvokeAsync(async () =>
+                {
+                    if (_mainViewModel is null)
+                    {
+                        throw new InvalidOperationException("MainViewModel is not available.");
+                    }
+
+                    if (request.ListIndex is null)
+                    {
+                        throw new InvalidOperationException("load_files requires listIndex.");
+                    }
+
+                    return await _mainViewModel.LoadFilesIntoListAsync(request.ListIndex.Value, request.FilePaths);
+                }).Task.Unwrap();
+
+                return actionResult;
+            }
+
+            return await Dispatcher.InvokeAsync<object>(() =>
+            {
+                if (_mainViewModel is null)
+                {
+                    throw new InvalidOperationException("MainViewModel is not available.");
+                }
+
+                if (string.Equals(request.Command, "get_loaded_entries", StringComparison.Ordinal))
+                {
+                    var maxPerList = request.MaxEntriesPerList ?? 500;
+                    var maxTotal = request.MaxTotalEntries ?? 5000;
+                    return _mainViewModel.GetLoadedEntriesSnapshot(maxPerList, maxTotal);
+                }
+
+                if (string.Equals(request.Command, "get_open_files", StringComparison.Ordinal))
+                {
+                    return _mainViewModel.GetOpenFilesSnapshot();
+                }
+
+                if (string.Equals(request.Command, "get_selected_entry", StringComparison.Ordinal))
+                {
+                    return _mainViewModel.GetSelectedEntrySnapshot();
+                }
+
+                if (string.Equals(request.Command, "select_entry", StringComparison.Ordinal))
+                {
+                    if (request.ListIndex is null || request.LineNumber is null)
+                    {
+                        throw new InvalidOperationException("select_entry requires listIndex and lineNumber.");
+                    }
+
+                    var success = _mainViewModel.TrySelectEntry(request.ListIndex.Value, request.LineNumber.Value);
+                    return new
+                    {
+                        success,
+                        listIndex = request.ListIndex.Value,
+                        lineNumber = request.LineNumber.Value
+                    };
+                }
+
+                if (string.Equals(request.Command, "set_filter_text", StringComparison.Ordinal))
+                {
+                    if (request.ListIndex is null)
+                    {
+                        throw new InvalidOperationException("set_filter_text requires listIndex.");
+                    }
+
+                    return _mainViewModel.SetFilterText(request.ListIndex.Value, request.FilterText);
+                }
+
+                if (string.Equals(request.Command, "set_time_filter", StringComparison.Ordinal))
+                {
+                    if (request.ListIndex is null)
+                    {
+                        throw new InvalidOperationException("set_time_filter requires listIndex.");
+                    }
+
+                    return _mainViewModel.SetTimeFilter(
+                        request.ListIndex.Value,
+                        request.FromDate,
+                        request.ToDate,
+                        request.FromTime,
+                        request.ToTime);
+                }
+
+                throw new InvalidOperationException($"Unknown command: {request.Command}");
+            }).Task;
         }
 
         private void MainWindow_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)

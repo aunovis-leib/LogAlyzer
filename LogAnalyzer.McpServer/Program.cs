@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.IO.Pipes;
+using System.Globalization;
 using LogAnalyzer.Models;
 using LogAnalyzer.Services;
 using LogAnalyzer.Services.Parsing;
@@ -106,6 +108,201 @@ while (TryReadMessage(input, out var payload))
                             },
                             required = new[] { "filePath" }
                         }
+                    },
+                    new
+                    {
+                        name = "get_live_loaded_log_lines",
+                        description = "Reads currently loaded parsed log lines from the running LogAnalyzer app via named pipe.",
+                        inputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                maxEntriesPerList = new
+                                {
+                                    type = "integer",
+                                    description = "Optional maximum entries returned per list (default 500)."
+                                },
+                                maxTotalEntries = new
+                                {
+                                    type = "integer",
+                                    description = "Optional maximum total entries returned (default 5000)."
+                                },
+                                pipeName = new
+                                {
+                                    type = "string",
+                                    description = "Optional pipe name. Default is 'LogAnalyzer.LiveTools'."
+                                }
+                            },
+                            required = Array.Empty<string>()
+                        }
+                    },
+                    new
+                    {
+                        name = "get_live_open_files",
+                        description = "Reads currently open/loaded log files from the running LogAnalyzer app via named pipe.",
+                        inputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                pipeName = new
+                                {
+                                    type = "string",
+                                    description = "Optional pipe name. Default is 'LogAnalyzer.LiveTools'."
+                                }
+                            },
+                            required = Array.Empty<string>()
+                        }
+                    },
+                    new
+                    {
+                        name = "get_live_selected_entry",
+                        description = "Reads the currently selected log entry from the running LogAnalyzer app via named pipe.",
+                        inputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                pipeName = new
+                                {
+                                    type = "string",
+                                    description = "Optional pipe name. Default is 'LogAnalyzer.LiveTools'."
+                                }
+                            },
+                            required = Array.Empty<string>()
+                        }
+                    },
+                    new
+                    {
+                        name = "select_live_entry",
+                        description = "Prepares action support by selecting an entry in the running LogAnalyzer app (listIndex + lineNumber).",
+                        inputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                listIndex = new
+                                {
+                                    type = "integer",
+                                    description = "Zero-based list index."
+                                },
+                                lineNumber = new
+                                {
+                                    type = "integer",
+                                    description = "Line number of the loaded entry in that list."
+                                },
+                                pipeName = new
+                                {
+                                    type = "string",
+                                    description = "Optional pipe name. Default is 'LogAnalyzer.LiveTools'."
+                                }
+                            },
+                            required = new[] { "listIndex", "lineNumber" }
+                        }
+                    },
+                    new
+                    {
+                        name = "load_live_files",
+                        description = "Loads one or more files into a target list in the running LogAnalyzer app.",
+                        inputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                listIndex = new
+                                {
+                                    type = "integer",
+                                    description = "Zero-based list index to load files into."
+                                },
+                                filePaths = new
+                                {
+                                    type = "array",
+                                    description = "Absolute log file paths to load.",
+                                    items = new
+                                    {
+                                        type = "string"
+                                    }
+                                },
+                                pipeName = new
+                                {
+                                    type = "string",
+                                    description = "Optional pipe name. Default is 'LogAnalyzer.LiveTools'."
+                                }
+                            },
+                            required = new[] { "listIndex", "filePaths" }
+                        }
+                    },
+                    new
+                    {
+                        name = "set_live_filter_text",
+                        description = "Sets the filter text of a log list in the running LogAnalyzer app.",
+                        inputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                listIndex = new
+                                {
+                                    type = "integer",
+                                    description = "Zero-based list index whose filter text should be set."
+                                },
+                                filterText = new
+                                {
+                                    type = "string",
+                                    description = "Filter text to apply. Empty string clears the filter."
+                                },
+                                pipeName = new
+                                {
+                                    type = "string",
+                                    description = "Optional pipe name. Default is 'LogAnalyzer.LiveTools'."
+                                }
+                            },
+                            required = new[] { "listIndex", "filterText" }
+                        }
+                    },
+                    new
+                    {
+                        name = "set_live_time_filter",
+                        description = "Sets the date/time range filter of a log list in the running LogAnalyzer app. Combined with get_live_loaded_log_lines, this returns only entries within the given range instead of all loaded entries.",
+                        inputSchema = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                listIndex = new
+                                {
+                                    type = "integer",
+                                    description = "Zero-based list index whose time filter should be set."
+                                },
+                                fromDate = new
+                                {
+                                    type = "string",
+                                    description = "Optional inclusive start date, e.g. '2026-08-03'. Omit or null to clear."
+                                },
+                                toDate = new
+                                {
+                                    type = "string",
+                                    description = "Optional inclusive end date, e.g. '2026-08-03'. Omit or null to clear."
+                                },
+                                fromTime = new
+                                {
+                                    type = "string",
+                                    description = "Optional inclusive start time of day, e.g. '05:40:00'. Omit or null to clear."
+                                },
+                                toTime = new
+                                {
+                                    type = "string",
+                                    description = "Optional inclusive end time of day, e.g. '10:35:00'. Omit or null to clear."
+                                },
+                                pipeName = new
+                                {
+                                    type = "string",
+                                    description = "Optional pipe name. Default is 'LogAnalyzer.LiveTools'."
+                                }
+                            },
+                            required = new[] { "listIndex" }
+                        }
                     }
                 }
             }, jsonOptions);
@@ -141,6 +338,34 @@ static async Task HandleToolCallAsync(StreamWriter writer, JsonObject message, J
 
         case "get_parsed_log_lines":
             await GetParsedLogLinesAsync(writer, id, arguments, jsonOptions);
+            break;
+
+        case "get_live_loaded_log_lines":
+            await GetLiveLoadedLogLinesAsync(writer, id, arguments, jsonOptions);
+            break;
+
+        case "get_live_open_files":
+            await GetLiveOpenFilesAsync(writer, id, arguments, jsonOptions);
+            break;
+
+        case "get_live_selected_entry":
+            await GetLiveSelectedEntryAsync(writer, id, arguments, jsonOptions);
+            break;
+
+        case "select_live_entry":
+            await SelectLiveEntryAsync(writer, id, arguments, jsonOptions);
+            break;
+
+        case "load_live_files":
+            await LoadLiveFilesAsync(writer, id, arguments, jsonOptions);
+            break;
+
+        case "set_live_filter_text":
+            await SetLiveFilterTextAsync(writer, id, arguments, jsonOptions);
+            break;
+
+        case "set_live_time_filter":
+            await SetLiveTimeFilterAsync(writer, id, arguments, jsonOptions);
             break;
 
         default:
@@ -266,6 +491,333 @@ static void WriteToolResult(StreamWriter writer, JsonNode id, object result, Jso
         },
         isError = false
     }, jsonOptions);
+}
+
+static async Task GetLiveLoadedLogLinesAsync(StreamWriter writer, JsonNode id, JsonObject? arguments, JsonSerializerOptions jsonOptions)
+{
+    var maxEntriesPerList = 500;
+    var maxTotalEntries = 5000;
+    var pipeName = "LogAnalyzer.LiveTools";
+
+    if (arguments?["maxEntriesPerList"] is JsonNode perListNode
+        && int.TryParse(perListNode.ToString(), out var requestedPerList)
+        && requestedPerList > 0)
+    {
+        maxEntriesPerList = requestedPerList;
+    }
+
+    if (arguments?["maxTotalEntries"] is JsonNode totalNode
+        && int.TryParse(totalNode.ToString(), out var requestedTotal)
+        && requestedTotal > 0)
+    {
+        maxTotalEntries = requestedTotal;
+    }
+
+    if (arguments?["pipeName"] is JsonNode pipeNameNode)
+    {
+        var requestedPipeName = pipeNameNode.GetValue<string>();
+        if (!string.IsNullOrWhiteSpace(requestedPipeName))
+        {
+            pipeName = requestedPipeName;
+        }
+    }
+
+    var response = await SendLivePipeRequestAsync(new
+    {
+        command = "get_loaded_entries",
+        maxEntriesPerList,
+        maxTotalEntries
+    }, pipeName, jsonOptions);
+
+    HandleLivePipeResponse(writer, id, response, jsonOptions);
+}
+
+static async Task LoadLiveFilesAsync(StreamWriter writer, JsonNode id, JsonObject? arguments, JsonSerializerOptions jsonOptions)
+{
+    if (arguments?["listIndex"] is not JsonNode listIndexNode || !int.TryParse(listIndexNode.ToString(), out var listIndex))
+    {
+        WriteError(writer, id, -32602, "Tool argument 'listIndex' is required.", jsonOptions);
+        return;
+    }
+
+    var filePaths = arguments?["filePaths"] as JsonArray;
+    if (filePaths is null)
+    {
+        WriteError(writer, id, -32602, "Tool argument 'filePaths' is required.", jsonOptions);
+        return;
+    }
+
+    var normalizedPaths = filePaths
+        .Select(node => node?.GetValue<string>())
+        .Where(path => !string.IsNullOrWhiteSpace(path))
+        .ToArray();
+
+    if (normalizedPaths.Length == 0)
+    {
+        WriteError(writer, id, -32602, "Tool argument 'filePaths' must contain at least one path.", jsonOptions);
+        return;
+    }
+
+    var pipeName = GetPipeName(arguments);
+    var response = await SendLivePipeRequestAsync(new
+    {
+        command = "load_files",
+        listIndex,
+        filePaths = normalizedPaths
+    }, pipeName, jsonOptions);
+
+    HandleLivePipeResponse(writer, id, response, jsonOptions);
+}
+
+static async Task GetLiveOpenFilesAsync(StreamWriter writer, JsonNode id, JsonObject? arguments, JsonSerializerOptions jsonOptions)
+{
+    var pipeName = GetPipeName(arguments);
+    var response = await SendLivePipeRequestAsync(new
+    {
+        command = "get_open_files"
+    }, pipeName, jsonOptions);
+
+    HandleLivePipeResponse(writer, id, response, jsonOptions);
+}
+
+static async Task GetLiveSelectedEntryAsync(StreamWriter writer, JsonNode id, JsonObject? arguments, JsonSerializerOptions jsonOptions)
+{
+    var pipeName = GetPipeName(arguments);
+    var response = await SendLivePipeRequestAsync(new
+    {
+        command = "get_selected_entry"
+    }, pipeName, jsonOptions);
+
+    HandleLivePipeResponse(writer, id, response, jsonOptions);
+}
+
+static async Task SelectLiveEntryAsync(StreamWriter writer, JsonNode id, JsonObject? arguments, JsonSerializerOptions jsonOptions)
+{
+    if (arguments?["listIndex"] is not JsonNode listIndexNode || !int.TryParse(listIndexNode.ToString(), out var listIndex))
+    {
+        WriteError(writer, id, -32602, "Tool argument 'listIndex' is required.", jsonOptions);
+        return;
+    }
+
+    if (arguments?["lineNumber"] is not JsonNode lineNumberNode || !int.TryParse(lineNumberNode.ToString(), out var lineNumber))
+    {
+        WriteError(writer, id, -32602, "Tool argument 'lineNumber' is required.", jsonOptions);
+        return;
+    }
+
+    var pipeName = GetPipeName(arguments);
+    var response = await SendLivePipeRequestAsync(new
+    {
+        command = "select_entry",
+        listIndex,
+        lineNumber
+    }, pipeName, jsonOptions);
+
+    HandleLivePipeResponse(writer, id, response, jsonOptions);
+}
+
+static async Task SetLiveFilterTextAsync(StreamWriter writer, JsonNode id, JsonObject? arguments, JsonSerializerOptions jsonOptions)
+{
+    if (arguments?["listIndex"] is not JsonNode listIndexNode || !int.TryParse(listIndexNode.ToString(), out var listIndex))
+    {
+        WriteError(writer, id, -32602, "Tool argument 'listIndex' is required.", jsonOptions);
+        return;
+    }
+
+    if (arguments?["filterText"] is not JsonNode filterTextNode)
+    {
+        WriteError(writer, id, -32602, "Tool argument 'filterText' is required.", jsonOptions);
+        return;
+    }
+
+    var filterText = filterTextNode.GetValue<string>();
+
+    var pipeName = GetPipeName(arguments);
+    var response = await SendLivePipeRequestAsync(new
+    {
+        command = "set_filter_text",
+        listIndex,
+        filterText
+    }, pipeName, jsonOptions);
+
+    HandleLivePipeResponse(writer, id, response, jsonOptions);
+}
+
+static async Task SetLiveTimeFilterAsync(StreamWriter writer, JsonNode id, JsonObject? arguments, JsonSerializerOptions jsonOptions)
+{
+    if (arguments?["listIndex"] is not JsonNode listIndexNode || !int.TryParse(listIndexNode.ToString(), out var listIndex))
+    {
+        WriteError(writer, id, -32602, "Tool argument 'listIndex' is required.", jsonOptions);
+        return;
+    }
+
+    if (!TryParseOptionalDate(arguments, "fromDate", out var fromDate, out var fromDateError))
+    {
+        WriteError(writer, id, -32602, fromDateError!, jsonOptions);
+        return;
+    }
+
+    if (!TryParseOptionalDate(arguments, "toDate", out var toDate, out var toDateError))
+    {
+        WriteError(writer, id, -32602, toDateError!, jsonOptions);
+        return;
+    }
+
+    if (!TryParseOptionalTime(arguments, "fromTime", out var fromTime, out var fromTimeError))
+    {
+        WriteError(writer, id, -32602, fromTimeError!, jsonOptions);
+        return;
+    }
+
+    if (!TryParseOptionalTime(arguments, "toTime", out var toTime, out var toTimeError))
+    {
+        WriteError(writer, id, -32602, toTimeError!, jsonOptions);
+        return;
+    }
+
+    var pipeName = GetPipeName(arguments);
+    var response = await SendLivePipeRequestAsync(new
+    {
+        command = "set_time_filter",
+        listIndex,
+        fromDate,
+        toDate,
+        fromTime,
+        toTime
+    }, pipeName, jsonOptions);
+
+    HandleLivePipeResponse(writer, id, response, jsonOptions);
+}
+
+static bool TryParseOptionalDate(JsonObject? arguments, string propertyName, out DateTime? value, out string? error)
+{
+    value = null;
+    error = null;
+
+    if (arguments?[propertyName] is not JsonNode node || node.GetValueKind() == JsonValueKind.Null)
+    {
+        return true;
+    }
+
+    var text = node.GetValue<string>();
+    if (string.IsNullOrWhiteSpace(text))
+    {
+        return true;
+    }
+
+    if (!DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+    {
+        error = $"Tool argument '{propertyName}' is not a valid date.";
+        return false;
+    }
+
+    value = parsed;
+    return true;
+}
+
+static bool TryParseOptionalTime(JsonObject? arguments, string propertyName, out TimeOnly? value, out string? error)
+{
+    value = null;
+    error = null;
+
+    if (arguments?[propertyName] is not JsonNode node || node.GetValueKind() == JsonValueKind.Null)
+    {
+        return true;
+    }
+
+    var text = node.GetValue<string>();
+    if (string.IsNullOrWhiteSpace(text))
+    {
+        return true;
+    }
+
+    if (!TimeOnly.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+    {
+        error = $"Tool argument '{propertyName}' is not a valid time.";
+        return false;
+    }
+
+    value = parsed;
+    return true;
+}
+
+static async Task<JsonObject?> SendLivePipeRequestAsync(object request, string pipeName, JsonSerializerOptions jsonOptions)
+{
+    try
+    {
+        using var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await pipe.ConnectAsync(1500);
+
+        using var requestWriter = new StreamWriter(pipe, new UTF8Encoding(false), leaveOpen: true)
+        {
+            AutoFlush = true
+        };
+        using var responseReader = new StreamReader(pipe, Encoding.UTF8, leaveOpen: true);
+
+        await requestWriter.WriteLineAsync(JsonSerializer.Serialize(request, jsonOptions));
+
+        var responseLine = await responseReader.ReadLineAsync();
+        if (string.IsNullOrWhiteSpace(responseLine))
+        {
+            return new JsonObject
+            {
+                ["success"] = false,
+                ["error"] = "No response from running LogAnalyzer app."
+            };
+        }
+
+        return JsonNode.Parse(responseLine) as JsonObject;
+    }
+    catch (TimeoutException)
+    {
+        return new JsonObject
+        {
+            ["success"] = false,
+            ["error"] = "Could not connect to running LogAnalyzer app (named pipe timeout)."
+        };
+    }
+    catch (IOException ex)
+    {
+        return new JsonObject
+        {
+            ["success"] = false,
+            ["error"] = $"Live IPC I/O error: {ex.Message}"
+        };
+    }
+}
+
+static void HandleLivePipeResponse(StreamWriter writer, JsonNode id, JsonObject? responseObject, JsonSerializerOptions jsonOptions)
+{
+    if (responseObject is null)
+    {
+        WriteError(writer, id, -32000, "Invalid response from running LogAnalyzer app.", jsonOptions);
+        return;
+    }
+
+    var success = responseObject["success"]?.GetValue<bool>() == true;
+    if (!success)
+    {
+        var errorMessage = responseObject["error"]?.GetValue<string>() ?? "Unknown live IPC error.";
+        WriteError(writer, id, -32001, errorMessage, jsonOptions);
+        return;
+    }
+
+    WriteToolResult(writer, id, responseObject["data"] ?? new JsonObject(), jsonOptions);
+}
+
+static string GetPipeName(JsonObject? arguments)
+{
+    var pipeName = "LogAnalyzer.LiveTools";
+    if (arguments?["pipeName"] is JsonNode pipeNameNode)
+    {
+        var requestedPipeName = pipeNameNode.GetValue<string>();
+        if (!string.IsNullOrWhiteSpace(requestedPipeName))
+        {
+            pipeName = requestedPipeName;
+        }
+    }
+
+    return pipeName;
 }
 
 static bool TryReadMessage(Stream input, out string payload)

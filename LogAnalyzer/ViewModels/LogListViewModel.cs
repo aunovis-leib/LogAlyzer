@@ -62,6 +62,43 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         }
     }
 
+    public IReadOnlyList<string> GetLoadedFilesSnapshot()
+    {
+        return [.. _currentLoadedFiles];
+    }
+
+    public bool TrySelectEntryByLineNumber(int lineNumber)
+    {
+        if (lineNumber <= 0)
+        {
+            return false;
+        }
+
+        var foundEntry = LogFilesEntries.FirstOrDefault(x => x.LineNumber == lineNumber);
+        if (foundEntry is null)
+        {
+            return false;
+        }
+
+        foundEntry.IsDetailVisible = true;
+        SelectedEntry = foundEntry;
+        EntrySelected?.Invoke(this, foundEntry);
+        return true;
+    }
+
+    public async Task LoadFilesFromExternalAsync(IReadOnlyList<string> filePaths)
+    {
+        if (filePaths is null || filePaths.Count == 0)
+        {
+            return;
+        }
+
+        await LoadFilesAsync(filePaths
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray());
+    }
+
     public int ReapplyPatternToLoadedEntries(string patternId)
     {
         if (_patternService == null || string.IsNullOrWhiteSpace(patternId))
