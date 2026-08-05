@@ -953,59 +953,73 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             try
             {
                 var parser = GetActiveParser();
-                var loader = new LogFileChunkLoader(parser);
                 var maxEntries = Math.Max(1, _appSettings.Settings.SettingsView?.MaxEntriesPerList ?? int.MaxValue);
                 var fastLoadMode = _appSettings.Settings.SettingsView?.FastLoadMode ?? false;
                 var loadedEntries = 0;
                 var deferredEntries = fastLoadMode ? new List<LogFileEntry>() : null;
 
-                await foreach (var chunk in loader.LoadAsync(fileNames, 2000, token))
+                async Task LoadEntriesWithParserAsync(ILogParser effectiveParser)
                 {
-                    var batch = new List<LogFileEntry>(chunk.Entries.Count);
-                    foreach (var e in chunk.Entries)
+                    var loader = new LogFileChunkLoader(effectiveParser);
+                    await foreach (var chunk in loader.LoadAsync(fileNames, 2000, token))
                     {
+                        var batch = new List<LogFileEntry>(chunk.Entries.Count);
+                        foreach (var e in chunk.Entries)
+                        {
+                            if (loadedEntries >= maxEntries)
+                            {
+                                break;
+                            }
+
+                            e.LineNumber = loadedEntries + 1;
+                            ApplyPatternsToEntry(e);
+                            batch.Add(e);
+
+                            loadedEntries++;
+                            observedTypes.Add(e.Type);
+
+                            var day = e.Date.Date;
+                            if (minDate is null || day < minDate.Value)
+                            {
+                                minDate = day;
+                            }
+
+                            if (maxDate is null || day > maxDate.Value)
+                            {
+                                maxDate = day;
+                            }
+                        }
+
+                        if (batch.Count > 0)
+                        {
+                            if (fastLoadMode)
+                            {
+                                deferredEntries!.AddRange(batch);
+                            }
+                            else
+                            {
+                                LogFilesEntries.AddRange(batch);
+                            }
+                        }
+
+                        LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
+
                         if (loadedEntries >= maxEntries)
                         {
                             break;
                         }
-
-                        e.LineNumber = loadedEntries + 1;
-                        ApplyPatternsToEntry(e);
-                        batch.Add(e);
-
-                        loadedEntries++;
-                        observedTypes.Add(e.Type);
-
-                        var day = e.Date.Date;
-                        if (minDate is null || day < minDate.Value)
-                        {
-                            minDate = day;
-                        }
-
-                        if (maxDate is null || day > maxDate.Value)
-                        {
-                            maxDate = day;
-                        }
                     }
+                }
 
-                    if (batch.Count > 0)
-                    {
-                        if (fastLoadMode)
-                        {
-                            deferredEntries!.AddRange(batch);
-                        }
-                        else
-                        {
-                            LogFilesEntries.AddRange(batch);
-                        }
-                    }
+                await LoadEntriesWithParserAsync(parser);
 
-                    LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
-
-                    if (loadedEntries >= maxEntries)
-                    {
-                        break;
-                    }
+                if (loadedEntries == 0
+                    && parser is ProfileLogParser
+                    && !ShouldUseCsv())
+                {
+                    LoadingStatus = "Kein Treffer mit Profilparser. Verwende Standardparser...";
+                    _activeParser = new LegacyLogParser();
+                    await LoadEntriesWithParserAsync(_activeParser);
                 }
 
                 if (fastLoadMode && deferredEntries is { Count: > 0 })

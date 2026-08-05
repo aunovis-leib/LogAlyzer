@@ -65,7 +65,7 @@ public partial class MainViewModel : ObservableObject
     {
         _appSettings = appSettings;
         Profiles = [.. _appSettings.ParserProfiles];
-        SelectedProfile = Profiles.Count > 0 ? Profiles[0] : null;
+        SelectedProfile = Profiles.FirstOrDefault();
         SettingsVM = new SettingsViewModel();
         RuleMatchResults.CollectionChanged += (_, __) => OnPropertyChanged(nameof(ShowRuleMatchesTab));
         SettingsVM.PropertyChanged += SettingsVM_PropertyChanged;

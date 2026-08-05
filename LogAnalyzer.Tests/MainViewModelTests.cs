@@ -20,6 +20,27 @@ namespace LogAnalyzer.Tests
         }
 
         [Fact]
+        public void Constructor_SelectsFirstParserProfileByDefault()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("main_profile_default_selection");
+                AppSettingsManager.Initialize(temp);
+                var manager = AppSettingsManager.Instance;
+                manager.Settings.ParserProfiles.Add(new ParserProfile
+                {
+                    Name = "CustomProfile"
+                });
+                manager.Save();
+
+                var vm = new MainViewModel(manager);
+
+                Assert.NotNull(vm.SelectedProfile);
+                Assert.Equal("CustomProfile", vm.SelectedProfile!.Name);
+            });
+        }
+
+        [Fact]
         public void ShowSearchResultsTab_Is_True_Only_With_SearchText()
         {
             StaTestHelper.Run(() =>
