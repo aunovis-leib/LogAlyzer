@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using LogAnalyzer.Models;
+using Microsoft.Extensions.Logging;
 
 namespace LogAnalyzer.Services.Parsing
 {
@@ -21,6 +22,7 @@ namespace LogAnalyzer.Services.Parsing
         private readonly char _delimiter;
         private readonly string _dateFormat;
         private readonly TimeSpan _timeOffset;
+        private readonly ILogger<CsvLogParser> _logger = AppServices.CreateLogger<CsvLogParser>();
 
         private string[]? _headers;
         private int _dateColumnIndex = -1;
@@ -36,6 +38,12 @@ namespace LogAnalyzer.Services.Parsing
                 : profile!.DateFormat;
             _timeOffset = TimeSpan.FromHours(profile?.TimeOffsetHours ?? 0)
                 + TimeSpan.FromMinutes(profile?.TimeOffsetMinutes ?? 0);
+            _logger.LogInformation(
+                "CSV-Parser initialisiert: Profil {ProfileName}, Trennzeichen {Delimiter}, Datumsformat {DateFormat}, Zeitoffset {TimeOffset}",
+                profile?.Name ?? "Standard",
+                _delimiter,
+                _dateFormat,
+                _timeOffset);
         }
 
         /// <summary>
@@ -118,6 +126,12 @@ namespace LogAnalyzer.Services.Parsing
             {
                 _displayColumns.RemoveAll(c => string.Equals(c, dateColumnName, StringComparison.OrdinalIgnoreCase));
             }
+
+            _logger.LogInformation(
+                "CSV-Header erkannt: {ColumnCount} Spalten, Datumsspalte {DateColumn}, Anzeigespalten {DisplayColumnCount}",
+                _headers.Length,
+                dateColumnName ?? "nicht erkannt",
+                _displayColumns.Count);
         }
 
         private static int ResolveDateColumnIndex(string[] headers, string? configuredDateColumn)

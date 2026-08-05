@@ -17,12 +17,14 @@ using System.Windows;
 using System.Windows.Threading;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace LogAnalyzer.ViewModels;
 
 public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 {
     private readonly AppSettingsManager _appSettings;
+    private readonly ILogger<LogListViewModel> _logger = AppServices.CreateLogger<LogListViewModel>();
     private CancellationTokenSource? _loadCancellation;
     private readonly SemaphoreSlim _loadSemaphore = new(1, 1);
     private readonly LogPatternService? _patternService;
@@ -129,7 +131,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Pattern Error] Fehler beim Re-Apply von '{patternId}': {ex.Message}");
+                _logger.LogError(ex, "Fehler beim erneuten Anwenden des Patterns {PatternId}", patternId);
             }
         }
 
@@ -724,7 +726,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error processing file {filePath}: {ex}");
+                    _logger.LogError(ex, "Fehler beim Verarbeiten der Datei {FilePath}", filePath);
                 }
             }
 
@@ -1356,21 +1358,20 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
             if (matches.Any())
             {
-                // Debug-Ausgabe: Patterns gefunden
-                Debug.WriteLine($"[Pattern Match] {entry.Text?.Substring(0, Math.Min(60, entry.Text?.Length ?? 0))}");
+                _logger.LogDebug("Patterns für einen Logeintrag gefunden");
                 foreach (var match in matches)
                 {
-                    Debug.WriteLine($"  ? {match.Pattern.Name} ({match.Pattern.Severity})");
+                    _logger.LogDebug("Pattern {PatternName} mit Schweregrad {Severity} gefunden", match.Pattern.Name, match.Pattern.Severity);
                     foreach (var field in match.ExtractedFields)
                     {
-                        Debug.WriteLine($"    - {field.Key}: {field.Value}");
+                        _logger.LogDebug("Extrahiertes Feld {FieldName} erkannt", field.Key);
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[Pattern Error] Fehler beim Anwenden von Patterns: {ex.Message}");
+            _logger.LogError(ex, "Fehler beim Anwenden von Patterns");
         }
     }
 

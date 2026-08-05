@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using LogAnalyzer.Models;
+using Microsoft.Extensions.Logging;
 using YamlDotNet.Serialization;
 
 namespace LogAnalyzer.Services
@@ -17,6 +18,7 @@ namespace LogAnalyzer.Services
         private readonly List<LogPattern> _patterns = [];
         private readonly Dictionary<string, Regex> _compiledRegexes = [];
         private readonly string _patternDirectory;
+        private readonly ILogger<LogPatternService> _logger = AppServices.CreateLogger<LogPatternService>();
 
         public event EventHandler<PatternMatch>? PatternMatched;
         public event EventHandler<LogPattern>? PatternSaved;
@@ -58,7 +60,7 @@ namespace LogAnalyzer.Services
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Fehler beim Laden von Pattern {file}: {ex.Message}");
+                    _logger.LogError(ex, "Fehler beim Laden des Patterns {PatternFile}", file);
                 }
             }
 
@@ -78,7 +80,7 @@ namespace LogAnalyzer.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Regex-Fehler in Pattern {pattern.Id}: {ex.Message}");
+                _logger.LogError(ex, "Regex-Fehler in Pattern {PatternId}", pattern.Id);
             }
         }
 

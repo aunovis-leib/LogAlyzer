@@ -1,12 +1,19 @@
 using System;
 using System.Globalization;
 using LogAnalyzer.Models;
+using Microsoft.Extensions.Logging;
 
 namespace LogAnalyzer.Services.Parsing
 {
     public sealed class LegacyLogParser : ILogParser
     {
         private static readonly CultureInfo GermanCulture = CultureInfo.GetCultureInfo("de-DE");
+        private readonly ILogger<LegacyLogParser> _logger = AppServices.CreateLogger<LegacyLogParser>();
+
+        public LegacyLogParser()
+        {
+            _logger.LogInformation("Legacy-Parser initialisiert");
+        }
 
         public bool TryParse(string line, out LogFileEntry entry)
         {

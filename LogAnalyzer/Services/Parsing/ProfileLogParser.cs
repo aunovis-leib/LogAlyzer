@@ -1,12 +1,14 @@
 using System;
 using System.Globalization;
 using LogAnalyzer.Models;
+using Microsoft.Extensions.Logging;
 
 namespace LogAnalyzer.Services.Parsing
 {
     public sealed class ProfileLogParser : ILogParser
     {
         private readonly ParserProfile _profile;
+        private readonly ILogger<ProfileLogParser> _logger = AppServices.CreateLogger<ProfileLogParser>();
         private static readonly CultureInfo GermanCulture = CultureInfo.GetCultureInfo("de-DE");
         private DateTime? _contextDate;
         private readonly TimeSpan _timeOffset;
@@ -15,6 +17,12 @@ namespace LogAnalyzer.Services.Parsing
         {
             _profile = profile ?? throw new ArgumentNullException(nameof(profile));
             _timeOffset = TimeSpan.FromHours(_profile.TimeOffsetHours) + TimeSpan.FromMinutes(_profile.TimeOffsetMinutes);
+            _logger.LogInformation(
+                "Profile-Parser initialisiert: {ProfileName}, Datumsformat {DateFormat}, Trenner {Splitter}, Zeitoffset {TimeOffset}",
+                _profile.Name,
+                _profile.DateFormat,
+                _profile.Splitter,
+                _timeOffset);
         }
 
         public bool TryParse(string line, out LogFileEntry entry)
@@ -85,6 +93,7 @@ namespace LogAnalyzer.Services.Parsing
                 || DateTime.TryParseExact(dateText, _profile.ContextDateFormat, GermanCulture, DateTimeStyles.None, out parsedDate))
             {
                 _contextDate = parsedDate.Date;
+                _logger.LogDebug("Kontextdatum erkannt: {ContextDate}", _contextDate.Value);
                 return true;
             }
 
