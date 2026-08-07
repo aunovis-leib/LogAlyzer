@@ -16,6 +16,8 @@ The plugin uses Microsoft Graph with delegated `Files.Read` permission.
 ```
 
 The first `Aktualisieren` action opens the Microsoft login in the system browser.
-Remote `.log` and `.csv` files are copied into the configured LogAlyzer explorer
-root under the `logalyzer.onedrive` archive folder. Files that disappear from
-OneDrive are not deleted locally.
+Before downloading, the plugin shows new or changed remote files and asks for
+confirmation. Declined files remain pending for the next refresh.
+After confirmation, remote `.log` and `.csv` files are copied into the configured
+LogAlyzer explorer root under the `logalyzer.onedrive` archive folder. Files that
+disappear from OneDrive are not deleted locally.

@@ -29,16 +29,37 @@ public sealed class PluginHostServices : IPluginHostServices
         }
     }
 
-    public ValueTask<RemoteSyncResult> SynchronizeRemoteLogsAsync(
+    public ValueTask<RemoteSyncPreview> PreviewRemoteLogsAsync(
         IRemoteLogSource source,
         string pluginDataDirectory,
         CancellationToken cancellationToken = default)
+    {
+        return _synchronizer.PreviewAsync(
+            source,
+            pluginDataDirectory,
+            cancellationToken);
+    }
+
+    public ValueTask<RemoteSyncResult> SynchronizeRemoteLogsAsync(
+        IRemoteLogSource source,
+        string pluginDataDirectory,
+        CancellationToken cancellationToken = default,
+        IReadOnlySet<string>? approvedFileIds = null)
     {
         return _synchronizer.SynchronizeAsync(
             source,
             DefaultLogDirectory,
             pluginDataDirectory,
-            cancellationToken);
+            cancellationToken,
+            approvedFileIds);
+    }
+
+    public Task<bool> ConfirmAsync(
+        string title,
+        string message,
+        CancellationToken cancellationToken = default)
+    {
+        return _confirmHandler(title, message, cancellationToken);
     }
 
     public Task LoadLogFilesAsync(
@@ -53,4 +74,14 @@ public sealed class PluginHostServices : IPluginHostServices
     {
         _loadLogFiles = loadLogFiles ?? ((_, _) => Task.CompletedTask);
     }
+
+    public void SetConfirmationHandler(
+        Func<string, string, CancellationToken, Task<bool>>? confirmationHandler)
+    {
+        _confirmHandler = confirmationHandler
+            ?? (static (_, _, _) => Task.FromResult(false));
+    }
+
+    private Func<string, string, CancellationToken, Task<bool>> _confirmHandler =
+        static (_, _, _) => Task.FromResult(false);
 }

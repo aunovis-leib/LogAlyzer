@@ -9,6 +9,58 @@ namespace LogAlyzer.Tests.PluginHost;
 public sealed class RemoteLogSynchronizerTests
 {
     [Fact]
+    public async Task PreviewAsync_DoesNotDownloadUntilFilesAreApproved()
+    {
+        var rootDirectory = Path.Combine(
+            Path.GetTempPath(),
+            "LogAlyzerTests",
+            "RemotePreview_" + Guid.NewGuid().ToString("N"));
+        var destinationDirectory = Path.Combine(rootDirectory, "Logs");
+        var pluginDataDirectory = Path.Combine(rootDirectory, "PluginData");
+        Directory.CreateDirectory(rootDirectory);
+
+        var source = new FakeRemoteLogSource(
+            [new RemoteLogFile("new-file", "new.log", "new.log", 3, null, "v1")],
+            new Dictionary<string, string> { ["new-file"] = "new" });
+        var synchronizer = new RemoteLogSynchronizer();
+
+        try
+        {
+            var preview = await synchronizer.PreviewAsync(
+                source,
+                pluginDataDirectory,
+                TestContext.Current.CancellationToken);
+
+            Assert.True(preview.HasPendingFiles);
+            Assert.Equal(1, preview.NewCount);
+            Assert.False(Directory.Exists(destinationDirectory));
+
+            var result = await synchronizer.SynchronizeAsync(
+                source,
+                destinationDirectory,
+                pluginDataDirectory,
+                TestContext.Current.CancellationToken,
+                preview.PendingFiles
+                    .Select(file => file.File.Id)
+                    .ToHashSet(StringComparer.Ordinal));
+
+            Assert.Equal(1, result.AddedCount);
+            Assert.Equal(
+                "new",
+                await File.ReadAllTextAsync(
+                    Path.Combine(destinationDirectory, "onedrive", "new.log"),
+                    TestContext.Current.CancellationToken));
+        }
+        finally
+        {
+            if (Directory.Exists(rootDirectory))
+            {
+                Directory.Delete(rootDirectory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task SynchronizeAsync_UsesRemoteDateAndRetainsFilesMissingRemotely()
     {
         var rootDirectory = Path.Combine(

@@ -25,6 +25,7 @@ namespace LogAlyzer
             DataContext = new MainViewModel(Services.AppServices.AppSettings);
             AttachMainViewModel(DataContext as MainViewModel);
             App.PluginHostServices?.SetLogFileLoader(LoadPluginFilesAsync);
+            App.PluginHostServices?.SetConfirmationHandler(ConfirmPluginActionAsync);
             _liveToolPipeServer = new LiveToolPipeServer(HandleLiveToolRequestAsync);
             _liveToolPipeServer.Start();
             RebuildLogListsHost();
@@ -33,7 +34,24 @@ namespace LogAlyzer
         private async void MainWindow_Closed(object? sender, EventArgs e)
         {
             App.PluginHostServices?.SetLogFileLoader(null);
+            App.PluginHostServices?.SetConfirmationHandler(null);
             await _liveToolPipeServer.StopAsync();
+        }
+
+        private Task<bool> ConfirmPluginActionAsync(
+            string title,
+            string message,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Dispatcher.InvokeAsync(
+                () => MessageBox.Show(
+                    this,
+                    message,
+                    title,
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question,
+                    MessageBoxResult.No) == MessageBoxResult.Yes).Task;
         }
 
         private Task LoadPluginFilesAsync(
@@ -258,27 +276,27 @@ namespace LogAlyzer
             SelectFirstVisibleBottomTab();
         }
 
-    private void SearchResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-    {
-        if (DataContext is not MainViewModel vm || SearchResultsListView.SelectedItem is not Models.LogFileEntry entry)
+        private void SearchResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            return;
+            if (DataContext is not MainViewModel vm || SearchResultsListView.SelectedItem is not Models.LogFileEntry entry)
+            {
+                return;
+            }
+
+            vm.NavigateToSearchResult(entry);
+            e.Handled = true;
         }
 
-        vm.NavigateToSearchResult(entry);
-        e.Handled = true;
-    }
-
-    private void RuleMatchResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-    {
-        if (DataContext is not MainViewModel vm || RuleMatchResultsListView.SelectedItem is not Models.LogFileEntry entry)
+        private void RuleMatchResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            return;
-        }
+            if (DataContext is not MainViewModel vm || RuleMatchResultsListView.SelectedItem is not Models.LogFileEntry entry)
+            {
+                return;
+            }
 
-        vm.NavigateToSearchResult(entry);
-        e.Handled = true;
-    }
+            vm.NavigateToSearchResult(entry);
+            e.Handled = true;
+        }
 
         private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {

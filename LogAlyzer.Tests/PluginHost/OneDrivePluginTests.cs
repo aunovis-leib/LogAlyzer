@@ -66,10 +66,31 @@ public sealed class OneDrivePluginTests
     {
         public string DefaultLogDirectory => Path.GetTempPath();
 
-        public async ValueTask<RemoteSyncResult> SynchronizeRemoteLogsAsync(
+        public ValueTask<RemoteSyncPreview> PreviewRemoteLogsAsync(
             IRemoteLogSource source,
             string pluginDataDirectory,
             CancellationToken cancellationToken = default)
+        {
+            return PreviewAsync(source, cancellationToken);
+        }
+
+        private static async ValueTask<RemoteSyncPreview> PreviewAsync(
+            IRemoteLogSource source,
+            CancellationToken cancellationToken)
+        {
+            await foreach (var _ in source.ListLogFilesAsync(cancellationToken))
+            {
+                break;
+            }
+
+            return RemoteSyncPreview.Empty;
+        }
+
+        public async ValueTask<RemoteSyncResult> SynchronizeRemoteLogsAsync(
+            IRemoteLogSource source,
+            string pluginDataDirectory,
+            CancellationToken cancellationToken = default,
+            IReadOnlySet<string>? approvedFileIds = null)
         {
             await foreach (var _ in source.ListLogFilesAsync(cancellationToken))
             {
@@ -77,6 +98,14 @@ public sealed class OneDrivePluginTests
             }
 
             return RemoteSyncResult.Empty;
+        }
+
+        public Task<bool> ConfirmAsync(
+            string title,
+            string message,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(false);
         }
 
         public Task LoadLogFilesAsync(

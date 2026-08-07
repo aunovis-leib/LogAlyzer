@@ -20,11 +20,59 @@ public sealed class RemoteLogSynchronizer
         _log = log ?? ((_, _) => { });
     }
 
+    public async ValueTask<RemoteSyncPreview> PreviewAsync(
+        IRemoteLogSource source,
+        string pluginDataDirectory,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        Directory.CreateDirectory(pluginDataDirectory);
+        var state = await LoadStateAsync(
+            GetStatePath(pluginDataDirectory, source.Descriptor.Id),
+            cancellationToken);
+        var pendingFiles = new List<RemoteSyncPreviewFile>();
+        var seenRemoteIds = new HashSet<string>(StringComparer.Ordinal);
+        var unchangedCount = 0;
+
+        await foreach (var remoteFile in source.ListLogFilesAsync(cancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(remoteFile.Id)
+                || !IsSupportedLogFile(remoteFile.Name))
+            {
+                continue;
+            }
+
+            seenRemoteIds.Add(remoteFile.Id);
+
+            if (state.Files.TryGetValue(remoteFile.Id, out var previous)
+                && !NeedsUpdate(previous, remoteFile))
+            {
+                unchangedCount++;
+                continue;
+            }
+
+            pendingFiles.Add(new RemoteSyncPreviewFile(
+                remoteFile,
+                previous is null));
+        }
+
+        var missingCount = state.Files.Keys.Count(id => !seenRemoteIds.Contains(id));
+        return new RemoteSyncPreview(
+            pendingFiles,
+            unchangedCount,
+            missingCount,
+            []);
+    }
+
     public async ValueTask<RemoteSyncResult> SynchronizeAsync(
         IRemoteLogSource source,
         string destinationDirectory,
         string pluginDataDirectory,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlySet<string>? approvedFileIds = null)
     {
         ArgumentNullException.ThrowIfNull(source);
 
@@ -35,10 +83,7 @@ public sealed class RemoteLogSynchronizer
         Directory.CreateDirectory(archiveDirectory);
         Directory.CreateDirectory(pluginDataDirectory);
 
-        var statePath = Path.Combine(
-            pluginDataDirectory,
-            "remote-sync",
-            SanitizeFileName(source.Descriptor.Id) + ".json");
+        var statePath = GetStatePath(pluginDataDirectory, source.Descriptor.Id);
         var state = await LoadStateAsync(statePath, cancellationToken);
         var seenRemoteIds = new HashSet<string>(StringComparer.Ordinal);
         var changedFiles = new List<string>();
@@ -58,6 +103,11 @@ public sealed class RemoteLogSynchronizer
             }
 
             seenRemoteIds.Add(remoteFile.Id);
+
+            if (approvedFileIds is not null && !approvedFileIds.Contains(remoteFile.Id))
+            {
+                continue;
+            }
 
             if (state.Files.TryGetValue(remoteFile.Id, out var previous)
                 && !NeedsUpdate(previous, remoteFile))
@@ -240,6 +290,14 @@ public sealed class RemoteLogSynchronizer
     private static string SanitizeFileName(string value)
     {
         return SanitizePathSegment(value, "remote-source");
+    }
+
+    private static string GetStatePath(string pluginDataDirectory, string sourceId)
+    {
+        return Path.Combine(
+            pluginDataDirectory,
+            "remote-sync",
+            SanitizeFileName(sourceId) + ".json");
     }
 
     private static async Task<SyncState> LoadStateAsync(
