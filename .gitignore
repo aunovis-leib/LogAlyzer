@@ -1,4 +1,4 @@
-﻿################################################################################
+################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
@@ -46,6 +46,6 @@ bin/*
 *.mdf
 *.ldf
 
-/LogAnalyzer/bin/Debug/*
-/LogAnalyzer/bin/Debug/net10.0-windows/LogAnalyzer.exe
-/LogAnalyzer/bin/Debug/net10.0-windows/LogAnalyzer.pdb
+/LogAlyzer/bin/Debug/*
+/LogAlyzer/bin/Debug/net10.0-windows/LogAlyzer.exe
+/LogAlyzer/bin/Debug/net10.0-windows/LogAlyzer.pdb

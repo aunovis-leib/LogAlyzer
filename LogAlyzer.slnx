@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="LogAlyzer.McpServer/LogAlyzer.McpServer.csproj" />
+  <Project Path="LogAlyzer.Tests/LogAlyzer.Tests.csproj">
+    <Build Solution="Release|*" Project="false" />
+  </Project>
+  <Project Path="LogAlyzer/LogAlyzer.csproj" />
+</Solution>

@@ -1,5 +1,5 @@
 <Project>
   <ItemGroup>
-    <ProjectCapability Include="TestContainer" Condition="'$(MSBuildProjectName)' == 'LogAnalyzer.Tests'" />
+    <ProjectCapability Include="TestContainer" Condition="'$(MSBuildProjectName)' == 'LogAlyzer.Tests'" />
   </ItemGroup>
 </Project>
