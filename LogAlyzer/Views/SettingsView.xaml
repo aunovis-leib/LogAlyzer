@@ -7,319 +7,319 @@
              xmlns:conv="clr-namespace:LogAlyzer.Converters"
              xmlns:ctrls="clr-namespace:LogAlyzer.Controls"
              mc:Ignorable="d">
-    <UserControl.Resources>
-        <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    </UserControl.Resources>
-    <Grid Margin="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <UserControl.Resources>
+                <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
+                <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        </UserControl.Resources>
+        <Grid Margin="12">
+                <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                Text="{x:Static res:Strings.Settings}"
-                FontWeight="Bold"
-                FontSize="16"/>
-        <Separator Grid.Row="1"
-                Margin="0,8,0,8"/>
+                <TextBlock Grid.Row="0"
+                           Text="{x:Static res:Strings.Settings}"
+                           FontWeight="Bold"
+                           FontSize="16"/>
+                <Separator Grid.Row="1"
+                           Margin="0,8,0,8"/>
 
-        <TabControl Grid.Row="2">
-            <TabItem Header="General">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <GroupBox Header="{x:Static res:Strings.List}">
-                            <StackPanel Margin="6">
-                                <CheckBox Content="{x:Static res:Strings.SyncSelectionAcrossLists}"
-                                          IsChecked="{Binding SyncSelectionAcrossLists, Mode=TwoWay}"/>
-                                <CheckBox Content="{x:Static res:Strings.ShowFileExplorerInLogLists}"
-                                        Margin="0,8,0,0"
-                                          IsChecked="{Binding ShowFileExplorerInLogLists, Mode=TwoWay}"/>
-                                <CheckBox Content="{x:Static res:Strings.ShowMiniMap}"
-                                        Margin="0,8,0,0"
-                                          IsChecked="{Binding ShowMiniMap, Mode=TwoWay}"/>
-                                <StackPanel Orientation="Horizontal"
-                                        Margin="0,8,0,0">
-                                    <TextBlock VerticalAlignment="Center"
-                                            Text="{x:Static res:Strings.MaxEntriesPerList}"/>
-                                    <TextBox Width="80"
-                                            Margin="6,0,0,0"
-                                            Text="{Binding MaxEntriesPerList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                </StackPanel>
-                                <CheckBox Content="{x:Static res:Strings.FastLoadMode}"
-                                        Margin="0,8,0,0"
-                                          IsChecked="{Binding FastLoadMode, Mode=TwoWay}"/>
-                                <StackPanel Orientation="Vertical"
-                                        Margin="0,8,0,0">
-                                    <TextBlock VerticalAlignment="Center"
-                                            Text="{x:Static res:Strings.ExplorerRootFolder}"/>
-                                    <DockPanel Margin="0,4,0,0">
-                                        <Button DockPanel.Dock="Right"
-                                                Content="..."
-                                                Width="28"
-                                                Margin="6,0,0,0"
-                                                Click="ChooseExplorerRootFolder_Click"/>
-                                        <ComboBox ItemsSource="{Binding ExplorerRootFolderHistory, Mode=OneWay}"
-                                                  SelectedItem="{Binding ExplorerRootFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  IsEditable="True"/>
-                                    </DockPanel>
-                                    <Button Content="{x:Static res:Strings.CurrentPathAsRoot}"
-                                            Width="140"
-                                            HorizontalAlignment="Left"
-                                            Margin="0,6,0,0"
-                                            Click="SetCurrentExplorerPathAsRoot_Click"/>
-                                </StackPanel>
-                                <CheckBox Content="{x:Static res:Strings.AutoReloadLogFiles}"
-                                        Margin="0,8,0,0"
-                                          IsChecked="{Binding AutoReloadLogFiles, Mode=TwoWay}"/>
-                                <GroupBox Header="{x:Static res:Strings.DateColumnSorting}"
-                                        Margin="0,8,0,0">
-                                    <StackPanel Margin="6">
-                                        <RadioButton Content="{x:Static res:Strings.NewestEntriesOnTopDescending}"
-                                                Margin="0,4,0,0"
-                                                     IsChecked="{Binding DateSortDescending, Mode=TwoWay}"/>
-                                        <RadioButton Content="{x:Static res:Strings.OldestEntriesOnTopAscending}"
-                                                Margin="0,4,0,0"
-                                                     IsChecked="{Binding DateSortDescending, Mode=TwoWay, Converter={StaticResource InverseBoolConverter}}"/>
-                                    </StackPanel>
-                                </GroupBox>
-                            </StackPanel>
-                        </GroupBox>
+                <TabControl Grid.Row="2">
+                        <TabItem Header="General">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel>
+                                                <GroupBox Header="{x:Static res:Strings.List}">
+                                                        <StackPanel Margin="6">
+                                                                <CheckBox Content="{x:Static res:Strings.SyncSelectionAcrossLists}"
+                                                                          IsChecked="{Binding SyncSelectionAcrossLists, Mode=TwoWay}"/>
+                                                                <CheckBox Content="{x:Static res:Strings.ShowFileExplorerInLogLists}"
+                                                                          Margin="0,8,0,0"
+                                                                          IsChecked="{Binding ShowFileExplorerInLogLists, Mode=TwoWay}"/>
+                                                                <CheckBox Content="{x:Static res:Strings.ShowMiniMap}"
+                                                                          Margin="0,8,0,0"
+                                                                          IsChecked="{Binding ShowMiniMap, Mode=TwoWay}"/>
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            Margin="0,8,0,0">
+                                                                        <TextBlock VerticalAlignment="Center"
+                                                                                   Text="{x:Static res:Strings.MaxEntriesPerList}"/>
+                                                                        <TextBox Width="80"
+                                                                                 Margin="6,0,0,0"
+                                                                                 Text="{Binding MaxEntriesPerList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                                                </StackPanel>
+                                                                <CheckBox Content="{x:Static res:Strings.FastLoadMode}"
+                                                                          Margin="0,8,0,0"
+                                                                          IsChecked="{Binding FastLoadMode, Mode=TwoWay}"/>
+                                                                <StackPanel Orientation="Vertical"
+                                                                            Margin="0,8,0,0">
+                                                                        <TextBlock VerticalAlignment="Center"
+                                                                                   Text="{x:Static res:Strings.ExplorerRootFolder}"/>
+                                                                        <DockPanel Margin="0,4,0,0">
+                                                                                <Button DockPanel.Dock="Right"
+                                                                                        Content="..."
+                                                                                        Width="28"
+                                                                                        Margin="6,0,0,0"
+                                                                                        Click="ChooseExplorerRootFolder_Click"/>
+                                                                                <ComboBox ItemsSource="{Binding ExplorerRootFolderHistory, Mode=OneWay}"
+                                                                                          SelectedItem="{Binding ExplorerRootFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                                          IsEditable="True"/>
+                                                                        </DockPanel>
+                                                                        <Button Content="{x:Static res:Strings.CurrentPathAsRoot}"
+                                                                                Width="140"
+                                                                                HorizontalAlignment="Left"
+                                                                                Margin="0,6,0,0"
+                                                                                Click="SetCurrentExplorerPathAsRoot_Click"/>
+                                                                </StackPanel>
+                                                                <CheckBox Content="{x:Static res:Strings.AutoReloadLogFiles}"
+                                                                          Margin="0,8,0,0"
+                                                                          IsChecked="{Binding AutoReloadLogFiles, Mode=TwoWay}"/>
+                                                                <GroupBox Header="{x:Static res:Strings.DateColumnSorting}"
+                                                                          Margin="0,8,0,0">
+                                                                        <StackPanel Margin="6">
+                                                                                <RadioButton Content="{x:Static res:Strings.NewestEntriesOnTopDescending}"
+                                                                                             Margin="0,4,0,0"
+                                                                                             IsChecked="{Binding DateSortDescending, Mode=TwoWay}"/>
+                                                                                <RadioButton Content="{x:Static res:Strings.OldestEntriesOnTopAscending}"
+                                                                                             Margin="0,4,0,0"
+                                                                                             IsChecked="{Binding DateSortDescending, Mode=TwoWay, Converter={StaticResource InverseBoolConverter}}"/>
+                                                                        </StackPanel>
+                                                                </GroupBox>
+                                                        </StackPanel>
+                                                </GroupBox>
 
-                        <GroupBox Header="{x:Static res:Strings.LiveChart}">
-                            <CheckBox Margin="6"
-                                    Content="{x:Static res:Strings.ShowLiveChart}"
-                                      IsChecked="{Binding ShowLiveChart, Mode=TwoWay}"/>
-                        </GroupBox>
+                                                <GroupBox Header="{x:Static res:Strings.LiveChart}">
+                                                        <CheckBox Margin="6"
+                                                                  Content="{x:Static res:Strings.ShowLiveChart}"
+                                                                  IsChecked="{Binding ShowLiveChart, Mode=TwoWay}"/>
+                                                </GroupBox>
 
-                        <GroupBox Header="{x:Static res:Strings.PatternMatchPanel}">
-                            <CheckBox Margin="6"
-                                    Content="{x:Static res:Strings.ShowPatternMatchPanel}"
-                                      IsChecked="{Binding ShowPatternMatchPanel, Mode=TwoWay}"/>
-                        </GroupBox>
+                                                <GroupBox Header="{x:Static res:Strings.PatternMatchPanel}">
+                                                        <CheckBox Margin="6"
+                                                                  Content="{x:Static res:Strings.ShowPatternMatchPanel}"
+                                                                  IsChecked="{Binding ShowPatternMatchPanel, Mode=TwoWay}"/>
+                                                </GroupBox>
 
-                        <GroupBox Header="Plugins"
-                                Margin="0,8,0,0"
-                                Visibility="{Binding DataContext.PluginPanelVM.HasPanels,
+                                                <GroupBox Header="Plugins"
+                                                          Margin="0,8,0,0"
+                                                          Visibility="{Binding DataContext.PluginPanelVM.HasPanels,
                                                      RelativeSource={RelativeSource AncestorType={x:Type Window}},
                                                      Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <ItemsControl Margin="6"
-                                          DataContext="{Binding DataContext.PluginPanelVM,
+                                                        <ItemsControl Margin="6"
+                                                                      DataContext="{Binding DataContext.PluginPanelVM,
                                                                RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
-                                          ItemsSource="{Binding Panels}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <GroupBox Header="{Binding DisplayName}"
-                                                  Margin="0,0,0,6">
-                                            <ItemsControl Margin="6"
-                                                          ItemsSource="{Binding Actions}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <StackPanel Margin="0,0,0,6">
-                                                            <Button Content="{Binding Descriptor.DisplayName}"
-                                                                    Command="{Binding ExecuteCommand}"
-                                                                    IsEnabled="{Binding IsExecuting, Converter={StaticResource InverseBoolConverter}}"/>
-                                                            <TextBlock Text="{Binding StatusMessage}"
-                                                                       TextWrapping="Wrap"
-                                                                       Foreground="#666666"
-                                                                       Margin="0,3,0,0"/>
+                                                                      ItemsSource="{Binding Panels}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                                <GroupBox Header="{Binding DisplayName}"
+                                                                                          Margin="0,0,0,6">
+                                                                                        <ItemsControl Margin="6"
+                                                                                                      ItemsSource="{Binding Actions}">
+                                                                                                <ItemsControl.ItemTemplate>
+                                                                                                        <DataTemplate>
+                                                                                                                <StackPanel Margin="0,0,0,6">
+                                                                                                                        <Button Content="{Binding Descriptor.DisplayName}"
+                                                                                                                                Command="{Binding ExecuteCommand}"
+                                                                                                                                IsEnabled="{Binding IsExecuting, Converter={StaticResource InverseBoolConverter}}"/>
+                                                                                                                        <TextBlock Text="{Binding StatusMessage}"
+                                                                                                                                   TextWrapping="Wrap"
+                                                                                                                                   Foreground="#666666"
+                                                                                                                                   Margin="0,3,0,0"/>
+                                                                                                                </StackPanel>
+                                                                                                        </DataTemplate>
+                                                                                                </ItemsControl.ItemTemplate>
+                                                                                        </ItemsControl>
+                                                                                </GroupBox>
+                                                                        </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                </GroupBox>
+
+                                                <GroupBox Header="{x:Static res:Strings.SynchronizationTolerance}"
+                                                          Margin="0,8,0,0">
+                                                        <StackPanel Orientation="Horizontal"
+                                                                    Margin="0,6,0,0">
+                                                                <TextBlock VerticalAlignment="Center"
+                                                                           Margin="6,0,0,0"
+                                                                           Text="{x:Static res:Strings.ToleranceHhMmSs}"/>
+                                                                <TextBox Width="100"
+                                                                         Margin="6,0,0,0"
+                                                                         Text="{Binding SyncTolerance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                                         </StackPanel>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
+                                                </GroupBox>
+
+                                                <GroupBox Header="{x:Static res:Strings.HighlightRules}"
+                                                          Margin="0,8,0,0">
+                                                        <StackPanel Margin="6">
+                                                                <CheckBox Content="Regeln anwenden"
+                                                                          IsChecked="{Binding ApplyHighlightRules, Mode=TwoWay}"/>
+                                                                <CheckBox Content="Regel-Treffer auf aktuelle Filter begrenzen"
+                                                                          Margin="0,8,0,0"
+                                                                          IsChecked="{Binding LimitRuleResultsToFilteredEntries, Mode=TwoWay}"/>
+                                                                <StackPanel Orientation="Vertical"
+                                                                            Margin="0,0,0,8">
+                                                                        <StackPanel Orientation="Vertical">
+                                                                                <TextBlock Text="{x:Static res:Strings.SearchText}"
+                                                                                           Margin="0,0,0,2"
+                                                                                           FontSize="11"/>
+                                                                                <TextBox Text="{Binding HighlightSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                                         Height="24"/>
+                                                                        </StackPanel>
+                                                                        <StackPanel Orientation="Vertical"
+                                                                                    Margin="0,6,0,0">
+                                                                                <TextBlock Text="{x:Static res:Strings.Color}"
+                                                                                           Margin="0,0,0,2"
+                                                                                           FontSize="11"/>
+                                                                                <ctrls:SimpleColorPicker SelectedColor="{Binding HighlightColor, Mode=TwoWay}"/>
+                                                                        </StackPanel>
+                                                                        <Button Content="{x:Static res:Strings.AddRule}"
+                                                                                Command="{Binding AddHighlightRuleCommand}"
+                                                                                Margin="0,6,0,0"
+                                                                                Height="28"/>
+                                                                </StackPanel>
+                                                                <DockPanel Margin="0,8,0,4">
+                                                                        <Button DockPanel.Dock="Right"
+                                                                                Content="&#x2922;"
+                                                                                Width="20"
+                                                                                Height="20"
+                                                                                Padding="0"
+                                                                                FontSize="12"
+                                                                                VerticalAlignment="Center"
+                                                                                HorizontalAlignment="Right"
+                                                                                ToolTip="{x:Static res:Strings.OpenActiveRulesInWindow}"
+                                                                                Click="OpenActiveRulesWindow_Click"/>
+                                                                        <TextBlock Text="{x:Static res:Strings.ActiveRules}"
+                                                                                   VerticalAlignment="Center"
+                                                                                   FontSize="11"
+                                                                                   FontWeight="Bold"/>
+                                                                </DockPanel>
+                                                                <ctrls:HighlightRulesGrid MaxHeight="150"/>
+                                                        </StackPanel>
+                                                </GroupBox>
+
+                                                <Button Content="{x:Static res:Strings.ResetDefaults}"
+                                                        Command="{Binding ResetDefaultsCommand}"
+                                                        HorizontalAlignment="Right"
+                                                        Width="120"
+                                                        Margin="0,12,0,0"/>
+
+                                                <Separator Margin="0,12,0,8"/>
+                                                <GroupBox Header="{x:Static res:Strings.LogPatternEditor}">
+                                                        <StackPanel Margin="6">
+                                                                <TextBlock Text="{x:Static res:Strings.ManageLogPatternTemplates}"
+                                                                           FontSize="12"
+                                                                           Foreground="#666666"
+                                                                           TextWrapping="Wrap"
+                                                                           Margin="0,0,0,8"/>
+                                                                <Button Content="{x:Static res:Strings.OpenPatternEditor}"
+                                                                        Command="{Binding OpenPatternEditorCommand}"
+                                                                        Padding="10,8"
+                                                                        Background="#007ACC"
+                                                                        Foreground="White"
+                                                                        FontWeight="Bold"/>
+                                                                <TextBlock Text="{x:Static res:Strings.CreateEditAndTestLogPatternTemplates}"
+                                                                           FontSize="11"
+                                                                           Foreground="#999999"
+                                                                           TextWrapping="Wrap"
+                                                                           Margin="0,8,0,0"/>
+                                                        </StackPanel>
+                                                </GroupBox>
+                                        </StackPanel>
+                                </ScrollViewer>
+                        </TabItem>
+
+                        <TabItem Header="Parser Profiles">
+                                <Grid Margin="0,8,0,0">
+                                        <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <StackPanel>
+                                                <TextBlock Text="Profiles"
+                                                           FontWeight="Bold"
+                                                           Margin="0,0,0,6"/>
+                                                <ListBox ItemsSource="{Binding ParserProfiles}"
+                                                         SelectedItem="{Binding SelectedParserProfile, Mode=TwoWay}"
+                                                         DisplayMemberPath="Name"
+                                                         MinHeight="180"/>
+                                                <StackPanel Orientation="Horizontal"
+                                                            Margin="0,8,0,0">
+                                                        <Button Content="+"
+                                                                Width="30"
+                                                                Command="{Binding AddParserProfileCommand}"/>
+                                                        <Button Content="-"
+                                                                Width="30"
+                                                                Margin="6,0,0,0"
+                                                                Command="{Binding RemoveParserProfileCommand}"
+                                                                CommandParameter="{Binding SelectedParserProfile}"/>
+                                                </StackPanel>
+                                        </StackPanel>
+
+                                        <GroupBox Grid.Row="1"
+                                                  Header="Profile Details"
+                                                  Margin="0,8,0,0"
+                                                  DataContext="{Binding SelectedParserProfile}">
+                                                <StackPanel Margin="8">
+                                                        <TextBlock Text="Name"/>
+                                                        <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="Date Format"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Text="{Binding DateFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="Splitter"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Text="{Binding Splitter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="Context Date Prefix"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Text="{Binding ContextDatePrefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="Context Date Format"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Text="{Binding ContextDateFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="Time Offset (h)"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Width="80"
+                                                                 Text="{Binding TimeOffsetHours, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="Time Offset (min)"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Width="80"
+                                                                 Text="{Binding TimeOffsetMinutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <Separator Margin="0,12,0,4"/>
+                                                        <CheckBox Content="CSV parsen"
+                                                                  IsChecked="{Binding IsCsv, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="CSV Trennzeichen"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Width="80"
+                                                                 HorizontalAlignment="Left"
+                                                                 Text="{Binding CsvDelimiter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="CSV Datum-Spalte (Header-Name)"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Text="{Binding CsvDateColumn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                                        <TextBlock Text="CSV Spalten (eine pro Zeile; leer = alle)"
+                                                                   Margin="0,8,0,0"/>
+                                                        <TextBox Text="{Binding CsvColumnsText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                 AcceptsReturn="True"
+                                                                 TextWrapping="Wrap"
+                                                                 MinHeight="60"
+                                                                 VerticalScrollBarVisibility="Auto"/>
+                                                </StackPanel>
                                         </GroupBox>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </GroupBox>
 
-                        <GroupBox Header="{x:Static res:Strings.SynchronizationTolerance}"
-                                Margin="0,8,0,0">
-                            <StackPanel Orientation="Horizontal"
-                                    Margin="0,6,0,0">
-                                <TextBlock VerticalAlignment="Center"
-                                        Margin="6,0,0,0"
-                                        Text="{x:Static res:Strings.ToleranceHhMmSs}"/>
-                                <TextBox Width="100"
-                                        Margin="6,0,0,0"
-                                        Text="{Binding SyncTolerance, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                        </GroupBox>
-
-                        <GroupBox Header="{x:Static res:Strings.HighlightRules}"
-                                Margin="0,8,0,0">
-                            <StackPanel Margin="6">
-                                <CheckBox Content="Regeln anwenden"
-                                          IsChecked="{Binding ApplyHighlightRules, Mode=TwoWay}"/>
-                                <CheckBox Content="Regel-Treffer auf aktuelle Filter begrenzen"
-                                          Margin="0,8,0,0"
-                                          IsChecked="{Binding LimitRuleResultsToFilteredEntries, Mode=TwoWay}"/>
-                                <StackPanel Orientation="Vertical"
-                                        Margin="0,0,0,8">
-                                    <StackPanel Orientation="Vertical">
-                                        <TextBlock Text="{x:Static res:Strings.SearchText}"
-                                                Margin="0,0,0,2"
-                                                FontSize="11"/>
-                                        <TextBox Text="{Binding HighlightSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                Height="24"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Vertical"
-                                            Margin="0,6,0,0">
-                                        <TextBlock Text="{x:Static res:Strings.Color}"
-                                                Margin="0,0,0,2"
-                                                FontSize="11"/>
-                                        <ctrls:SimpleColorPicker SelectedColor="{Binding HighlightColor, Mode=TwoWay}"/>
-                                    </StackPanel>
-                                    <Button Content="{x:Static res:Strings.AddRule}"
-                                            Command="{Binding AddHighlightRuleCommand}"
-                                            Margin="0,6,0,0"
-                                            Height="28"/>
-                                </StackPanel>
-                                <DockPanel Margin="0,8,0,4">
-                                    <Button DockPanel.Dock="Right"
-                                            Content="&#x2922;"
-                                            Width="20"
-                                            Height="20"
-                                            Padding="0"
-                                            FontSize="12"
-                                            VerticalAlignment="Center"
-                                            HorizontalAlignment="Right"
-                                            ToolTip="{x:Static res:Strings.OpenActiveRulesInWindow}"
-                                            Click="OpenActiveRulesWindow_Click"/>
-                                    <TextBlock Text="{x:Static res:Strings.ActiveRules}"
-                                            VerticalAlignment="Center"
-                                            FontSize="11"
-                                            FontWeight="Bold"/>
-                                </DockPanel>
-                                <ctrls:HighlightRulesGrid MaxHeight="150"/>
-                            </StackPanel>
-                        </GroupBox>
-
-                        <Button Content="{x:Static res:Strings.ResetDefaults}"
-                                Command="{Binding ResetDefaultsCommand}"
-                                HorizontalAlignment="Right"
-                                Width="120"
-                                Margin="0,12,0,0"/>
-
-                        <Separator Margin="0,12,0,8"/>
-                        <GroupBox Header="{x:Static res:Strings.LogPatternEditor}">
-                            <StackPanel Margin="6">
-                                <TextBlock Text="{x:Static res:Strings.ManageLogPatternTemplates}"
-                                        FontSize="12"
-                                        Foreground="#666666"
-                                        TextWrapping="Wrap"
-                                        Margin="0,0,0,8"/>
-                                <Button Content="{x:Static res:Strings.OpenPatternEditor}"
-                                        Command="{Binding OpenPatternEditorCommand}"
-                                        Padding="10,8"
-                                        Background="#007ACC"
-                                        Foreground="White"
-                                        FontWeight="Bold"/>
-                                <TextBlock Text="{x:Static res:Strings.CreateEditAndTestLogPatternTemplates}"
-                                           FontSize="11"
-                                        Foreground="#999999"
-                                        TextWrapping="Wrap"
-                                        Margin="0,8,0,0"/>
-                            </StackPanel>
-                        </GroupBox>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <TabItem Header="Parser Profiles">
-                <Grid Margin="0,8,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel>
-                        <TextBlock Text="Profiles"
-                                FontWeight="Bold"
-                                Margin="0,0,0,6"/>
-                        <ListBox ItemsSource="{Binding ParserProfiles}"
-                                 SelectedItem="{Binding SelectedParserProfile, Mode=TwoWay}"
-                                 DisplayMemberPath="Name"
-                                 MinHeight="180"/>
-                        <StackPanel Orientation="Horizontal"
-                                Margin="0,8,0,0">
-                            <Button Content="+"
-                                    Width="30"
-                                    Command="{Binding AddParserProfileCommand}"/>
-                            <Button Content="-"
-                                    Width="30"
-                                    Margin="6,0,0,0"
-                                    Command="{Binding RemoveParserProfileCommand}"
-                                    CommandParameter="{Binding SelectedParserProfile}"/>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <GroupBox Grid.Row="1"
-                            Header="Profile Details"
-                            Margin="0,8,0,0"
-                              DataContext="{Binding SelectedParserProfile}">
-                        <StackPanel Margin="8">
-                            <TextBlock Text="Name"/>
-                            <TextBox Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="Date Format"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding DateFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="Splitter"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding Splitter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="Context Date Prefix"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding ContextDatePrefix, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="Context Date Format"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding ContextDateFormat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="Time Offset (h)"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Width="80"
-                                    Text="{Binding TimeOffsetHours, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="Time Offset (min)"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Width="80"
-                                    Text="{Binding TimeOffsetMinutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <Separator Margin="0,12,0,4"/>
-                            <CheckBox Content="CSV parsen"
-                                    IsChecked="{Binding IsCsv, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="CSV Trennzeichen"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Width="80"
-                                    HorizontalAlignment="Left"
-                                     Text="{Binding CsvDelimiter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="CSV Datum-Spalte (Header-Name)"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding CsvDateColumn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-
-                            <TextBlock Text="CSV Spalten (eine pro Zeile; leer = alle)"
-                                    Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding CsvColumnsText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     AcceptsReturn="True"
-                                    TextWrapping="Wrap"
-                                    MinHeight="60"
-                                     VerticalScrollBarVisibility="Auto"/>
-                        </StackPanel>
-                    </GroupBox>
-
-                    <TextBlock Grid.Row="2"
-                            Margin="0,8,0,0"
-                            Foreground="#666666"
-                               Text="Bearbeiten der Profile wird sofort in appsettings.json gespeichert."/>
-                </Grid>
-            </TabItem>
-        </TabControl>
-    </Grid>
+                                        <TextBlock Grid.Row="2"
+                                                   Margin="0,8,0,0"
+                                                   Foreground="#666666"
+                                                   Text="Bearbeiten der Profile wird sofort in appsettings.json gespeichert."/>
+                                </Grid>
+                        </TabItem>
+                </TabControl>
+        </Grid>
 </UserControl>
