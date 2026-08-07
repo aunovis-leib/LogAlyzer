@@ -1,5 +1,7 @@
-using LogAlyzer.TestPluginFixture;
+using LogAlyzer.PluginContracts;
 using LogAlyzer.PluginHost;
+using LogAlyzer.Plugins.OneDrive;
+using LogAlyzer.TestPluginFixture;
 using Xunit;
 
 namespace LogAlyzer.Tests.PluginHost;
@@ -57,6 +59,39 @@ public sealed class PluginManagerTests
                 rootDirectory,
                 "PluginData",
                 "tests.valid-plugin")));
+            Assert.Empty(manager.Failures);
+        }
+        finally
+        {
+            await manager.DisposeAsync();
+            loadedPlugin = null;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            DeleteTestDirectory(rootDirectory);
+        }
+    }
+
+    [Fact]
+    public async Task LoadPluginsAsync_WhenOneDriveDeploymentIsPresent_LoadsPluginPanel()
+    {
+        var rootDirectory = CreateTestDirectory();
+        var pluginDirectory = CreatePluginDirectory(rootDirectory, "OneDrive");
+        CopyOneDriveDeployment(pluginDirectory);
+        var manager = CreateManager(rootDirectory);
+        LoadedPlugin? loadedPlugin = null;
+
+        try
+        {
+            await manager.LoadPluginsAsync(TestContext.Current.CancellationToken);
+
+            loadedPlugin = Assert.Single(manager.LoadedPlugins);
+            Assert.Equal("logalyzer.onedrive", loadedPlugin.Info.Id);
+            var contribution = Assert.IsAssignableFrom<IPluginUiContribution>(loadedPlugin.Instance);
+            Assert.NotNull(contribution.Panel);
+            Assert.Contains(
+                contribution.Panel!.Actions,
+                action => action.Descriptor.DisplayName == "Aktualisieren");
             Assert.Empty(manager.Failures);
         }
         finally
@@ -201,6 +236,23 @@ public sealed class PluginManagerTests
     }
 
     private static string TestPluginAssemblyPath => typeof(TestPlugin).Assembly.Location;
+
+    private static void CopyOneDriveDeployment(string pluginDirectory)
+    {
+        var outputDirectory = Path.GetDirectoryName(typeof(OneDrivePlugin).Assembly.Location)!;
+        foreach (var file in Directory.EnumerateFiles(outputDirectory, "*.dll")
+                     .Where(path =>
+                         Path.GetFileName(path).StartsWith("LogAlyzer.OneDrive", StringComparison.OrdinalIgnoreCase)
+                         || Path.GetFileName(path).StartsWith("LogAlyzer.PluginContracts", StringComparison.OrdinalIgnoreCase)
+                         || Path.GetFileName(path).StartsWith("Microsoft.Identity", StringComparison.OrdinalIgnoreCase)))
+        {
+            File.Copy(file, Path.Combine(pluginDirectory, Path.GetFileName(file)));
+        }
+
+        File.Copy(
+            Path.Combine(outputDirectory, PluginManager.ManifestFileName),
+            Path.Combine(pluginDirectory, PluginManager.ManifestFileName));
+    }
 
     private static string CreatePluginDirectory(string rootDirectory, string name)
     {

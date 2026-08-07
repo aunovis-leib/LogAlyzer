@@ -24,6 +24,7 @@ namespace LogAlyzer
             Closed += MainWindow_Closed;
             DataContext = new MainViewModel(Services.AppServices.AppSettings);
             AttachMainViewModel(DataContext as MainViewModel);
+            App.PluginHostServices?.SetLogFileLoader(LoadPluginFilesAsync);
             _liveToolPipeServer = new LiveToolPipeServer(HandleLiveToolRequestAsync);
             _liveToolPipeServer.Start();
             RebuildLogListsHost();
@@ -31,7 +32,23 @@ namespace LogAlyzer
 
         private async void MainWindow_Closed(object? sender, EventArgs e)
         {
+            App.PluginHostServices?.SetLogFileLoader(null);
             await _liveToolPipeServer.StopAsync();
+        }
+
+        private Task LoadPluginFilesAsync(
+            IReadOnlyList<string> filePaths,
+            CancellationToken cancellationToken)
+        {
+            return Dispatcher.InvokeAsync(async () =>
+            {
+                if (_mainViewModel is null || _mainViewModel.Lists.Count == 0)
+                {
+                    return;
+                }
+
+                await _mainViewModel.LoadFilesIntoListAsync(0, filePaths);
+            }).Task.Unwrap();
         }
 
         private async Task<object> HandleLiveToolRequestAsync(LivePipeRequest request)

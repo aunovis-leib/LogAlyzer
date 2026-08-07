@@ -26,6 +26,7 @@
     <ProjectReference Include="..\LogAlyzer\LogAlyzer.csproj" />
     <ProjectReference Include="..\LogAlyzer.PluginHost\LogAlyzer.PluginHost.csproj" />
     <ProjectReference Include="..\LogAlyzer.TestPluginFixture\LogAlyzer.TestPluginFixture.csproj" />
+    <ProjectReference Include="..\LogAlyzer.OneDrive\LogAlyzer.OneDrive.csproj" />
   </ItemGroup>
 
 </Project>

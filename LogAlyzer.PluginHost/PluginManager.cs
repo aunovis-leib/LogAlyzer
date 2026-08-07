@@ -17,6 +17,7 @@ public sealed class PluginManager : IAsyncDisposable
     private readonly string _pluginsDirectory;
     private readonly string _dataDirectory;
     private readonly Action<PluginLogLevel, string, Exception?> _log;
+    private readonly IPluginHostServices _hostServices;
     private readonly List<LoadedPlugin> _loadedPlugins = [];
     private readonly List<PluginLoadFailure> _failures = [];
     private readonly HashSet<string> _loadedPluginIds = new(StringComparer.OrdinalIgnoreCase);
@@ -25,7 +26,8 @@ public sealed class PluginManager : IAsyncDisposable
     public PluginManager(
         string pluginsDirectory,
         string dataDirectory,
-        Action<PluginLogLevel, string, Exception?>? log = null)
+        Action<PluginLogLevel, string, Exception?>? log = null,
+        IPluginHostServices? hostServices = null)
     {
         if (string.IsNullOrWhiteSpace(pluginsDirectory))
         {
@@ -40,11 +42,14 @@ public sealed class PluginManager : IAsyncDisposable
         _pluginsDirectory = Path.GetFullPath(pluginsDirectory);
         _dataDirectory = Path.GetFullPath(dataDirectory);
         _log = log ?? ((_, _, _) => { });
+        _hostServices = hostServices ?? new NullPluginHostServices();
     }
 
     public IReadOnlyList<LoadedPlugin> LoadedPlugins => _loadedPlugins;
 
     public IReadOnlyList<PluginLoadFailure> Failures => _failures;
+
+    public event EventHandler? PluginsChanged;
 
     public async Task LoadPluginsAsync(CancellationToken cancellationToken = default)
     {
@@ -156,6 +161,7 @@ public sealed class PluginManager : IAsyncDisposable
             var context = new PluginContext(
                 pluginDirectory,
                 dataDirectory,
+                _hostServices,
                 (level, message, exception) => Log(level, $"[{plugin.Info.Id}] {message}", exception));
 
             await plugin.InitializeAsync(context, cancellationToken);
@@ -165,6 +171,7 @@ public sealed class PluginManager : IAsyncDisposable
                 pluginDirectory,
                 plugin,
                 loadContext));
+            PluginsChanged?.Invoke(this, EventArgs.Empty);
 
             Log(PluginLogLevel.Information, $"Plugin geladen: {plugin.Info.Id} ({plugin.Info.Version})");
         }

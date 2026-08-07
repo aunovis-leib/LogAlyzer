@@ -21,6 +21,8 @@ public interface IPluginContext
 
     string DataDirectory { get; }
 
+    IPluginHostServices HostServices { get; }
+
     void Log(PluginLogLevel level, string message, Exception? exception = null);
 }
 

@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="LogAlyzer.OneDrive/LogAlyzer.OneDrive.csproj" />
   <Project Path="LogAlyzer.PluginContracts/LogAlyzer.PluginContracts.csproj" />
   <Project Path="LogAlyzer.PluginHost/LogAlyzer.PluginHost.csproj" />
   <Project Path="LogAlyzer.TestPluginFixture/LogAlyzer.TestPluginFixture.csproj" />

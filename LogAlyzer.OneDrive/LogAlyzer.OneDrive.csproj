@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>LogAlyzer.OneDrive</AssemblyName>
+    <RootNamespace>LogAlyzer.Plugins.OneDrive</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <PluginDeployDirectory>..\LogAlyzer\bin\$(Configuration)\net10.0-windows\Plugins\LogAlyzer.OneDrive\</PluginDeployDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LogAlyzer.PluginContracts\LogAlyzer.PluginContracts.csproj" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.86.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="plugin.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="DeployOneDrivePlugin" AfterTargets="Build">
+    <MakeDir Directories="$(PluginDeployDirectory)" />
+    <ItemGroup>
+      <PluginDeploymentFiles Include="$(TargetDir)*.dll" />
+      <PluginDeploymentFiles Include="$(TargetDir)plugin.json" />
+      <PluginDeploymentFiles Include="$(TargetDir)README.md" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PluginDeploymentFiles)"
+          DestinationFolder="$(PluginDeployDirectory)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

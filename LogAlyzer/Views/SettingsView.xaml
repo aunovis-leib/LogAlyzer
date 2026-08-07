@@ -9,6 +9,7 @@
              mc:Ignorable="d">
     <UserControl.Resources>
         <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </UserControl.Resources>
     <Grid Margin="12">
         <Grid.RowDefinitions>
@@ -96,6 +97,41 @@
                             <CheckBox Margin="6"
                                     Content="{x:Static res:Strings.ShowPatternMatchPanel}"
                                       IsChecked="{Binding ShowPatternMatchPanel, Mode=TwoWay}"/>
+                        </GroupBox>
+
+                        <GroupBox Header="Plugins"
+                                Margin="0,8,0,0"
+                                Visibility="{Binding DataContext.PluginPanelVM.HasPanels,
+                                                     RelativeSource={RelativeSource AncestorType={x:Type Window}},
+                                                     Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ItemsControl Margin="6"
+                                          DataContext="{Binding DataContext.PluginPanelVM,
+                                                               RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                                          ItemsSource="{Binding Panels}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <GroupBox Header="{Binding DisplayName}"
+                                                  Margin="0,0,0,6">
+                                            <ItemsControl Margin="6"
+                                                          ItemsSource="{Binding Actions}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,0,0,6">
+                                                            <Button Content="{Binding Descriptor.DisplayName}"
+                                                                    Command="{Binding ExecuteCommand}"
+                                                                    IsEnabled="{Binding IsExecuting, Converter={StaticResource InverseBoolConverter}}"/>
+                                                            <TextBlock Text="{Binding StatusMessage}"
+                                                                       TextWrapping="Wrap"
+                                                                       Foreground="#666666"
+                                                                       Margin="0,3,0,0"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </GroupBox>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </GroupBox>
 
                         <GroupBox Header="{x:Static res:Strings.SynchronizationTolerance}"

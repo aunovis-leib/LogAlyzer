@@ -1,0 +1,8 @@
+{
+  "id": "logalyzer.onedrive",
+  "name": "OneDrive",
+  "version": "1.0.0",
+  "apiVersion": "1.0",
+  "entryAssembly": "LogAlyzer.OneDrive.dll",
+  "entryType": "LogAlyzer.Plugins.OneDrive.OneDrivePlugin"
+}

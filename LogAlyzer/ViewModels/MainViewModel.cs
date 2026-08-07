@@ -18,6 +18,7 @@ public partial class MainViewModel : ObservableObject
     public LiveChartViewModel ChartVM { get; } = new();
     public SettingsViewModel? SettingsVM { get; private set; }
     public PatternMatchPanelViewModel? PatternMatchPanelVM { get; private set; }
+    public PluginPanelViewModel PluginPanelVM { get; }
     public event EventHandler<string>? PatternSaved;
 
     [ObservableProperty]
@@ -67,6 +68,7 @@ public partial class MainViewModel : ObservableObject
         Profiles = [.. _appSettings.ParserProfiles];
         SelectedProfile = Profiles.FirstOrDefault();
         SettingsVM = new SettingsViewModel();
+        PluginPanelVM = new PluginPanelViewModel(App.PluginManager);
         RuleMatchResults.CollectionChanged += (_, __) => OnPropertyChanged(nameof(ShowRuleMatchesTab));
         SettingsVM.PropertyChanged += SettingsVM_PropertyChanged;
         SettingsVM.MaxEntriesPerListChanged += SettingsVM_MaxEntriesPerListChanged;

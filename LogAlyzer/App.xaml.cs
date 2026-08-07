@@ -18,10 +18,12 @@ namespace LogAlyzer
     {
         private static LogPatternService? _patternService;
         private static PluginManager? _pluginManager;
+        private static PluginHostServices? _pluginHostServices;
         private static ILogger<App> Logger => AppServices.CreateLogger<App>();
 
         public static LogPatternService? PatternService => _patternService;
         public static PluginManager? PluginManager => _pluginManager;
+        public static PluginHostServices? PluginHostServices => _pluginHostServices;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -30,10 +32,14 @@ namespace LogAlyzer
             base.OnStartup(e);
             Logger.LogInformation("LogAlyzer gestartet");
 
+            _pluginHostServices = new PluginHostServices(
+                GetDefaultLogDirectory,
+                (message, exception) => Logger.LogError(exception, "{Message}", message));
             _pluginManager = new PluginManager(
                 Path.Combine(AppContext.BaseDirectory, PluginManager.PluginsDirectoryName),
                 GetPluginDataDirectory(),
-                LogPluginMessage);
+                LogPluginMessage,
+                _pluginHostServices);
             _ = InitializePluginsAsync();
 
             // Initialize Pattern Service
@@ -47,6 +53,14 @@ namespace LogAlyzer
             return string.IsNullOrWhiteSpace(appDataDirectory)
                 ? Path.Combine(AppContext.BaseDirectory, PluginManager.PluginDataDirectoryName)
                 : Path.Combine(appDataDirectory, "LogAlyzer", PluginManager.PluginDataDirectoryName);
+        }
+
+        private static string GetDefaultLogDirectory()
+        {
+            var configuredDirectory = AppServices.AppSettings.Settings.SettingsView?.ExplorerRootFolder;
+            return string.IsNullOrWhiteSpace(configuredDirectory)
+                ? Environment.CurrentDirectory
+                : configuredDirectory;
         }
 
         private static async Task InitializePluginsAsync()
