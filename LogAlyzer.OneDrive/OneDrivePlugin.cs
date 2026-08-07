@@ -11,7 +11,7 @@ public sealed class OneDrivePlugin : IRemoteLogSourcePlugin, IPluginUiContributi
     public PluginInfo Info { get; } = new(
         "logalyzer.onedrive",
         "OneDrive",
-        "1.0.0",
+        "1.1.0",
         PluginApi.CurrentVersion);
 
     public IReadOnlyList<IRemoteLogSource> Sources =>

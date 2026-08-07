@@ -4,7 +4,7 @@ This file is the persistent handover for future chat sessions.
 
 ## Current status
 
-The optional plugin system and the first OneDrive plugin are implemented and committed.
+The optional plugin system and the OneDrive shared-folder plugin are implemented and committed.
 
 - Branch: `feature/plugin-system`
 - Foundation commit: `1e5e3ca`
@@ -26,31 +26,24 @@ The optional plugin system and the first OneDrive plugin are implemented and com
 - Added lazy OneDrive authentication so an unconfigured plugin can still load.
 - Added the generic plugin panel and the OneDrive `Aktualisieren` action to Settings.
 - Added remote-file preview and explicit confirmation before new or changed files are downloaded.
+- Added `sharedFolderUrl` configuration and Microsoft Graph Shares API resolution.
+- Added foreign `driveId`/`itemId` routing for shared-folder enumeration and downloads.
 - Added deployment of the plugin assembly, manifest, README, and runtime dependencies.
-- Added unit, loader, deployment, and synchronization tests.
+- Added unit, loader, deployment, synchronization, share-resolution, and declined-download tests.
 
 ## Open tasks
 
-1. Add a `sharedFolderUrl` setting for the folder shared by the remote OneDrive owner.
-2. Resolve the shared folder through the Graph Shares API and retain its foreign `driveId`
-  and `itemId`; do not assume that the source is under `/me/drive`.
-3. Enumerate children and download content through the resolved drive/item resource while
-  preserving the existing `IRemoteLogSource` and generic synchronizer contracts.
-4. Run the application with the same Microsoft account that has access to the share and
+1. Run the application with the same Microsoft account that has access to the share and
   verify interactive login including the configured two-factor authentication.
-5. Verify initial download of `.log` and `.csv` files into the configured explorer root.
-6. Verify that a newer remote timestamp causes an update.
-7. Verify that unchanged files are not downloaded again.
-8. Verify that remote deletion increments the missing count but does not delete the local archive.
-9. Verify the delegated permission required for shared-item resolution. Microsoft Graph currently
+2. Verify initial download of `.log` and `.csv` files into the configured explorer root.
+3. Verify that a newer remote timestamp causes an update.
+4. Verify that unchanged files are not downloaded again.
+5. Verify that remote deletion increments the missing count but does not delete the local archive.
+6. Verify the delegated permission required for shared-item resolution. Microsoft Graph currently
   documents `Files.ReadWrite` as the least-privileged delegated permission for the Shares API;
   keep the read-only `Files.Read` scope unless the shared-folder flow demonstrably requires more.
-10. Record any Graph permissions, tenant, cross-tenant sharing, MFA, or path issues discovered
+7. Record any Graph permissions, tenant, cross-tenant sharing, MFA, or path issues discovered
    during the manual run.
-11. Add focused tests for share URL encoding, foreign drive/item identifiers, and shared-folder
-   enumeration without using the signed-in user's own drive root.
-12. Verify that declining the download confirmation leaves all pending files available for the
-  next refresh.
 
 ## Configuration
 
