@@ -110,7 +110,6 @@ public sealed class LogMiniMap : FrameworkElement
             return;
         }
 
-        var topOffset = 0d;
         var drawableHeight = height;
         if (drawableHeight <= 0)
         {
