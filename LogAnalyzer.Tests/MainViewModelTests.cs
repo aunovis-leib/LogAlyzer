@@ -213,5 +213,51 @@ namespace LogAnalyzer.Tests
                 Assert.True(secondEntry.IsDetailVisible);
             });
         }
+
+        [Fact]
+        public void RuleMatchResults_Respect_The_List_Filter()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("main_rule_matches_filter");
+                AppSettingsManager.Initialize(temp);
+                var vm = new MainViewModel(AppSettingsManager.Instance);
+                var list = vm.Lists[0];
+
+                var matchingEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 0, 0),
+                    Type = LogType.Error,
+                    Text = "timeout detected"
+                };
+                var otherEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 1, 0),
+                    Type = LogType.Info,
+                    Text = "normal operation"
+                };
+
+                list.LogFilesEntries.Add(matchingEntry);
+                list.LogFilesEntries.Add(otherEntry);
+
+                vm.SettingsVM!.HighlightSearchText = "timeout";
+                vm.SettingsVM.HighlightColor = "#FFFF00";
+                vm.SettingsVM.AddHighlightRuleCommand.Execute(null);
+
+                Assert.Contains(matchingEntry, vm.RuleMatchResults);
+
+                list.SelectedType = LogType.Info;
+
+                Assert.Contains(matchingEntry, vm.RuleMatchResults);
+
+                vm.SettingsVM.LimitRuleResultsToFilteredEntries = true;
+
+                Assert.DoesNotContain(matchingEntry, vm.RuleMatchResults);
+
+                list.SelectedType = LogType.All;
+
+                Assert.Contains(matchingEntry, vm.RuleMatchResults);
+            });
+        }
     }
 }

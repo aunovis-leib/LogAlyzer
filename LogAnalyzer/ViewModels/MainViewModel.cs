@@ -161,6 +161,12 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
+        if (e.PropertyName == nameof(SettingsViewModel.LimitRuleResultsToFilteredEntries))
+        {
+            RefreshRuleMatchResults();
+            return;
+        }
+
         if (e.PropertyName != nameof(SettingsViewModel.ExplorerRootFolder))
         {
             return;
@@ -371,6 +377,7 @@ public partial class MainViewModel : ObservableObject
         vm.EntriesReloading += OnEntriesReloading;
         vm.EntriesReloaded += EntriesReloaded;
         vm.HighlightsUpdated += OnHighlightsUpdated;
+        vm.FilterChanged += OnListFilterChanged;
         vm.EntrySelected += OnEntrySelected;
         vm.TypesChanged += OnListTypesChanged;
         vm.OpenSettingsRequested += OnOpenSettingsRequested;
@@ -392,6 +399,7 @@ public partial class MainViewModel : ObservableObject
         vm.EntriesReloading -= OnEntriesReloading;
         vm.EntriesReloaded -= EntriesReloaded;
         vm.HighlightsUpdated -= OnHighlightsUpdated;
+        vm.FilterChanged -= OnListFilterChanged;
         vm.EntrySelected -= OnEntrySelected;
         vm.OpenSettingsRequested -= OnOpenSettingsRequested;
         vm.SetGlobalSearchText = null;
@@ -461,6 +469,11 @@ public partial class MainViewModel : ObservableObject
         RefreshRuleMatchResults();
     }
 
+    private void OnListFilterChanged(object? sender, EventArgs e)
+    {
+        RefreshRuleMatchResults();
+    }
+
     private void OnListTypesChanged(object? sender, LogType selectedType)
     {
         ChartVM.TypeToShow = selectedType;
@@ -469,8 +482,11 @@ public partial class MainViewModel : ObservableObject
 
     private void RefreshRuleMatchResults()
     {
-        var ruleMatches = Lists
-            .SelectMany(list => list.LogFilesEntries)
+        var entries = SettingsVM?.LimitRuleResultsToFilteredEntries == true
+            ? Lists.SelectMany(list => list.LogFilesView.Cast<LogFileEntry>())
+            : Lists.SelectMany(list => list.LogFilesEntries);
+
+        var ruleMatches = entries
             .Where(entry => !string.IsNullOrWhiteSpace(entry.HighlightColor))
             .OrderBy(entry => entry.Date)
             .ThenBy(entry => entry.LineNumber)

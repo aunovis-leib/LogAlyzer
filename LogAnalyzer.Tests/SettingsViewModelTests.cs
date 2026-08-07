@@ -152,5 +152,18 @@ namespace LogAnalyzer.Tests
 
             Assert.Equal(3000, AppSettingsManager.Instance.Settings.SettingsView.MaxEntriesPerList);
         }
+
+        [Fact]
+        public void LimitRuleResultsToFilteredEntries_IsPersistedToSettings()
+        {
+            var tempDir = CreateTempDir("settings_rule_results_filter");
+            AppSettingsManager.TestBaseDirectory = null;
+            AppSettingsManager.Initialize(tempDir);
+
+            var vm = new SettingsViewModel();
+            vm.LimitRuleResultsToFilteredEntries = true;
+
+            Assert.True(AppSettingsManager.Instance.Settings.SettingsView.LimitRuleResultsToFilteredEntries);
+        }
     }
 }

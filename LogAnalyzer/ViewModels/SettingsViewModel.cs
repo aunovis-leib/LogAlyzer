@@ -63,6 +63,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _applyHighlightRules = true;
 
+    [ObservableProperty]
+    private bool _limitRuleResultsToFilteredEntries;
+
     public ObservableCollection<ParserProfile> ParserProfiles { get; } = [];
 
     private ParserProfile? _selectedParserProfile;
@@ -89,6 +92,7 @@ public partial class SettingsViewModel : ObservableObject
         DateSortDescending = settingsView.DateSortDescending;
         ShowMiniMap = settingsView.ShowMiniMap;
         ApplyHighlightRules = settingsView.ApplyHighlightRules;
+        LimitRuleResultsToFilteredEntries = settingsView.LimitRuleResultsToFilteredEntries;
 
         var history = settingsView.ExplorerRootFolderHistory ?? [];
         var uniqueHistory = history.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -304,6 +308,14 @@ public partial class SettingsViewModel : ObservableObject
         HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    partial void OnLimitRuleResultsToFilteredEntriesChanged(bool value)
+    {
+        var manager = AppSettingsManager.Instance;
+        var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+        settingsView.LimitRuleResultsToFilteredEntries = value;
+        manager.Save();
+    }
+
     [RelayCommand]
     private void ResetDefaults()
     {
@@ -319,6 +331,7 @@ public partial class SettingsViewModel : ObservableObject
         DateSortDescending = true;
         ShowMiniMap = true;
         ApplyHighlightRules = true;
+        LimitRuleResultsToFilteredEntries = false;
         HighlightRules.Clear();
         HighlightSearchText = string.Empty;
         HighlightColor = "#FFFF00";

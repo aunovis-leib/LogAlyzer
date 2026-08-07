@@ -23,6 +23,7 @@ public sealed class PatternMatchPanelSettings
 public sealed class SettingsViewSettings
 {
     public bool ApplyHighlightRules { get; set; } = true;
+    public bool LimitRuleResultsToFilteredEntries { get; set; } = false;
     public bool SyncSelectionAcrossLists { get; set; } = true;
     public bool ShowFileExplorerInLogLists { get; set; } = true;
     public int MaxEntriesPerList { get; set; } = 10000;

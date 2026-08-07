@@ -61,6 +61,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     public event EventHandler? EntriesReloaded;
     public event EventHandler? EntriesReloading;
     public event EventHandler? HighlightsUpdated;
+    public event EventHandler? FilterChanged;
     public event EventHandler<LogFileEntry?>? EntrySelected;
     public event EventHandler<string>? GlobalSearchRequested;
     public event EventHandler<LogType>? TypesChanged;
@@ -435,7 +436,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
         var dlg = new OpenFileDialog
         {
-            Title = "Logdatei wählen",
+            Title = "Logdatei wï¿½hlen",
             Filter = "Log & CSV Files (*.log;*.csv)|*.log;*.csv|Log Files (*.log)|*.log|CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
             Multiselect = true
         };
@@ -445,7 +446,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             return;
         }
 
-        // Setze Explorer auf das Verzeichnis der ersten gewählten Datei
+        // Setze Explorer auf das Verzeichnis der ersten gewï¿½hlten Datei
         if (dlg.FileNames.Length > 0)
         {
             var dir = System.IO.Path.GetDirectoryName(dlg.FileNames[0]);
@@ -1004,7 +1005,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
                             }
                         }
 
-                        LoadingStatus = $"Geladen: {loadedEntries:N0} Einträge";
+                        LoadingStatus = $"Geladen: {loadedEntries:N0} Eintrï¿½ge";
 
                         if (loadedEntries >= maxEntries)
                         {
@@ -1180,7 +1181,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             return;
         }
 
-        SetErrors(nameof(FilterFromTimeText), ["Ungültige Uhrzeit. Bitte HH:mm:ss verwenden."]);
+        SetErrors(nameof(FilterFromTimeText), ["Ungï¿½ltige Uhrzeit. Bitte HH:mm:ss verwenden."]);
     }
 
     partial void OnFilterToTimeTextChanged(string value)
@@ -1208,7 +1209,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             return;
         }
 
-        SetErrors(nameof(FilterToTimeText), ["Ungültige Uhrzeit. Bitte HH:mm:ss verwenden."]);
+        SetErrors(nameof(FilterToTimeText), ["Ungï¿½ltige Uhrzeit. Bitte HH:mm:ss verwenden."]);
     }
 
     partial void OnFilterFromTimeChanged(TimeOnly? value)
@@ -1305,6 +1306,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     {
         LogFilesView.Refresh();
         UpdateFilteredEntryCount();
+        FilterChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void UpdateFilteredEntryCount()
@@ -1336,7 +1338,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
     /// <summary>
     /// Wendet alle definierten Log-Patterns auf einen einzelnen Log-Eintrag an.
-    /// Dies wird automatisch aufgerufen, wenn ein neuer Eintrag hinzugefügt wird.
+    /// Dies wird automatisch aufgerufen, wenn ein neuer Eintrag hinzugefï¿½gt wird.
     /// </summary>
     private void ApplyPatternsToEntry(LogFileEntry entry)
     {
@@ -1345,8 +1347,8 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             return;
         }
 
-        // Pattern-Matching wird ausschließlich zur Speisung des Pattern-Match-Panels
-        // benötigt. Ist das Panel deaktiviert, entfällt die (teure) Auswertung pro Eintrag.
+        // Pattern-Matching wird ausschlieï¿½lich zur Speisung des Pattern-Match-Panels
+        // benï¿½tigt. Ist das Panel deaktiviert, entfï¿½llt die (teure) Auswertung pro Eintrag.
         if (Settings?.ShowPatternMatchPanel != true)
         {
             return;
@@ -1358,7 +1360,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
             if (matches.Any())
             {
-                _logger.LogDebug("Patterns für einen Logeintrag gefunden");
+                _logger.LogDebug("Patterns fï¿½r einen Logeintrag gefunden");
                 foreach (var match in matches)
                 {
                     _logger.LogDebug("Pattern {PatternName} mit Schweregrad {Severity} gefunden", match.Pattern.Name, match.Pattern.Severity);
