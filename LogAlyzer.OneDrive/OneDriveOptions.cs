@@ -16,9 +16,15 @@ internal sealed class OneDriveOptions
 
     public string[] Scopes { get; set; } = ["Files.Read"];
 
+    public string SharedFolderUrl { get; set; } = string.Empty;
+
     public string SettingsPath { get; private set; } = string.Empty;
 
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(ClientId);
+    public bool IsClientConfigured => !string.IsNullOrWhiteSpace(ClientId);
+
+    public bool IsSharedFolderConfigured => !string.IsNullOrWhiteSpace(SharedFolderUrl);
+
+    public bool IsConfigured => IsClientConfigured && IsSharedFolderConfigured;
 
     public static async Task<OneDriveOptions> LoadAsync(
         string dataDirectory,
@@ -46,6 +52,7 @@ internal sealed class OneDriveOptions
             options.TenantId = string.IsNullOrWhiteSpace(options.TenantId)
                 ? "common"
                 : options.TenantId;
+            options.SharedFolderUrl = options.SharedFolderUrl?.Trim() ?? string.Empty;
             return options;
         }
         catch (JsonException ex)
