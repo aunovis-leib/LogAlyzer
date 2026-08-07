@@ -1,4 +1,9 @@
 <Solution>
+  <Project Path="LogAlyzer.PluginContracts/LogAlyzer.PluginContracts.csproj" />
+  <Project Path="LogAlyzer.PluginHost/LogAlyzer.PluginHost.csproj" />
+  <Project Path="LogAlyzer.TestPluginFixture/LogAlyzer.TestPluginFixture.csproj" />
+  <Folder Name="/LogAlyzer.Tests/" />
+  <Folder Name="/LogAlyzer.Tests/PluginFixture/" />
   <Project Path="LogAlyzer.McpServer/LogAlyzer.McpServer.csproj" />
   <Project Path="LogAlyzer.Tests/LogAlyzer.Tests.csproj">
     <Build Solution="Release|*" Project="false" />
