@@ -34,7 +34,29 @@ public sealed class SettingsViewSettings
     public bool AutoReloadLogFiles { get; set; } = false;
     public bool DateSortDescending { get; set; } = true;
     public bool ShowMiniMap { get; set; } = true;
+    public List<HighlightRuleProfile> HighlightRuleProfiles { get; set; } = [];
+    public string SelectedHighlightRuleProfileName { get; set; } = HighlightRuleProfile.DefaultName;
     public List<HighlightRule> HighlightRules { get; set; } = [];
+}
+
+public sealed class HighlightRuleProfile : ObservableObject
+{
+    public const string DefaultName = "Default";
+
+    private string _name = DefaultName;
+    private List<HighlightRule> _rules = [];
+
+    public string Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+
+    public List<HighlightRule> Rules
+    {
+        get => _rules;
+        set => SetProperty(ref _rules, value ?? []);
+    }
 }
 
 public sealed class HighlightRule : ObservableObject

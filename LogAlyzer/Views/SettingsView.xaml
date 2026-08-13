@@ -119,6 +119,30 @@
                                 <CheckBox Content="Regel-Treffer auf aktuelle Filter begrenzen"
                                           Margin="0,8,0,0"
                                           IsChecked="{Binding LimitRuleResultsToFilteredEntries, Mode=TwoWay}"/>
+                                <TextBlock Text="Regelprofil"
+                                           Margin="0,10,0,2"
+                                           FontSize="11"
+                                           FontWeight="Bold"/>
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right"
+                                            Content="-"
+                                            Width="24"
+                                            Margin="6,0,0,0"
+                                            Command="{Binding RemoveHighlightRuleProfileCommand}"
+                                            CommandParameter="{Binding SelectedHighlightRuleProfile}"
+                                            ToolTip="Profil entfernen"/>
+                                    <Button DockPanel.Dock="Right"
+                                            Content="+"
+                                            Width="24"
+                                            Command="{Binding AddHighlightRuleProfileCommand}"
+                                            ToolTip="Neues Profil"/>
+                                    <ComboBox ItemsSource="{Binding HighlightRuleProfiles}"
+                                              SelectedItem="{Binding SelectedHighlightRuleProfile, Mode=TwoWay}"
+                                              DisplayMemberPath="Name"/>
+                                </DockPanel>
+                                <TextBox Text="{Binding SelectedHighlightRuleProfile.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,4,0,8"
+                                         ToolTip="Profilname"/>
                                 <StackPanel Orientation="Vertical"
                                         Margin="0,0,0,8">
                                     <StackPanel Orientation="Vertical">

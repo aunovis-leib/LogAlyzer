@@ -54,6 +54,34 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<HighlightRule> _highlightRules = [];
 
+    public ObservableCollection<HighlightRuleProfile> HighlightRuleProfiles { get; } = [];
+
+    private HighlightRuleProfile? _selectedHighlightRuleProfile;
+    private readonly HashSet<HighlightRule> _attachedHighlightRules = [];
+    private readonly HashSet<HighlightRuleProfile> _attachedHighlightRuleProfiles = [];
+    private bool _suppressHighlightRulePersistence;
+
+    public HighlightRuleProfile? SelectedHighlightRuleProfile
+    {
+        get => _selectedHighlightRuleProfile;
+        set
+        {
+            if (ReferenceEquals(_selectedHighlightRuleProfile, value))
+            {
+                return;
+            }
+
+            SaveCurrentHighlightRuleProfile();
+
+            if (SetProperty(ref _selectedHighlightRuleProfile, value))
+            {
+                LoadHighlightRulesForProfile(value);
+                SaveHighlightRules();
+                HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
     [ObservableProperty]
     private string _highlightSearchText = string.Empty;
 
@@ -112,16 +140,42 @@ public partial class SettingsViewModel : ObservableObject
 
         SelectedParserProfile = ParserProfiles.FirstOrDefault();
 
-        foreach (var rule in settingsView.HighlightRules)
+        foreach (var profile in settingsView.HighlightRuleProfiles)
         {
-            HighlightRules.Add(rule);
-            // Subscribe to property changes for auto-save and update highlights
-            rule.PropertyChanged += (s, e) =>
-            {
-                SaveHighlightRules();
-                HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
-            };
+            AttachHighlightRuleProfile(profile);
+            HighlightRuleProfiles.Add(profile);
         }
+
+        if (HighlightRuleProfiles.Count == 0)
+        {
+            var defaultProfile = new HighlightRuleProfile
+            {
+                Name = HighlightRuleProfile.DefaultName,
+                Rules = [.. settingsView.HighlightRules]
+            };
+            AttachHighlightRuleProfile(defaultProfile);
+            HighlightRuleProfiles.Add(defaultProfile);
+        }
+
+        _selectedHighlightRuleProfile = HighlightRuleProfiles.FirstOrDefault(profile =>
+            string.Equals(
+                profile.Name,
+                settingsView.SelectedHighlightRuleProfileName,
+                StringComparison.OrdinalIgnoreCase))
+            ?? HighlightRuleProfiles.FirstOrDefault();
+
+        LoadHighlightRulesForProfile(_selectedHighlightRuleProfile);
+
+        HighlightRules.CollectionChanged += (_, _) =>
+        {
+            if (_suppressHighlightRulePersistence)
+            {
+                return;
+            }
+
+            SaveHighlightRules();
+            HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
+        };
     }
 
     private void AttachParserProfile(ParserProfile profile)
@@ -173,6 +227,158 @@ public partial class SettingsViewModel : ObservableObject
         }
 
         SaveParserProfiles();
+    }
+
+    private void AttachHighlightRuleProfile(HighlightRuleProfile profile)
+    {
+        if (_attachedHighlightRuleProfiles.Add(profile))
+        {
+            profile.PropertyChanged += HighlightRuleProfile_PropertyChanged;
+        }
+    }
+
+    private void DetachHighlightRuleProfile(HighlightRuleProfile profile)
+    {
+        if (_attachedHighlightRuleProfiles.Remove(profile))
+        {
+            profile.PropertyChanged -= HighlightRuleProfile_PropertyChanged;
+        }
+    }
+
+    private void HighlightRuleProfile_PropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(HighlightRuleProfile.Name))
+        {
+            SaveHighlightRules();
+        }
+    }
+
+    private string CreateHighlightRuleProfileName()
+    {
+        var index = 1;
+        string name;
+        do
+        {
+            name = $"Profile {index++}";
+        }
+        while (HighlightRuleProfiles.Any(profile =>
+            string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase)));
+
+        return name;
+    }
+
+    [RelayCommand]
+    private void AddHighlightRuleProfile()
+    {
+        var profile = new HighlightRuleProfile
+        {
+            Name = CreateHighlightRuleProfileName()
+        };
+
+        AttachHighlightRuleProfile(profile);
+        HighlightRuleProfiles.Add(profile);
+        SelectedHighlightRuleProfile = profile;
+        SaveHighlightRules();
+    }
+
+    [RelayCommand]
+    private void RemoveHighlightRuleProfile(HighlightRuleProfile? profile)
+    {
+        if (profile is null || !HighlightRuleProfiles.Contains(profile))
+        {
+            return;
+        }
+
+        var wasSelected = ReferenceEquals(SelectedHighlightRuleProfile, profile);
+        if (wasSelected)
+        {
+            SaveCurrentHighlightRuleProfile();
+        }
+
+        DetachHighlightRuleProfile(profile);
+        HighlightRuleProfiles.Remove(profile);
+
+        if (HighlightRuleProfiles.Count == 0)
+        {
+            var defaultProfile = new HighlightRuleProfile
+            {
+                Name = HighlightRuleProfile.DefaultName
+            };
+            AttachHighlightRuleProfile(defaultProfile);
+            HighlightRuleProfiles.Add(defaultProfile);
+        }
+
+        if (wasSelected)
+        {
+            SelectedHighlightRuleProfile = HighlightRuleProfiles.First();
+        }
+        else
+        {
+            SaveHighlightRules();
+        }
+    }
+
+    private void AttachHighlightRule(HighlightRule rule)
+    {
+        if (_attachedHighlightRules.Add(rule))
+        {
+            rule.PropertyChanged += HighlightRule_PropertyChanged;
+        }
+    }
+
+    private void DetachHighlightRule(HighlightRule rule)
+    {
+        if (_attachedHighlightRules.Remove(rule))
+        {
+            rule.PropertyChanged -= HighlightRule_PropertyChanged;
+        }
+    }
+
+    private void HighlightRule_PropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (_suppressHighlightRulePersistence)
+        {
+            return;
+        }
+
+        SaveHighlightRules();
+        HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void LoadHighlightRulesForProfile(HighlightRuleProfile? profile)
+    {
+        _suppressHighlightRulePersistence = true;
+        try
+        {
+            foreach (var rule in HighlightRules)
+            {
+                DetachHighlightRule(rule);
+            }
+
+            HighlightRules.Clear();
+
+            foreach (var rule in profile?.Rules ?? [])
+            {
+                AttachHighlightRule(rule);
+                HighlightRules.Add(rule);
+            }
+        }
+        finally
+        {
+            _suppressHighlightRulePersistence = false;
+        }
+    }
+
+    private void SaveCurrentHighlightRuleProfile()
+    {
+        if (SelectedHighlightRuleProfile is not null)
+        {
+            SelectedHighlightRuleProfile.Rules = [.. HighlightRules];
+        }
     }
 
     // Allow external callers (e.g. view tests or view code) to set the
@@ -344,30 +550,30 @@ public partial class SettingsViewModel : ObservableObject
             return;
 
         var rule = new HighlightRule { SearchText = HighlightSearchText, Color = HighlightColor };
-        // Subscribe to property changes for auto-save and update highlights
-        rule.PropertyChanged += (s, e) =>
-        {
-            SaveHighlightRules();
-            HighlightRulesChanged?.Invoke(this, EventArgs.Empty);
-        };
+        AttachHighlightRule(rule);
         HighlightRules.Add(rule);
-        SaveHighlightRules();
         HighlightSearchText = string.Empty;
         HighlightColor = "#FFFF00";
     }
 
     [RelayCommand]
-    private void RemoveHighlightRule(HighlightRule rule)
+    private void RemoveHighlightRule(HighlightRule? rule)
     {
-        if (rule == null) return;
+        if (rule is null) return;
+        DetachHighlightRule(rule);
         HighlightRules.Remove(rule);
-        SaveHighlightRules();
     }
 
     private void SaveHighlightRules()
     {
         var manager = AppSettingsManager.Instance;
         var settingsView = GetOrCreateSettingsViewSettings(manager.Settings);
+
+        SaveCurrentHighlightRuleProfile();
+        settingsView.HighlightRuleProfiles = [.. HighlightRuleProfiles];
+        settingsView.SelectedHighlightRuleProfileName = SelectedHighlightRuleProfile?.Name
+            ?? HighlightRuleProfiles.FirstOrDefault()?.Name
+            ?? HighlightRuleProfile.DefaultName;
         settingsView.HighlightRules = [.. HighlightRules];
         manager.Save();
     }

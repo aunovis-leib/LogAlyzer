@@ -50,6 +50,102 @@ namespace LogAlyzer.Tests
         }
 
         [Fact]
+        public void SaveAndLoad_PersistsAllHighlightRuleProperties()
+        {
+            var tempDir = CreateTempDir("highlight_rules_persistence");
+            AppSettingsManager.TestBaseDirectory = null;
+
+            AppSettingsManager.Initialize(tempDir);
+            var manager = AppSettingsManager.Instance;
+            manager.Settings.SettingsView.HighlightRules =
+            [
+                new Models.HighlightRule
+                {
+                    SearchText = "timeout",
+                    Color = "#FF0000",
+                    IsEnabled = false
+                },
+                new Models.HighlightRule
+                {
+                    SearchText = "connection",
+                    Color = "#00FF00",
+                    IsEnabled = true
+                }
+            ];
+            manager.Save();
+
+            AppSettingsManager.Initialize(tempDir);
+            var loadedRules = AppSettingsManager.Instance.Settings.SettingsView.HighlightRules;
+
+            Assert.Equal(2, loadedRules.Count);
+            Assert.Equal("timeout", loadedRules[0].SearchText);
+            Assert.Equal("#FF0000", loadedRules[0].Color);
+            Assert.False(loadedRules[0].IsEnabled);
+            Assert.Equal("connection", loadedRules[1].SearchText);
+            Assert.Equal("#00FF00", loadedRules[1].Color);
+            Assert.True(loadedRules[1].IsEnabled);
+        }
+
+        [Fact]
+        public void Load_MigratesLegacyHighlightRulesToDefaultProfile()
+        {
+            var tempDir = CreateTempDir("highlight_rules_migration");
+            AppSettingsManager.TestBaseDirectory = null;
+            File.WriteAllText(
+                Path.Combine(tempDir, "appsettings.json"),
+                "{ \"settingsView\": { \"highlightRules\": [ { \"searchText\": \"timeout\", \"color\": \"#FF0000\", \"isEnabled\": false } ] } }");
+
+            AppSettingsManager.Initialize(tempDir);
+            var settingsView = AppSettingsManager.Instance.Settings.SettingsView;
+
+            var profile = Assert.Single(settingsView.HighlightRuleProfiles);
+            Assert.Equal(Models.HighlightRuleProfile.DefaultName, profile.Name);
+            var rule = Assert.Single(profile.Rules);
+            Assert.Equal("timeout", rule.SearchText);
+            Assert.Equal("#FF0000", rule.Color);
+            Assert.False(rule.IsEnabled);
+        }
+
+        [Fact]
+        public void SaveAndLoad_PersistsMultipleHighlightRuleProfilesAndSelection()
+        {
+            var tempDir = CreateTempDir("highlight_rule_profiles_persistence");
+            AppSettingsManager.TestBaseDirectory = null;
+
+            AppSettingsManager.Initialize(tempDir);
+            var manager = AppSettingsManager.Instance;
+            manager.Settings.SettingsView.HighlightRuleProfiles =
+            [
+                new Models.HighlightRuleProfile
+                {
+                    Name = "Errors",
+                    Rules =
+                    [
+                        new Models.HighlightRule { SearchText = "error", Color = "#FF0000" }
+                    ]
+                },
+                new Models.HighlightRuleProfile
+                {
+                    Name = "Warnings",
+                    Rules =
+                    [
+                        new Models.HighlightRule { SearchText = "warning", Color = "#FFFF00" }
+                    ]
+                }
+            ];
+            manager.Settings.SettingsView.SelectedHighlightRuleProfileName = "Warnings";
+            manager.Save();
+
+            AppSettingsManager.Initialize(tempDir);
+            var settingsView = AppSettingsManager.Instance.Settings.SettingsView;
+
+            Assert.Equal("Warnings", settingsView.SelectedHighlightRuleProfileName);
+            Assert.Equal(2, settingsView.HighlightRuleProfiles.Count);
+            Assert.Equal("error", settingsView.HighlightRuleProfiles[0].Rules[0].SearchText);
+            Assert.Equal("warning", settingsView.HighlightRuleProfiles[1].Rules[0].SearchText);
+        }
+
+        [Fact]
         public void Load_Handles_Invalid_Json_And_Uses_Defaults()
         {
             var tempDir = Path.Combine(Path.GetTempPath(), "LogAlyzerTests", "appsettings3_" + Guid.NewGuid().ToString());

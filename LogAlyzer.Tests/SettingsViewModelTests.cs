@@ -165,5 +165,94 @@ namespace LogAlyzer.Tests
 
             Assert.True(AppSettingsManager.Instance.Settings.SettingsView.LimitRuleResultsToFilteredEntries);
         }
+
+        [Fact]
+        public void Constructor_LoadsAllHighlightRuleProperties()
+        {
+            var tempDir = CreateTempDir("settings_highlight_rules_load");
+            AppSettingsManager.TestBaseDirectory = null;
+            AppSettingsManager.Initialize(tempDir);
+
+            var manager = AppSettingsManager.Instance;
+            manager.Settings.SettingsView.HighlightRules.Add(new Models.HighlightRule
+            {
+                SearchText = "timeout",
+                Color = "#FF0000",
+                IsEnabled = false
+            });
+            manager.Save();
+
+            AppSettingsManager.Initialize(tempDir);
+            var vm = new SettingsViewModel();
+
+            var rule = Assert.Single(vm.HighlightRules);
+            Assert.Equal("timeout", rule.SearchText);
+            Assert.Equal("#FF0000", rule.Color);
+            Assert.False(rule.IsEnabled);
+        }
+
+        [Fact]
+        public void HighlightRuleProfiles_CanBeSelectedAndPersisted()
+        {
+            var tempDir = CreateTempDir("settings_highlight_rule_profiles");
+            AppSettingsManager.TestBaseDirectory = null;
+            AppSettingsManager.Initialize(tempDir);
+
+            var vm = new SettingsViewModel
+            {
+                HighlightSearchText = "timeout",
+                HighlightColor = "#FF0000"
+            };
+            vm.AddHighlightRuleCommand.Execute(null);
+
+            var defaultProfile = Assert.Single(vm.HighlightRuleProfiles);
+            vm.AddHighlightRuleProfileCommand.Execute(null);
+            var secondProfile = vm.SelectedHighlightRuleProfile;
+            Assert.NotNull(secondProfile);
+            secondProfile!.Name = "Connections";
+            vm.HighlightSearchText = "connection";
+            vm.HighlightColor = "#00FF00";
+            vm.AddHighlightRuleCommand.Execute(null);
+
+            vm.SelectedHighlightRuleProfile = defaultProfile;
+            Assert.Equal("timeout", Assert.Single(vm.HighlightRules).SearchText);
+
+            vm.SelectedHighlightRuleProfile = secondProfile;
+            Assert.Equal("connection", Assert.Single(vm.HighlightRules).SearchText);
+
+            AppSettingsManager.Initialize(tempDir);
+            var loadedVm = new SettingsViewModel();
+
+            Assert.Equal("Connections", loadedVm.SelectedHighlightRuleProfile?.Name);
+            Assert.Equal(2, loadedVm.HighlightRuleProfiles.Count);
+            Assert.Equal("connection", Assert.Single(loadedVm.HighlightRules).SearchText);
+            Assert.Equal(
+                "timeout",
+                Assert.Single(loadedVm.HighlightRuleProfiles.First(profile =>
+                    profile.Name == defaultProfile.Name).Rules).SearchText);
+        }
+
+        [Fact]
+        public void ResetDefaults_ClearsPersistedHighlightRules()
+        {
+            var tempDir = CreateTempDir("settings_highlight_rules_reset");
+            AppSettingsManager.TestBaseDirectory = null;
+            AppSettingsManager.Initialize(tempDir);
+
+            var vm = new SettingsViewModel
+            {
+                HighlightSearchText = "timeout",
+                HighlightColor = "#FF0000"
+            };
+            vm.AddHighlightRuleCommand.Execute(null);
+
+            Assert.Single(AppSettingsManager.Instance.Settings.SettingsView.HighlightRules);
+
+            vm.ResetDefaultsCommand.Execute(null);
+
+            Assert.Empty(vm.HighlightRules);
+            AppSettingsManager.Initialize(tempDir);
+            Assert.Empty(AppSettingsManager.Instance.Settings.SettingsView.HighlightRules);
+        }
     }
 }

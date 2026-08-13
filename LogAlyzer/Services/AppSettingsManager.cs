@@ -159,8 +159,64 @@ namespace LogAlyzer.Services
         private void EnsureDefaults()
         {
             Settings.LivChart ??= new LiveChartSettings();
+            Settings.PatternMatchPanel ??= new PatternMatchPanelSettings();
             Settings.ParserProfiles ??= new List<ParserProfile>();
             Settings.SettingsView ??= new SettingsViewSettings();
+
+            var settingsView = Settings.SettingsView;
+            settingsView.ExplorerRootFolderHistory ??= [];
+            settingsView.HighlightRules ??= [];
+            settingsView.HighlightRuleProfiles ??= [];
+
+            if (settingsView.HighlightRuleProfiles.Count == 0)
+            {
+                settingsView.HighlightRuleProfiles.Add(new HighlightRuleProfile
+                {
+                    Name = HighlightRuleProfile.DefaultName,
+                    Rules = [.. settingsView.HighlightRules]
+                });
+            }
+
+            for (var index = 0; index < settingsView.HighlightRuleProfiles.Count; index++)
+            {
+                var profile = settingsView.HighlightRuleProfiles[index];
+                if (profile is null)
+                {
+                    profile = new HighlightRuleProfile
+                    {
+                        Name = $"Profile {index + 1}"
+                    };
+                    settingsView.HighlightRuleProfiles[index] = profile;
+                }
+
+                if (string.IsNullOrWhiteSpace(profile.Name))
+                {
+                    profile.Name = $"Profile {index + 1}";
+                }
+
+                profile.Rules ??= [];
+            }
+
+            if (settingsView.HighlightRuleProfiles.Count == 1
+                && string.Equals(
+                    settingsView.HighlightRuleProfiles[0].Name,
+                    HighlightRuleProfile.DefaultName,
+                    StringComparison.OrdinalIgnoreCase)
+                && settingsView.HighlightRuleProfiles[0].Rules.Count == 0
+                && settingsView.HighlightRules.Count > 0)
+            {
+                settingsView.HighlightRuleProfiles[0].Rules = [.. settingsView.HighlightRules];
+            }
+
+            if (string.IsNullOrWhiteSpace(settingsView.SelectedHighlightRuleProfileName)
+                || !settingsView.HighlightRuleProfiles.Any(profile =>
+                    string.Equals(
+                        profile.Name,
+                        settingsView.SelectedHighlightRuleProfileName,
+                        StringComparison.OrdinalIgnoreCase)))
+            {
+                settingsView.SelectedHighlightRuleProfileName = settingsView.HighlightRuleProfiles[0].Name;
+            }
         }
     }
 }
