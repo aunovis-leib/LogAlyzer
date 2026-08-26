@@ -230,6 +230,153 @@ namespace LogAlyzer.Tests
         }
 
         [Fact]
+        public void RuleMatchResults_Are_Isolated_Per_List()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("main_rule_matches_per_list");
+                AppSettingsManager.Initialize(temp);
+                var vm = new MainViewModel(AppSettingsManager.Instance);
+                var firstList = vm.Lists[0];
+
+                vm.AddListCommand.Execute(null);
+                var secondList = vm.Lists[1];
+
+                var firstEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 0, 0),
+                    Type = LogType.Error,
+                    Text = "timeout in first log"
+                };
+                var secondEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 1, 0),
+                    Type = LogType.Error,
+                    Text = "timeout in second log"
+                };
+
+                firstList.LogFilesEntries.Add(firstEntry);
+                secondList.LogFilesEntries.Add(secondEntry);
+
+                vm.SettingsVM!.HighlightSearchText = "timeout";
+                vm.SettingsVM.HighlightColor = "#FFFF00";
+                vm.SettingsVM.AddHighlightRuleCommand.Execute(null);
+
+                Assert.Contains(firstEntry, firstList.RuleMatchResults);
+                Assert.DoesNotContain(secondEntry, firstList.RuleMatchResults);
+                Assert.Contains(secondEntry, secondList.RuleMatchResults);
+                Assert.DoesNotContain(firstEntry, secondList.RuleMatchResults);
+                Assert.Contains(firstEntry, vm.RuleMatchResults);
+                Assert.Contains(secondEntry, vm.RuleMatchResults);
+            });
+        }
+
+        [Fact]
+        public void LogLists_CanUseDifferentHighlightRuleProfiles()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("main_highlight_profiles_per_list");
+                AppSettingsManager.Initialize(temp);
+                var vm = new MainViewModel(AppSettingsManager.Instance);
+                var settings = vm.SettingsVM!;
+                var firstList = vm.Lists[0];
+
+                vm.AddListCommand.Execute(null);
+                var secondList = vm.Lists[1];
+
+                settings.HighlightSearchText = "first-only";
+                settings.HighlightColor = "#FFFF00";
+                settings.AddHighlightRuleCommand.Execute(null);
+                var firstProfile = settings.SelectedHighlightRuleProfile!;
+
+                settings.AddHighlightRuleProfileCommand.Execute(null);
+                settings.HighlightSearchText = "second-only";
+                settings.HighlightColor = "#00FF00";
+                settings.AddHighlightRuleCommand.Execute(null);
+                var secondProfile = settings.SelectedHighlightRuleProfile!;
+
+                firstList.SelectedHighlightRuleProfile = firstProfile;
+                secondList.SelectedHighlightRuleProfile = secondProfile;
+
+                var firstListFirstEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 0, 0),
+                    Type = LogType.Error,
+                    Text = "first-only entry"
+                };
+                var firstListSecondEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 1, 0),
+                    Type = LogType.Warning,
+                    Text = "second-only entry"
+                };
+                var secondListFirstEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 0, 0),
+                    Type = LogType.Error,
+                    Text = "first-only entry"
+                };
+                var secondListSecondEntry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 1, 0),
+                    Type = LogType.Warning,
+                    Text = "second-only entry"
+                };
+
+                firstList.LogFilesEntries.Add(firstListFirstEntry);
+                firstList.LogFilesEntries.Add(firstListSecondEntry);
+                secondList.LogFilesEntries.Add(secondListFirstEntry);
+                secondList.LogFilesEntries.Add(secondListSecondEntry);
+
+                Assert.Equal("#FFFF00", firstListFirstEntry.HighlightColor);
+                Assert.Null(firstListSecondEntry.HighlightColor);
+                Assert.Null(secondListFirstEntry.HighlightColor);
+                Assert.Equal("#00FF00", secondListSecondEntry.HighlightColor);
+                Assert.Equal("first-only", firstListFirstEntry.MatchedHighlightRule);
+                Assert.Null(firstListSecondEntry.MatchedHighlightRule);
+                Assert.Null(secondListFirstEntry.MatchedHighlightRule);
+                Assert.Equal("second-only", secondListSecondEntry.MatchedHighlightRule);
+            });
+        }
+
+        [Fact]
+        public void LogList_CanSelectNoHighlightRuleProfile()
+        {
+            StaTestHelper.Run(() =>
+            {
+                var temp = CreateTempDir("main_no_highlight_profile");
+                AppSettingsManager.Initialize(temp);
+                var vm = new MainViewModel(AppSettingsManager.Instance);
+                var settings = vm.SettingsVM!;
+                var list = vm.Lists[0];
+
+                settings.HighlightSearchText = "timeout";
+                settings.HighlightColor = "#FFFF00";
+                settings.AddHighlightRuleCommand.Execute(null);
+
+                var entry = new LogFileEntry
+                {
+                    Date = new DateTime(2024, 1, 1, 9, 0, 0),
+                    Type = LogType.Error,
+                    Text = "timeout detected"
+                };
+                list.LogFilesEntries.Add(entry);
+
+                Assert.Equal("#FFFF00", entry.HighlightColor);
+                Assert.Contains(entry, list.RuleMatchResults);
+                var noProfileOption = list.HighlightRuleProfileOptions[0];
+
+                list.SelectedHighlightRuleProfileOption = noProfileOption;
+
+                Assert.Null(entry.HighlightColor);
+                Assert.Null(entry.MatchedHighlightRule);
+                Assert.DoesNotContain(entry, list.RuleMatchResults);
+                Assert.DoesNotContain(entry, vm.RuleMatchResults);
+            });
+        }
+
+        [Fact]
         public void RuleMatchResults_Respect_The_List_Filter()
         {
             StaTestHelper.Run(() =>

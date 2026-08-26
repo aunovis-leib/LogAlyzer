@@ -15,6 +15,8 @@ public partial class LogListView : UserControl
 {
     private SettingsViewModel? _settingsViewModel;
     private LogListViewModel? _viewModel;
+    private MainViewModel? _mainViewModel;
+    private Window? _ownerWindow;
     private string? _currentCsvSortColumn;
     private ListSortDirection _currentCsvSortDirection = ListSortDirection.Ascending;
 
@@ -22,6 +24,60 @@ public partial class LogListView : UserControl
     {
         InitializeComponent();
         DataContextChanged += LogListView_DataContextChanged;
+        Loaded += LogListView_Loaded;
+        Unloaded += LogListView_Unloaded;
+    }
+
+    private void LogListView_Loaded(object sender, RoutedEventArgs e)
+    {
+        _ownerWindow = Window.GetWindow(this);
+        if (_ownerWindow is null)
+        {
+            return;
+        }
+
+        _ownerWindow.DataContextChanged -= OwnerWindow_DataContextChanged;
+        _ownerWindow.DataContextChanged += OwnerWindow_DataContextChanged;
+        AttachMainViewModel(_ownerWindow.DataContext as MainViewModel);
+    }
+
+    private void LogListView_Unloaded(object sender, RoutedEventArgs e)
+    {
+        if (_ownerWindow is not null)
+        {
+            _ownerWindow.DataContextChanged -= OwnerWindow_DataContextChanged;
+        }
+
+        AttachMainViewModel(null);
+        _ownerWindow = null;
+    }
+
+    private void OwnerWindow_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        AttachMainViewModel(e.NewValue as MainViewModel);
+    }
+
+    private void AttachMainViewModel(MainViewModel? vm)
+    {
+        if (ReferenceEquals(_mainViewModel, vm))
+        {
+            SelectFirstVisibleBottomTab();
+            return;
+        }
+
+        if (_mainViewModel is not null)
+        {
+            _mainViewModel.PropertyChanged -= MainViewModel_PropertyChanged;
+        }
+
+        _mainViewModel = vm;
+
+        if (_mainViewModel is not null)
+        {
+            _mainViewModel.PropertyChanged += MainViewModel_PropertyChanged;
+        }
+
+        SelectFirstVisibleBottomTab();
     }
 
     private void LogListView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -228,6 +284,87 @@ public partial class LogListView : UserControl
     private void DetailTextBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;
+    }
+
+    private void BottomTabs_Loaded(object sender, RoutedEventArgs e)
+    {
+        SelectFirstVisibleBottomTab();
+    }
+
+    private void BottomTab_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        SelectFirstVisibleBottomTab();
+    }
+
+    private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.ShowSearchResultsTab)
+            || e.PropertyName == nameof(MainViewModel.ShowRuleMatchesTab))
+        {
+            SelectFirstVisibleBottomTab();
+        }
+    }
+
+    private void SelectFirstVisibleBottomTab()
+    {
+        if (!IsLoaded || BottomTabs is null || !BottomTabs.IsVisible)
+        {
+            return;
+        }
+
+        if (BottomTabs.SelectedItem is TabItem selectedTab && selectedTab.Visibility == Visibility.Visible)
+        {
+            return;
+        }
+
+        if (PatternMatchTab is not null && PatternMatchTab.Visibility == Visibility.Visible)
+        {
+            BottomTabs.SelectedItem = PatternMatchTab;
+            return;
+        }
+
+        if (LiveChartTab is not null && LiveChartTab.Visibility == Visibility.Visible)
+        {
+            BottomTabs.SelectedItem = LiveChartTab;
+            return;
+        }
+
+        if (SearchTab is not null && SearchTab.Visibility == Visibility.Visible)
+        {
+            BottomTabs.SelectedItem = SearchTab;
+            return;
+        }
+
+        if (RuleMatchesTab is not null && RuleMatchesTab.Visibility == Visibility.Visible)
+        {
+            BottomTabs.SelectedItem = RuleMatchesTab;
+        }
+    }
+
+    private void SearchResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (_mainViewModel is null || SearchResultsListView.SelectedItem is not LogFileEntry entry)
+        {
+            return;
+        }
+
+        if (_mainViewModel.NavigateToSearchResult(entry))
+        {
+            e.Handled = true;
+        }
+    }
+
+    private void RuleMatchResultsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (_mainViewModel is null || RuleMatchResultsListView.SelectedItem is not LogFileEntry entry)
+        {
+            return;
+        }
+
+        if (_mainViewModel.NavigateToSearchResult(entry))
+        {
+            e.Handled = true;
+        }
     }
 
     private void ApplyGlobalSearchFromSelection_Click(object sender, RoutedEventArgs e)

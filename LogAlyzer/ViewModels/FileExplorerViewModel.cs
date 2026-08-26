@@ -64,13 +64,26 @@ public partial class FileExplorerViewModel : ObservableObject
         }
     }
 
-    private void SaveHistoryToSettings()
+    private void SaveHistoryToSettings(IEnumerable<string>? excludedPaths = null)
     {
         var manager = AppSettingsManager.Instance;
         var settingsView = manager.Settings.SettingsView;
         if (settingsView == null)
         {
             return;
+        }
+
+        var excluded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (excludedPaths != null)
+        {
+            foreach (var path in excludedPaths)
+            {
+                var normalized = NormalizePath(path);
+                if (!string.IsNullOrWhiteSpace(normalized))
+                {
+                    excluded.Add(normalized);
+                }
+            }
         }
 
         // Merge with the already persisted history instead of overwriting it. Multiple
@@ -89,7 +102,9 @@ public partial class FileExplorerViewModel : ObservableObject
             foreach (var path in paths)
             {
                 var normalized = NormalizePath(path);
-                if (!string.IsNullOrWhiteSpace(normalized) && seen.Add(normalized))
+                if (!string.IsNullOrWhiteSpace(normalized)
+                    && !excluded.Contains(normalized)
+                    && seen.Add(normalized))
                 {
                     merged.Add(normalized);
                 }
@@ -101,6 +116,36 @@ public partial class FileExplorerViewModel : ObservableObject
 
         settingsView.ExplorerRootFolderHistory = merged;
         manager.Save();
+    }
+
+    [RelayCommand]
+    private void RemoveHistory(string? path)
+    {
+        var normalizedPath = NormalizePath(path);
+        if (string.IsNullOrWhiteSpace(normalizedPath))
+        {
+            return;
+        }
+
+        var removed = false;
+        for (var index = ExplorerRootFolderHistory.Count - 1; index >= 0; index--)
+        {
+            if (!string.Equals(
+                    NormalizePath(ExplorerRootFolderHistory[index]),
+                    normalizedPath,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            ExplorerRootFolderHistory.RemoveAt(index);
+            removed = true;
+        }
+
+        if (removed)
+        {
+            SaveHistoryToSettings([normalizedPath]);
+        }
     }
 
     public FileExplorerViewModel()

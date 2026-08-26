@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using LogAlyzer.ViewModels;
+using LogAlyzer.Services;
 using System.Collections.ObjectModel;
 using Xunit;
 
 namespace LogAlyzer.Tests;
 
+[Collection("AppSettingsManagerSerial")]
 public class FileExplorerViewModelTests
 {
     private static string CreateTempDir(string name)
@@ -360,6 +362,45 @@ public class FileExplorerViewModelTests
         }
         finally
         {
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
+    public void RemoveHistoryCommand_RemovesNormalizedPathAndPersistsChange()
+    {
+        var settingsDir = CreateTempDir("explorer_history_remove_settings");
+        var root = CreateTempDir("explorer_history_remove");
+        var other = Path.Combine(root, "other");
+        Directory.CreateDirectory(other);
+
+        try
+        {
+            AppSettingsManager.TestBaseDirectory = null;
+            AppSettingsManager.Initialize(settingsDir);
+            AppSettingsManager.Instance.Settings.SettingsView.ExplorerRootFolderHistory = [root, other];
+            AppSettingsManager.Instance.Save();
+
+            var vm = new FileExplorerViewModel();
+            vm.SetExplorerRootFolderHistory(new ObservableCollection<string> { root, root + Path.DirectorySeparatorChar, other });
+
+            vm.RemoveHistoryCommand.Execute(root + Path.DirectorySeparatorChar);
+
+            Assert.DoesNotContain(vm.ExplorerRootFolderHistory, path =>
+                string.Equals(path, root, StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(vm.ExplorerRootFolderHistory, path =>
+                string.Equals(path, other, StringComparison.OrdinalIgnoreCase));
+
+            AppSettingsManager.Initialize(settingsDir);
+            var savedHistory = AppSettingsManager.Instance.Settings.SettingsView.ExplorerRootFolderHistory;
+            Assert.DoesNotContain(savedHistory, path =>
+                string.Equals(Path.GetFullPath(path), Path.GetFullPath(root), StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(savedHistory, path =>
+                string.Equals(Path.GetFullPath(path), Path.GetFullPath(other), StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            Directory.Delete(settingsDir, true);
             Directory.Delete(root, true);
         }
     }

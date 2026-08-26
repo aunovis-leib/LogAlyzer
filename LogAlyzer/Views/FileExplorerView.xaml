@@ -20,7 +20,31 @@
                           SelectedItem="{Binding SelectedHistoryPath, Mode=TwoWay}"
                           Text="{Binding SelectedHistoryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                           ToolTip="{Binding CurrentPath}"
-                          IsEditable="True" />
+                          IsEditable="True">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding}"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                                <Button Grid.Column="1"
+                                        Content="×"
+                                        Width="22"
+                                        Height="22"
+                                        Padding="0"
+                                        Margin="6,0,0,0"
+                                        Focusable="False"
+                                        Command="{Binding DataContext.RemoveHistoryCommand, RelativeSource={RelativeSource AncestorType={x:Type ComboBox}}}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </Grid>
             <ListView x:Name="ExplorerListView"
                       ItemsSource="{Binding Items}"

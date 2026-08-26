@@ -6,25 +6,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-        xmlns:local="clr-namespace:LogAlyzer"
-        xmlns:conv="clr-namespace:LogAlyzer.Converters"
-        xmlns:vm="clr-namespace:LogAlyzer.ViewModels"
         xmlns:ctrls="clr-namespace:LogAlyzer.Controls"
-        xmlns:bh="clr-namespace:LogAlyzer.Behaviors"
         xmlns:views="clr-namespace:LogAlyzer.Views"
-        xmlns:res="clr-namespace:LogAlyzer.Resources"
         mc:Ignorable="d"
         Title="LogAlyzer" Height="450" Width="800" Icon="/Resources/Icons/LogAlyzer.png"
         PreviewMouseDown="Window_PreviewMouseDown">
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <conv:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
-        <CollectionViewSource x:Key="RuleMatchResultsGroupedView" Source="{Binding RuleMatchResults}">
-            <CollectionViewSource.GroupDescriptions>
-                <PropertyGroupDescription PropertyName="MatchedHighlightRuleDisplay" />
-            </CollectionViewSource.GroupDescriptions>
-        </CollectionViewSource>
         <DataTemplate x:Key="LogListTemplate">
             <views:LogListView />
         </DataTemplate>
@@ -54,36 +41,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="2*" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition>
-                <RowDefinition.Style>
-                    <Style TargetType="RowDefinition">
-                        <Setter Property="Height" Value="1.2*" />
-                        <Setter Property="MaxHeight" Value="Infinity" />
-                        <Style.Triggers>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Value="False"
-                                               Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
-                                                                 RelativeSource={RelativeSource AncestorType=Window}}" />
-                                    <Condition Value="False"
-                                               Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
-                                                                 RelativeSource={RelativeSource AncestorType=Window}}" />
-                                    <Condition Value="False"
-                                               Binding="{Binding DataContext.ShowSearchResultsTab,
-                                                                 RelativeSource={RelativeSource AncestorType=Window}}" />
-                                    <Condition Value="False"
-                                               Binding="{Binding DataContext.ShowRuleMatchesTab,
-                                                                 RelativeSource={RelativeSource AncestorType=Window}}" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Height" Value="0" />
-                                <Setter Property="MaxHeight" Value="0" />
-                            </MultiDataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </RowDefinition.Style>
-            </RowDefinition>
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Main Content -->
@@ -155,164 +113,8 @@
         </Grid>
         <Grid x:Name="LogListsHost" Grid.Row="2" />
 
-        <GridSplitter Grid.Row="3" HorizontalAlignment="Stretch" Height="6" VerticalAlignment="Center" ResizeDirection="Rows" Background="#33000000">
-            <GridSplitter.Style>
-                <Style TargetType="GridSplitter">
-                    <Setter Property="Visibility" Value="Visible" />
-                    <Style.Triggers>
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Value="False"
-                                           Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
-                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
-                                <Condition Value="False"
-                                           Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
-                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
-                                <Condition Value="False"
-                                           Binding="{Binding DataContext.ShowSearchResultsTab,
-                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
-                                <Condition Value="False"
-                                           Binding="{Binding DataContext.ShowRuleMatchesTab,
-                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
-                            </MultiDataTrigger.Conditions>
-                            <Setter Property="Visibility" Value="Collapsed" />
-                        </MultiDataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </GridSplitter.Style>
-        </GridSplitter>
-
-        <TabControl x:Name="BottomTabs" Grid.Row="4" Margin="0,8,0,0" Loaded="BottomTabs_Loaded">
-            <TabControl.Style>
-                <Style TargetType="TabControl">
-                    <Setter Property="Visibility" Value="Visible" />
-                    <Style.Triggers>
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Value="False"
-                                           Binding="{Binding DataContext.SettingsVM.ShowPatternMatchPanel,
-                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
-                                <Condition Value="False"
-                                           Binding="{Binding DataContext.SettingsVM.ShowLiveChart,
-                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
-                                <Condition Value="False"
-                                           Binding="{Binding DataContext.ShowSearchResultsTab,
-                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
-                                <Condition Value="False"
-                                           Binding="{Binding DataContext.ShowRuleMatchesTab,
-                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
-                            </MultiDataTrigger.Conditions>
-                            <Setter Property="Visibility" Value="Collapsed" />
-                        </MultiDataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TabControl.Style>
-
-            <TabItem x:Name="PatternMatchTab"
-                     Header="Pattern Match"
-                     IsVisibleChanged="BottomTab_IsVisibleChanged"
-                     Visibility="{Binding DataContext.SettingsVM.ShowPatternMatchPanel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <views:PatternMatchPanelView DataContext="{Binding PatternMatchPanelVM}" />
-            </TabItem>
-
-            <TabItem x:Name="LiveChartTab"
-                     Header="Live Chart"
-                     IsVisibleChanged="BottomTab_IsVisibleChanged"
-                     Visibility="{Binding DataContext.SettingsVM.ShowLiveChart, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <views:LiveChartView DataContext="{Binding ChartVM}" />
-            </TabItem>
-
-            <TabItem x:Name="SearchTab"
-                     Header="Suche"
-                     IsVisibleChanged="BottomTab_IsVisibleChanged"
-                     Visibility="{Binding ShowSearchResultsTab, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ListView x:Name="SearchResultsListView"
-                          ItemsSource="{Binding SearchResults}"
-                          SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
-                          MouseDoubleClick="SearchResultsListView_MouseDoubleClick"
-                          Margin="8"
-                          bh:ListViewBehaviors.FillRemainingColumnIndex="3"
-                          bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"
-                          SelectionMode="Single"
-                          VirtualizingPanel.IsVirtualizing="True"
-                          VirtualizingPanel.VirtualizationMode="Recycling"
-                          VirtualizingPanel.CacheLength="1"
-                          VirtualizingPanel.CacheLengthUnit="Page"
-                          VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                          ScrollViewer.CanContentScroll="True">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="#" Width="50" DisplayMemberBinding="{Binding LineNumber}" />
-                            <GridViewColumn Header="Date" Width="160" DisplayMemberBinding="{Binding DateDisplay}" />
-                            <GridViewColumn Header="Type" Width="90" DisplayMemberBinding="{Binding Type}" />
-                            <GridViewColumn Header="Text" Width="500" DisplayMemberBinding="{Binding Text}" />
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </TabItem>
-
-            <TabItem x:Name="RuleMatchesTab"
-                     Header="Regel-Treffer"
-                     IsVisibleChanged="BottomTab_IsVisibleChanged"
-                     Visibility="{Binding ShowRuleMatchesTab, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ListView x:Name="RuleMatchResultsListView"
-                          ItemsSource="{Binding Source={StaticResource RuleMatchResultsGroupedView}}"
-                          SelectedItem="{Binding SelectedRuleMatchResult, Mode=TwoWay}"
-                          MouseDoubleClick="RuleMatchResultsListView_MouseDoubleClick"
-                          Margin="8"
-                          bh:ListViewBehaviors.FillRemainingColumnIndex="3"
-                          bh:ListViewBehaviors.FillRemainingColumnMinWidth="120"
-                          SelectionMode="Single"
-                          VirtualizingPanel.IsVirtualizing="True"
-                          VirtualizingPanel.VirtualizationMode="Recycling"
-                          VirtualizingPanel.CacheLength="1"
-                          VirtualizingPanel.CacheLengthUnit="Page"
-                          VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                          ScrollViewer.CanContentScroll="True">
-                    <ListView.GroupStyle>
-                        <GroupStyle>
-                            <GroupStyle.ContainerStyle>
-                                <Style TargetType="{x:Type GroupItem}">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="{x:Type GroupItem}">
-                                                <Expander IsExpanded="True" Margin="0,0,0,6">
-                                                    <Expander.Header>
-                                                        <Border Padding="6,3"
-                                                                CornerRadius="3"
-                                                                Opacity="0.85"
-                                                                Background="{Binding Items[0].HighlightColor, Converter={StaticResource HexColorToBrushConverter}}">
-                                                            <DockPanel>
-                                                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-                                                                <TextBlock Text=" (" Margin="6,0,0,0"/>
-                                                                <TextBlock Text="{Binding ItemCount}"/>
-                                                                <TextBlock Text="x)"/>
-                                                            </DockPanel>
-                                                        </Border>
-                                                    </Expander.Header>
-                                                    <ItemsPresenter/>
-                                                </Expander>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </GroupStyle.ContainerStyle>
-                        </GroupStyle>
-                    </ListView.GroupStyle>
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="#" Width="50" DisplayMemberBinding="{Binding LineNumber}" />
-                            <GridViewColumn Header="Date" Width="160" DisplayMemberBinding="{Binding DateDisplay}" />
-                            <GridViewColumn Header="Type" Width="90" DisplayMemberBinding="{Binding Type}" />
-                            <GridViewColumn Header="Text" Width="500" DisplayMemberBinding="{Binding Text}" />
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </TabItem>
-        </TabControl>
-
         <!-- Sliding Settings Pane -->
-        <Border x:Name="SettingsPane" Grid.RowSpan="5" Width="320" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
+        <Border x:Name="SettingsPane" Grid.RowSpan="3" Width="320" Background="#F0F0F0" BorderBrush="#CCC" BorderThickness="1" HorizontalAlignment="Right" DataContext="{Binding SettingsVM}">
             <Border.RenderTransform>
                 <TranslateTransform x:Name="SettingsPaneTransform" X="420" />
             </Border.RenderTransform>

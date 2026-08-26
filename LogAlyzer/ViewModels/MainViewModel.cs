@@ -482,12 +482,14 @@ public partial class MainViewModel : ObservableObject
 
     private void RefreshRuleMatchResults()
     {
-        var entries = SettingsVM?.LimitRuleResultsToFilteredEntries == true
-            ? Lists.SelectMany(list => list.LogFilesView.Cast<LogFileEntry>())
-            : Lists.SelectMany(list => list.LogFilesEntries);
+        var limitToFilteredEntries = SettingsVM?.LimitRuleResultsToFilteredEntries == true;
+        foreach (var list in Lists)
+        {
+            list.RefreshRuleMatchResults(limitToFilteredEntries);
+        }
 
-        var ruleMatches = entries
-            .Where(entry => !string.IsNullOrWhiteSpace(entry.HighlightColor))
+        var ruleMatches = Lists
+            .SelectMany(list => list.RuleMatchResults)
             .OrderBy(entry => entry.Date)
             .ThenBy(entry => entry.LineNumber)
             .ToList();

@@ -23,6 +23,18 @@ namespace LogAlyzer.ViewModels;
 
 public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 {
+    public sealed class HighlightRuleProfileOption
+    {
+        public HighlightRuleProfileOption(HighlightRuleProfile? profile)
+        {
+            Profile = profile;
+        }
+
+        public HighlightRuleProfile? Profile { get; }
+
+        public string Name => Profile?.Name ?? "Keine";
+    }
+
     private readonly AppSettingsManager _appSettings;
     private readonly ILogger<LogListViewModel> _logger = AppServices.CreateLogger<LogListViewModel>();
     private CancellationTokenSource? _loadCancellation;
@@ -55,8 +67,48 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
     /// <summary>Parser profiles available for selection in this view.</summary>
     public ObservableCollection<ParserProfile> Profiles { get; } = [];
 
+    /// <summary>Highlight rule profiles available for selection in this view.</summary>
+    public ObservableCollection<HighlightRuleProfile> HighlightRuleProfiles => Settings?.HighlightRuleProfiles ?? [];
+    public ObservableCollection<HighlightRuleProfileOption> HighlightRuleProfileOptions { get; } = [];
+
     [ObservableProperty]
     private ParserProfile? _selectedProfile;
+
+    private HighlightRuleProfile? _selectedHighlightRuleProfile;
+
+    private HighlightRuleProfileOption? _selectedHighlightRuleProfileOption;
+
+    public HighlightRuleProfileOption? SelectedHighlightRuleProfileOption
+    {
+        get => _selectedHighlightRuleProfileOption;
+        set
+        {
+            if (SetProperty(ref _selectedHighlightRuleProfileOption, value)
+                && value is not null)
+            {
+                SelectedHighlightRuleProfile = value.Profile;
+            }
+        }
+    }
+
+    public HighlightRuleProfile? SelectedHighlightRuleProfile
+    {
+        get => _selectedHighlightRuleProfile;
+        set
+        {
+            if (SetProperty(ref _selectedHighlightRuleProfile, value))
+            {
+                var selectedOption = HighlightRuleProfileOptions.FirstOrDefault(option =>
+                    ReferenceEquals(option.Profile, value));
+                if (!ReferenceEquals(_selectedHighlightRuleProfileOption, selectedOption))
+                {
+                    SelectedHighlightRuleProfileOption = selectedOption;
+                }
+
+                UpdateHighlights();
+            }
+        }
+    }
 
     public event EventHandler? EntriesReloaded;
     public event EventHandler? EntriesReloading;
@@ -139,6 +191,8 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         return matchCount;
     }
     public ICollectionView LogFilesView { get; }
+    public ObservableCollection<LogFileEntry> RuleMatchResults { get; } = [];
+    public bool ShowRuleMatchesTab => RuleMatchResults.Count > 0;
 
     [ObservableProperty]
     private LogType _selectedType = LogType.All;
@@ -519,6 +573,12 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
         Settings = settingsViewModel;
         _patternService = App.PatternService;  // Pattern Service laden
 
+        _selectedHighlightRuleProfile = settingsViewModel?.SelectedHighlightRuleProfile
+            ?? settingsViewModel?.HighlightRuleProfiles.FirstOrDefault();
+        RefreshHighlightRuleProfileOptions();
+        SelectedHighlightRuleProfileOption = HighlightRuleProfileOptions.FirstOrDefault(option =>
+            ReferenceEquals(option.Profile, _selectedHighlightRuleProfile));
+
         RefreshProfiles();
         if (settingsViewModel != null)
         {
@@ -527,6 +587,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
         LogFilesView = CollectionViewSource.GetDefaultView(LogFilesEntries);
         LogFilesView.Filter = FilterByType;
+        RuleMatchResults.CollectionChanged += (_, __) => OnPropertyChanged(nameof(ShowRuleMatchesTab));
         FileExplorerVM.FilesSelected += OnExplorerFilesSelected;
         FileExplorerVM.FileCleared += OnExplorerFileCleared;
         UpdateFilteredEntryCount();
@@ -559,6 +620,17 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             settingsViewModel.HighlightRulesChanged += (sender, e) =>
             {
                 UpdateHighlights();
+            };
+
+            settingsViewModel.HighlightRuleProfiles.CollectionChanged += (_, __) =>
+            {
+                RefreshHighlightRuleProfileOptions();
+
+                if (SelectedHighlightRuleProfile is not null
+                    && !settingsViewModel.HighlightRuleProfiles.Contains(SelectedHighlightRuleProfile))
+                {
+                    SelectedHighlightRuleProfile = settingsViewModel.HighlightRuleProfiles.FirstOrDefault();
+                }
             };
         }
 
@@ -890,6 +962,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
         // Clear all entries since we don't have source file tracking
         // The Auto-Reload watcher will detect the file size change and handle it
+        ClearRuleMatchResults();
         LogFilesEntries.Clear();
 
         // Reset file position tracking for this file
@@ -951,6 +1024,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             _suppressAvailableTypesUpdate = true;
             LogFilesView.Filter = null;
             EntriesReloading?.Invoke(this, EventArgs.Empty);
+            ClearRuleMatchResults();
             LogFilesEntries.Clear();
 
             try
@@ -1129,6 +1203,25 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             ?? SelectedProfile;
     }
 
+    private void RefreshHighlightRuleProfileOptions()
+    {
+        HighlightRuleProfileOptions.Clear();
+        HighlightRuleProfileOptions.Add(new HighlightRuleProfileOption(null));
+
+        if (Settings is null)
+        {
+            return;
+        }
+
+        foreach (var profile in Settings.HighlightRuleProfiles)
+        {
+            HighlightRuleProfileOptions.Add(new HighlightRuleProfileOption(profile));
+        }
+
+        SelectedHighlightRuleProfileOption = HighlightRuleProfileOptions.FirstOrDefault(option =>
+            ReferenceEquals(option.Profile, _selectedHighlightRuleProfile));
+    }
+
     partial void OnSelectedTypeChanged(LogType value)
     {
         if (IsLoading) return;
@@ -1238,7 +1331,7 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
     public void UpdateHighlights()
     {
-        if (Settings?.HighlightRules == null)
+        if (Settings is null)
         {
             return;
         }
@@ -1261,9 +1354,10 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
             return;
         }
 
-        var activeRules = Settings.HighlightRules
+        var activeRules = SelectedHighlightRuleProfile?.Rules
             .Where(rule => rule.IsEnabled && !string.IsNullOrWhiteSpace(rule.SearchText))
-            .ToArray();
+            .ToArray()
+            ?? [];
 
         if (activeRules.Length == 0)
         {
@@ -1300,6 +1394,30 @@ public partial class LogListViewModel : ObservableObject, INotifyDataErrorInfo
 
         _hasHighlightsApplied = hasHighlights;
         HighlightsUpdated?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void RefreshRuleMatchResults(bool limitToFilteredEntries)
+    {
+        var entries = limitToFilteredEntries
+            ? LogFilesView.OfType<LogFileEntry>()
+            : LogFilesEntries;
+
+        var ruleMatches = entries
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.HighlightColor))
+            .OrderBy(entry => entry.Date)
+            .ThenBy(entry => entry.LineNumber)
+            .ToList();
+
+        RuleMatchResults.Clear();
+        foreach (var entry in ruleMatches)
+        {
+            RuleMatchResults.Add(entry);
+        }
+    }
+
+    public void ClearRuleMatchResults()
+    {
+        RuleMatchResults.Clear();
     }
 
     private void RefreshView()
