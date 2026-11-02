@@ -273,12 +273,13 @@
                             <RepeatButton Grid.Row="0" Height="14" Content="▲" FontSize="8"
                                           Command="ScrollBar.LineUpCommand" Style="{StaticResource MiniMapLineButton}" />
                             <Grid Grid.Row="1">
-                                <ctrls:LogMiniMap Entries="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                <ctrls:LogMiniMap x:Name="MiniMap"
+                                                  Entries="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=ListView}}"
                                                   SourceListView="{Binding RelativeSource={RelativeSource AncestorType=ListView}}"
                                                   MinimumMarkerHeight="1.2"
-                                                  Panel.ZIndex="1"
+                                                  Panel.ZIndex="0"
                                                   Visibility="{Binding DataContext.SettingsVM.ShowMiniMap, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                <Track x:Name="PART_Track" IsDirectionReversed="True" Panel.ZIndex="0">
+                                <Track x:Name="PART_Track" IsDirectionReversed="True" Panel.ZIndex="1">
                                     <Track.DecreaseRepeatButton>
                                         <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource MiniMapTrackRepeatButton}" />
                                     </Track.DecreaseRepeatButton>
@@ -293,6 +294,12 @@
                             <RepeatButton Grid.Row="2" Height="14" Content="▼" FontSize="8"
                                           Command="ScrollBar.LineDownCommand" Style="{StaticResource MiniMapLineButton}" />
                         </Grid>
+                        <ControlTemplate.Triggers>
+                            <!-- Thumb is drawn above the minimap markers; the minimap still handles all mouse input while visible. -->
+                            <Trigger SourceName="MiniMap" Property="Visibility" Value="Visible">
+                                <Setter TargetName="PART_Track" Property="IsHitTestVisible" Value="False" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
 
                     <ControlTemplate x:Key="HorizontalScrollBar" TargetType="ScrollBar">
